@@ -16,13 +16,11 @@ import { ServiceCard } from '@/components/ServiceCard'
 import { StatsBand } from '@/components/StatsBand'
 import { HowItWorks } from '@/components/HowItWorks'
 import { TestimonialCard } from '@/components/TestimonialCard'
-import { TeamCard } from '@/components/TeamCard'
 import { QuoteForm } from '@/components/QuoteForm'
 import {
   COMPANY,
   DIFFERENTIATORS,
   SERVICES,
-  TEAM,
   TESTIMONIALS,
   VALUES,
 } from '@/lib/constants'
@@ -229,18 +227,6 @@ export default function HomePage() {
                 goes sideways on a load, you hear it from us first — and we
                 already have a plan.
               </p>
-            </div>
-          </div>
-
-          {/* Team */}
-          <div className="mt-16">
-            <h3 className="mb-8 text-xs font-medium uppercase tracking-[0.2em] text-kanexa-gold">
-              The team
-            </h3>
-            <div className="grid gap-6 md:grid-cols-3">
-              {TEAM.map((member) => (
-                <TeamCard key={member.name} member={member} />
-              ))}
             </div>
           </div>
 
