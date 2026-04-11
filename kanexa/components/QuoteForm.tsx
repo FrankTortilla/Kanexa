@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface QuoteFormValues {
   origin: string
@@ -21,6 +21,7 @@ interface QuoteFormValues {
 export function QuoteForm() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -28,11 +29,25 @@ export function QuoteForm() {
     formState: { errors },
   } = useForm<QuoteFormValues>({ mode: 'onTouched' })
 
-  const onSubmit = async (_data: QuoteFormValues) => {
+  const onSubmit = async (data: QuoteFormValues) => {
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 500))
-    setSubmitting(false)
-    setSubmitted(true)
+    setSubmitError(null)
+    try {
+      const res = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error ?? 'Something went wrong. Please try again.')
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -239,7 +254,14 @@ export function QuoteForm() {
         </div>
       </div>
 
-      <div className="mt-8">
+      {submitError && (
+        <div className="mt-6 flex items-start gap-3 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{submitError}</span>
+        </div>
+      )}
+
+      <div className="mt-6">
         <button
           type="submit"
           disabled={submitting}
