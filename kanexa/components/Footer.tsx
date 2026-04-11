@@ -19,7 +19,7 @@ export function Footer() {
             <Image
               src="/logo-full.png"
               alt="Kanexa Freight"
-              width={180}
+              width={58}
               height={40}
               className="h-10 w-auto"
             />
@@ -49,7 +49,7 @@ export function Footer() {
             <Image
               src="/fenichey-logo.png"
               alt="Fenichey"
-              width={84}
+              width={67}
               height={24}
               className="h-6 w-auto"
             />
