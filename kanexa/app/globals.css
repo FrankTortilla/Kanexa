@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-kanexa-bg text-kanexa-text font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  ::selection {
+    background-color: #C9A84C;
+    color: #0A0C10;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded bg-kanexa-gold px-5 py-3 text-sm font-medium text-kanexa-bg transition-colors hover:bg-kanexa-gold/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kanexa-gold-light focus-visible:ring-offset-2 focus-visible:ring-offset-kanexa-bg;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded border border-kanexa-border bg-transparent px-5 py-3 text-sm font-medium text-kanexa-text transition-colors hover:bg-kanexa-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-kanexa-gold-light focus-visible:ring-offset-2 focus-visible:ring-offset-kanexa-bg;
+  }
+
+  .input {
+    @apply w-full rounded border border-kanexa-border bg-kanexa-surface px-4 py-3 text-sm text-kanexa-text placeholder:text-kanexa-muted focus:border-kanexa-gold focus:outline-none;
+  }
+
+  .label {
+    @apply mb-2 block text-xs font-medium uppercase tracking-wide text-kanexa-muted;
+  }
+
+  .section {
+    @apply py-20 lg:py-28;
+  }
+
+  .eyebrow {
+    @apply mb-3 inline-block text-xs font-medium uppercase tracking-[0.2em] text-kanexa-gold;
+  }
+}
