@@ -1,0 +1,247 @@
+'use client';
+import { useState } from 'react';
+import StatusBadge from './StatusBadge';
+import StatusStepper from './StatusStepper';
+import { formatDate, truncateText } from '../utils/formatters';
+
+const COLUMNS = [
+  { key: 'ship_date', label: 'Ship Date', format: v => formatDate(v) },
+  { key: 'delivery_date', label: 'Delivery Date', format: v => formatDate(v) },
+  { key: 'customer_name', label: 'Customer' },
+  { key: 'city_state', label: 'City/State', sortKey: 'city' },
+  { key: 'material', label: 'Material', truncate: true },
+  { key: 'po_number', label: 'PO#' },
+  { key: 'carrier_name', label: 'Carrier Name' },
+  { key: 'tracking_number', label: 'Tracking#' },
+  { key: 'quantity', label: 'Qty' },
+  { key: 'weight', label: 'Weight' },
+  { key: 'total_mileage', label: 'Total Mileage' },
+  { key: 'special_instructions', label: 'Special Instructions', truncate: true },
+  { key: 'status', label: 'Status' },
+];
+
+export default function ShipmentTable({
+  shipments,
+  sortConfig,
+  onSort,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  isWarehouse,
+  flashedId,
+  expandedId,
+  onToggleExpand,
+  renderActivityLog,
+  getUrgencyClass,
+  isHistory,
+}) {
+  const baseFontSize = isWarehouse ? '18px' : '15px';
+  const headerFontSize = isWarehouse ? '15px' : '12px';
+  const cellPadding = isWarehouse ? '14px 12px' : '10px 10px';
+
+  return (
+    <div className="animate-fade-in" style={{ overflowX: 'auto', width: '100%' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: baseFontSize }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid var(--border)' }}>
+            {/* Expand column */}
+            <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize, width: '40px' }} />
+            {COLUMNS.map(col => {
+              const sortKey = col.sortKey || col.key;
+              const isSorted = sortConfig.key === sortKey;
+              const canSort = col.key !== 'city_state';
+              return (
+                <th
+                  key={col.key}
+                  onClick={() => canSort && onSort(sortKey)}
+                  style={{
+                    ...thStyle,
+                    padding: cellPadding,
+                    fontSize: headerFontSize,
+                    cursor: canSort ? 'pointer' : 'default',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {col.label}
+                  {isSorted && (
+                    <span style={{ marginLeft: '4px' }}>
+                      {sortConfig.direction === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+              );
+            })}
+            {/* Actions column */}
+            {!isWarehouse && <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize }}>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {shipments.map(shipment => {
+            const isExpanded = expandedId === shipment.id;
+            const urgencyClass = getUrgencyClass ? getUrgencyClass(shipment) : '';
+            const isFlashed = flashedId === shipment.id;
+
+            return (
+              <TableRow
+                key={shipment.id}
+                shipment={shipment}
+                isExpanded={isExpanded}
+                onToggleExpand={onToggleExpand}
+                urgencyClass={urgencyClass}
+                isFlashed={isFlashed}
+                isWarehouse={isWarehouse}
+                isHistory={isHistory}
+                cellPadding={cellPadding}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onStatusChange={onStatusChange}
+                renderActivityLog={renderActivityLog}
+              />
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TableRow({
+  shipment,
+  isExpanded,
+  onToggleExpand,
+  urgencyClass,
+  isFlashed,
+  isWarehouse,
+  isHistory,
+  cellPadding,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  renderActivityLog,
+}) {
+  const [hovered, setHovered] = useState(false);
+  const s = shipment;
+
+  const urgencyBorderStyle = urgencyClass === 'danger'
+    ? { borderLeft: '4px solid var(--accent-danger)' }
+    : urgencyClass === 'warning'
+      ? { borderLeft: '4px solid var(--accent-warning)' }
+      : {};
+
+  return (
+    <>
+      <tr
+        className={isFlashed ? 'animate-row-flash' : ''}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          borderBottom: '1px solid var(--border)',
+          background: hovered ? 'var(--bg-hover)' : 'transparent',
+          transition: 'background 0.15s',
+          ...urgencyBorderStyle,
+        }}
+      >
+        {/* Expand button */}
+        <td style={{ padding: cellPadding, textAlign: 'center' }}>
+          <button
+            onClick={() => onToggleExpand(s.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '14px',
+              transform: isExpanded ? 'rotate(90deg)' : 'none',
+              transition: 'transform 0.2s',
+            }}
+          >
+            ▶
+          </button>
+        </td>
+
+        <Cell padding={cellPadding}>{formatDate(s.ship_date)}</Cell>
+        <Cell padding={cellPadding}>{formatDate(s.delivery_date)}</Cell>
+        <Cell padding={cellPadding}>{s.customer_name}</Cell>
+        <Cell padding={cellPadding}>{s.city}{s.state ? `, ${s.state}` : ''}</Cell>
+        <TruncatedCell padding={cellPadding} text={s.material} />
+        <Cell padding={cellPadding}>{s.po_number}</Cell>
+        <Cell padding={cellPadding}>{s.carrier_name}</Cell>
+        <Cell padding={cellPadding}>{s.tracking_number}</Cell>
+        <Cell padding={cellPadding}>{s.quantity}</Cell>
+        <Cell padding={cellPadding}>{s.weight}</Cell>
+        <Cell padding={cellPadding}>{s.total_mileage}</Cell>
+        <TruncatedCell padding={cellPadding} text={s.special_instructions} />
+        <td style={{ padding: cellPadding }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <StatusBadge status={s.status} isWarehouse={isWarehouse} />
+            {!isWarehouse && <StatusStepper currentStatus={s.status} onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)} />}
+          </div>
+        </td>
+
+        {!isWarehouse && (
+          <td style={{ padding: cellPadding, whiteSpace: 'nowrap' }}>
+            {isHistory ? (
+              <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-delivered)' }}>Restore</button>
+            ) : (
+              <>
+                <button onClick={() => onEdit(s)} style={actionBtn}>Edit</button>
+                <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Delete</button>
+              </>
+            )}
+          </td>
+        )}
+      </tr>
+
+      {/* Expanded activity log */}
+      {isExpanded && (
+        <tr>
+          <td colSpan={COLUMNS.length + (isWarehouse ? 1 : 2)} style={{
+            padding: '0 24px 16px 56px',
+            background: 'var(--bg-surface)',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            {renderActivityLog && renderActivityLog(s.id)}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function Cell({ children, padding }) {
+  return <td style={{ padding, color: 'var(--text-primary)' }}>{children ?? ''}</td>;
+}
+
+function TruncatedCell({ text, padding }) {
+  const truncated = truncateText(text, 50);
+  const needsTooltip = text && text.length > 50;
+  return (
+    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '200px' }} title={needsTooltip ? text : undefined}>
+      {truncated}
+    </td>
+  );
+}
+
+const thStyle = {
+  textAlign: 'left',
+  fontFamily: 'var(--font-heading), Oswald, sans-serif',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  color: 'var(--text-secondary)',
+  background: 'var(--bg-surface)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+};
+
+const actionBtn = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--accent-green)',
+  cursor: 'pointer',
+  fontSize: '13px',
+  fontWeight: 600,
+  padding: '4px 8px',
+};
