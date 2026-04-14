@@ -4,7 +4,6 @@ import { Resend } from 'resend'
 // RESEND_API_KEY must be set as an environment variable in .env.local (dev)
 // or in your hosting platform's environment settings (production).
 // Get your key at: https://resend.com/api-keys
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const FREIGHT_LABELS: Record<string, string> = {
   ftl: 'Full Truckload (FTL)',
@@ -46,6 +45,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const resend = new Resend(process.env.RESEND_API_KEY)
     const freightLabel = FREIGHT_LABELS[freightType] ?? freightType
 
     const html = `
