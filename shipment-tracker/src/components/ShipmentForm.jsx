@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { US_STATES } from '../lib/constants';
 import { todayISO } from '../utils/formatters';
 
-const REQUIRED_FIELDS = ['ship_date', 'customer_name', 'city', 'state', 'material', 'po_number', 'quantity'];
+const TRAILER_TYPES = ['Flatbed', 'Stepdeck', 'Hotshot', 'Box Truck', 'Sprinter Van', 'LTL', 'FOB'];
+
+const REQUIRED_FIELDS = ['ship_date', 'customer_name', 'city', 'state', 'po_number'];
 
 const INITIAL = {
   ship_date: '',
@@ -11,19 +13,21 @@ const INITIAL = {
   customer_name: '',
   city: '',
   state: '',
-  material: '',
   po_number: '',
   carrier_name: '',
   tracking_number: '',
-  quantity: '',
+  trailer_type: '',
   weight: '',
   total_mileage: '',
   special_instructions: '',
   status: 'Pending',
 };
 
+const BLANK_MATERIAL = { quantity: '', material_name: '' };
+
 export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment, onDelete, checkDuplicatePO }) {
   const [form, setForm] = useState(INITIAL);
+  const [materials, setMaterials] = useState([{ ...BLANK_MATERIAL }]);
   const [errors, setErrors] = useState({});
   const [duplicatePO, setDuplicatePO] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -40,18 +44,29 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
           customer_name: editingShipment.customer_name || '',
           city: editingShipment.city || '',
           state: editingShipment.state || '',
-          material: editingShipment.material || '',
           po_number: editingShipment.po_number || '',
           carrier_name: editingShipment.carrier_name || '',
           tracking_number: editingShipment.tracking_number || '',
-          quantity: editingShipment.quantity ?? '',
+          trailer_type: editingShipment.trailer_type || '',
           weight: editingShipment.weight ?? '',
           total_mileage: editingShipment.total_mileage ?? '',
           special_instructions: editingShipment.special_instructions || '',
           status: editingShipment.status || 'Pending',
         });
+        // Populate materials from shipment_materials, or fall back to legacy material/quantity
+        if (editingShipment.shipment_materials && editingShipment.shipment_materials.length > 0) {
+          setMaterials(editingShipment.shipment_materials.map(m => ({
+            quantity: m.quantity || '',
+            material_name: m.material_name || '',
+          })));
+        } else if (editingShipment.material) {
+          setMaterials([{ quantity: String(editingShipment.quantity || ''), material_name: editingShipment.material }]);
+        } else {
+          setMaterials([{ ...BLANK_MATERIAL }]);
+        }
       } else {
         setForm({ ...INITIAL, ship_date: todayISO() });
+        setMaterials([{ ...BLANK_MATERIAL }]);
       }
       setErrors({});
       setDuplicatePO(false);
@@ -71,15 +86,30 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
     if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
   };
 
+  const setMaterial = (index, field, value) => {
+    setMaterials(prev => prev.map((m, i) => i === index ? { ...m, [field]: value } : m));
+    if (errors[`material_${index}_${field}`]) {
+      setErrors(prev => { const n = { ...prev }; delete n[`material_${index}_${field}`]; return n; });
+    }
+  };
+
+  const addMaterial = () => setMaterials(prev => [...prev, { ...BLANK_MATERIAL }]);
+
+  const removeMaterial = (index) => {
+    if (materials.length === 1) return;
+    setMaterials(prev => prev.filter((_, i) => i !== index));
+  };
+
   const validate = () => {
     const errs = {};
     for (const f of REQUIRED_FIELDS) {
       const v = form[f];
       if (v === '' || v === null || v === undefined) errs[f] = 'Required';
     }
-    if (form.quantity !== '' && (isNaN(Number(form.quantity)) || Number(form.quantity) < 0)) {
-      errs.quantity = 'Must be a positive number';
-    }
+    // Validate each material row
+    materials.forEach((m, i) => {
+      if (!m.material_name.trim()) errs[`material_${i}_material_name`] = 'Required';
+    });
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -91,13 +121,14 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
     try {
       const payload = {
         ...form,
-        quantity: Number(form.quantity),
         weight: form.weight !== '' ? Number(form.weight) : null,
         total_mileage: form.total_mileage !== '' ? Number(form.total_mileage) : null,
         delivery_date: form.delivery_date || null,
         carrier_name: form.carrier_name || null,
         tracking_number: form.tracking_number || null,
+        trailer_type: form.trailer_type || null,
         special_instructions: form.special_instructions || null,
+        materials: materials.filter(m => m.material_name.trim()),
       };
       await onSave(payload, editingShipment?.id);
       onClose();
@@ -173,20 +204,77 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
                 {US_STATES.map(st => <option key={st} value={st}>{st}</option>)}
               </select>
             </Field>
-            <Field label="Material *" error={errors.material}>
-              <input type="text" value={form.material} onChange={e => set('material', e.target.value)} style={inputStyle} />
-            </Field>
             <Field label="PO# *" error={errors.po_number}>
               <input type="text" value={form.po_number} onChange={e => set('po_number', e.target.value)} onBlur={handlePOBlur} style={inputStyle} />
+            </Field>
+
+            {/* Dynamic Materials List */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Materials *
+              </label>
+              {materials.map((m, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start' }}>
+                  <div style={{ flex: '0 0 100px' }}>
+                    <input
+                      type="text"
+                      placeholder="Qty (e.g. 600ea)"
+                      value={m.quantity}
+                      onChange={e => setMaterial(i, 'quantity', e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="Material name *"
+                      value={m.material_name}
+                      onChange={e => setMaterial(i, 'material_name', e.target.value)}
+                      style={{ ...inputStyle, borderColor: errors[`material_${i}_material_name`] ? 'var(--accent-danger)' : undefined }}
+                    />
+                    {errors[`material_${i}_material_name`] && (
+                      <span style={{ fontSize: '12px', color: 'var(--accent-danger)', marginTop: '2px', display: 'block' }}>Required</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeMaterial(i)}
+                    disabled={materials.length === 1}
+                    style={{
+                      background: 'none', border: 'none', cursor: materials.length === 1 ? 'default' : 'pointer',
+                      color: materials.length === 1 ? 'var(--border)' : 'var(--accent-danger)',
+                      fontSize: '18px', padding: '10px 4px', lineHeight: 1,
+                    }}
+                    title="Remove row"
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addMaterial}
+                style={{
+                  background: 'none', border: '1px dashed var(--border)', borderRadius: '6px',
+                  color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px',
+                  padding: '6px 12px', width: '100%', textAlign: 'center',
+                }}
+              >
+                + Add material
+              </button>
+            </div>
+
+            <Field label="Trailer Type" error={errors.trailer_type}>
+              <select value={form.trailer_type} onChange={e => set('trailer_type', e.target.value)} style={inputStyle}>
+                <option value="">Select type</option>
+                {TRAILER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </Field>
             <Field label="Carrier Name" error={errors.carrier_name}>
               <input type="text" value={form.carrier_name} onChange={e => set('carrier_name', e.target.value)} style={inputStyle} />
             </Field>
             <Field label="Tracking#" error={errors.tracking_number}>
               <input type="text" value={form.tracking_number} onChange={e => set('tracking_number', e.target.value)} style={inputStyle} />
-            </Field>
-            <Field label="Quantity *" error={errors.quantity}>
-              <input type="number" min="0" value={form.quantity} onChange={e => set('quantity', e.target.value)} style={inputStyle} />
             </Field>
             <Field label="Weight (lbs)" error={errors.weight}>
               <input type="number" min="0" step="any" value={form.weight} onChange={e => set('weight', e.target.value)} style={inputStyle} />

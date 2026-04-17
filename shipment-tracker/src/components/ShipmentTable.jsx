@@ -5,15 +5,15 @@ import StatusStepper from './StatusStepper';
 import { formatDate, truncateText } from '../utils/formatters';
 
 const COLUMNS = [
-  { key: 'ship_date', label: 'Ship Date', format: v => formatDate(v) },
-  { key: 'delivery_date', label: 'Delivery Date', format: v => formatDate(v) },
+  { key: 'ship_date', label: 'Ship Date' },
+  { key: 'delivery_date', label: 'Delivery Date' },
   { key: 'customer_name', label: 'Customer' },
   { key: 'city_state', label: 'City/State', sortKey: 'city' },
-  { key: 'material', label: 'Material', truncate: true },
+  { key: 'materials', label: 'Materials' },
   { key: 'po_number', label: 'PO#' },
   { key: 'carrier_name', label: 'Carrier Name' },
   { key: 'tracking_number', label: 'Tracking#' },
-  { key: 'quantity', label: 'Qty' },
+  { key: 'trailer_type', label: 'Trailer Type' },
   { key: 'weight', label: 'Weight' },
   { key: 'total_mileage', label: 'Total Mileage' },
   { key: 'special_instructions', label: 'Special Instructions', truncate: true },
@@ -164,11 +164,11 @@ function TableRow({
         <Cell padding={cellPadding}>{formatDate(s.delivery_date)}</Cell>
         <Cell padding={cellPadding}>{s.customer_name}</Cell>
         <Cell padding={cellPadding}>{s.city}{s.state ? `, ${s.state}` : ''}</Cell>
-        <TruncatedCell padding={cellPadding} text={s.material} />
+        <MaterialsCell padding={cellPadding} shipment={s} />
         <Cell padding={cellPadding}>{s.po_number}</Cell>
         <Cell padding={cellPadding}>{s.carrier_name}</Cell>
         <Cell padding={cellPadding}>{s.tracking_number}</Cell>
-        <Cell padding={cellPadding}>{s.quantity}</Cell>
+        <Cell padding={cellPadding}>{s.trailer_type}</Cell>
         <Cell padding={cellPadding}>{s.weight}</Cell>
         <Cell padding={cellPadding}>{s.total_mileage}</Cell>
         <TruncatedCell padding={cellPadding} text={s.special_instructions} />
@@ -206,6 +206,28 @@ function TableRow({
         </tr>
       )}
     </>
+  );
+}
+
+function MaterialsCell({ shipment, padding }) {
+  const items = shipment.shipment_materials && shipment.shipment_materials.length > 0
+    ? shipment.shipment_materials
+    : shipment.material
+      ? [{ quantity: shipment.quantity != null ? String(shipment.quantity) : '', material_name: shipment.material }]
+      : [];
+
+  if (items.length === 0) return <td style={{ padding, color: 'var(--text-primary)' }} />;
+
+  return (
+    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '220px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {items.map((m, i) => (
+          <span key={i} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
+          </span>
+        ))}
+      </div>
+    </td>
   );
 }
 
