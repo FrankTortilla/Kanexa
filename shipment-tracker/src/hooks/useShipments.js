@@ -14,12 +14,16 @@ export function useShipments() {
   // Fetch a single shipment with its materials (used after realtime events)
   const fetchShipmentWithMaterials = async (id) => {
     if (!supabase) return null;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('shipments')
       .select('*, shipment_materials(*)')
       .eq('id', id)
       .single();
-    return data;
+    if (!error && data) return data;
+    // Fallback: shipment_materials table may not exist yet
+    const { data: fallback } = await supabase
+      .from('shipments').select('*').eq('id', id).single();
+    return fallback ? { ...fallback, shipment_materials: [] } : null;
   };
 
   // Fetch all non-deleted shipments
@@ -33,8 +37,19 @@ export function useShipments() {
         .order('ship_date', { ascending: false });
       if (fetchError) throw fetchError;
       setShipments(data || []);
-    } catch (err) {
-      setError(err.message);
+    } catch (_joinErr) {
+      // Fallback: shipment_materials table may not exist yet — load shipments without it
+      try {
+        const { data, error: fallbackErr } = await supabase
+          .from('shipments')
+          .select('*')
+          .is('deleted_at', null)
+          .order('ship_date', { ascending: false });
+        if (fallbackErr) throw fallbackErr;
+        setShipments((data || []).map(s => ({ ...s, shipment_materials: [] })));
+      } catch (err2) {
+        setError(err2.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -50,9 +65,19 @@ export function useShipments() {
         .order('ship_date', { ascending: false });
       if (fetchError) throw fetchError;
       return data || [];
-    } catch (err) {
-      setError(err.message);
-      return [];
+    } catch (_joinErr) {
+      // Fallback without materials join
+      try {
+        const { data, error: fallbackErr } = await supabase
+          .from('shipments')
+          .select('*')
+          .order('ship_date', { ascending: false });
+        if (fallbackErr) throw fallbackErr;
+        return (data || []).map(s => ({ ...s, shipment_materials: [] }));
+      } catch (err2) {
+        setError(err2.message);
+        return [];
+      }
     }
   }, []);
 
@@ -190,7 +215,7 @@ export function useShipments() {
   }, [shipments, sortConfig]);
 
   // Client-side search filtering
-  const searchFields = ['customer_name', 'city', 'state', 'material', 'po_number', 'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type'];
+  const searchFields = ['customer_name', 'city', 'state', 'material', 'po_number', 'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type', 'loading_building'];
 
   const filteredShipments = useMemo(() => {
     let result = sortedShipments;

@@ -3,10 +3,11 @@ import { formatDate } from '../utils/formatters';
 
 const CSV_COLUMNS = [
   { key: 'ship_date', label: 'Ship Date', format: (v) => formatDate(v) },
-  { key: 'delivery_date', label: 'Delivery Date', format: (v) => formatDate(v) },
+  { key: 'delivery_date', label: 'Delivery Date', format: (v) => v ? formatDate(v) : 'TBD' },
   { key: 'customer_name', label: 'Customer' },
   { key: 'city', label: 'City' },
   { key: 'state', label: 'State' },
+  { key: 'loading_building', label: 'Building' },
   { key: 'materials', label: 'Materials', format: (_, s) => {
     const items = s.shipment_materials && s.shipment_materials.length > 0
       ? s.shipment_materials

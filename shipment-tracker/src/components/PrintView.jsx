@@ -29,7 +29,7 @@ export default function PrintView({ shipments, statusFilter, searchQuery, totalC
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
           <thead>
             <tr>
-              {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Miles', 'Instructions', 'Status'].map(h => (
+              {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Building', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Miles', 'Instructions', 'Status'].map(h => (
                 <th key={h} style={{ border: '1px solid #333', padding: '4px 6px', background: '#eee', fontWeight: 'bold', textAlign: 'left' }}>
                   {h}
                 </th>
@@ -45,9 +45,10 @@ export default function PrintView({ shipments, statusFilter, searchQuery, totalC
               return (
                 <tr key={s.id}>
                   <td style={printTd}>{formatDate(s.ship_date)}</td>
-                  <td style={printTd}>{formatDate(s.delivery_date)}</td>
+                  <td style={printTd}>{s.delivery_date ? formatDate(s.delivery_date) : 'TBD'}</td>
                   <td style={printTd}>{s.customer_name}</td>
                   <td style={printTd}>{s.city}{s.state ? `, ${s.state}` : ''}</td>
+                  <td style={printTd}>{s.loading_building || 'Building A'}</td>
                   <td style={printTd}>{materialsStr}</td>
                   <td style={printTd}>{s.po_number}</td>
                   <td style={printTd}>{s.carrier_name}</td>

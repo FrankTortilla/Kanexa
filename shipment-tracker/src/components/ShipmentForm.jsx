@@ -5,7 +5,9 @@ import { todayISO } from '../utils/formatters';
 
 const TRAILER_TYPES = ['Flatbed', 'Stepdeck', 'Hotshot', 'Box Truck', 'Sprinter Van', 'LTL', 'FOB'];
 
-const REQUIRED_FIELDS = ['ship_date', 'customer_name', 'city', 'state', 'po_number'];
+const REQUIRED_FIELDS = ['ship_date', 'customer_name', 'city', 'state', 'po_number', 'loading_building'];
+
+const BUILDINGS = ['Building A', 'Building B', 'Building C'];
 
 const INITIAL = {
   ship_date: '',
@@ -17,6 +19,7 @@ const INITIAL = {
   carrier_name: '',
   tracking_number: '',
   trailer_type: '',
+  loading_building: '',
   weight: '',
   total_mileage: '',
   special_instructions: '',
@@ -28,6 +31,7 @@ const BLANK_MATERIAL = { quantity: '', material_name: '' };
 export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment, onDelete, checkDuplicatePO }) {
   const [form, setForm] = useState(INITIAL);
   const [materials, setMaterials] = useState([{ ...BLANK_MATERIAL }]);
+  const [deliveryTBD, setDeliveryTBD] = useState(false);
   const [errors, setErrors] = useState({});
   const [duplicatePO, setDuplicatePO] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -38,6 +42,8 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
   useEffect(() => {
     if (isOpen) {
       if (editingShipment) {
+        const isTBD = !editingShipment.delivery_date;
+        setDeliveryTBD(isTBD);
         setForm({
           ship_date: editingShipment.ship_date || '',
           delivery_date: editingShipment.delivery_date || '',
@@ -48,6 +54,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
           carrier_name: editingShipment.carrier_name || '',
           tracking_number: editingShipment.tracking_number || '',
           trailer_type: editingShipment.trailer_type || '',
+          loading_building: editingShipment.loading_building || 'Building A',
           weight: editingShipment.weight ?? '',
           total_mileage: editingShipment.total_mileage ?? '',
           special_instructions: editingShipment.special_instructions || '',
@@ -67,6 +74,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
       } else {
         setForm({ ...INITIAL, ship_date: todayISO() });
         setMaterials([{ ...BLANK_MATERIAL }]);
+        setDeliveryTBD(false);
       }
       setErrors({});
       setDuplicatePO(false);
@@ -123,7 +131,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
         ...form,
         weight: form.weight !== '' ? Number(form.weight) : null,
         total_mileage: form.total_mileage !== '' ? Number(form.total_mileage) : null,
-        delivery_date: form.delivery_date || null,
+        delivery_date: deliveryTBD ? null : (form.delivery_date || null),
         carrier_name: form.carrier_name || null,
         tracking_number: form.tracking_number || null,
         trailer_type: form.trailer_type || null,
@@ -190,7 +198,27 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
               <input type="date" value={form.ship_date} onChange={e => set('ship_date', e.target.value)} style={inputStyle} />
             </Field>
             <Field label="Delivery Date" error={errors.delivery_date}>
-              <input type="date" value={form.delivery_date} onChange={e => set('delivery_date', e.target.value)} style={inputStyle} />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="date"
+                  value={form.delivery_date}
+                  onChange={e => set('delivery_date', e.target.value)}
+                  disabled={deliveryTBD}
+                  style={{ ...inputStyle, flex: 1, opacity: deliveryTBD ? 0.4 : 1, cursor: deliveryTBD ? 'not-allowed' : 'auto' }}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={deliveryTBD}
+                    onChange={e => {
+                      setDeliveryTBD(e.target.checked);
+                      if (e.target.checked) set('delivery_date', '');
+                    }}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--accent-shipped)' }}
+                  />
+                  TBD
+                </label>
+              </div>
             </Field>
             <Field label="Customer Name *" error={errors.customer_name}>
               <input type="text" value={form.customer_name} onChange={e => set('customer_name', e.target.value)} style={inputStyle} />
@@ -206,6 +234,13 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
             </Field>
             <Field label="PO# *" error={errors.po_number}>
               <input type="text" value={form.po_number} onChange={e => set('po_number', e.target.value)} onBlur={handlePOBlur} style={inputStyle} />
+            </Field>
+
+            <Field label="Loading at Building *" error={errors.loading_building}>
+              <select value={form.loading_building} onChange={e => set('loading_building', e.target.value)} style={inputStyle}>
+                <option value="">Select building</option>
+                {BUILDINGS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
             </Field>
 
             {/* Dynamic Materials List */}

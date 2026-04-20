@@ -9,6 +9,7 @@ const COLUMNS = [
   { key: 'delivery_date', label: 'Delivery Date' },
   { key: 'customer_name', label: 'Customer' },
   { key: 'city_state', label: 'City/State', sortKey: 'city' },
+  { key: 'loading_building', label: 'Building' },
   { key: 'materials', label: 'Materials' },
   { key: 'po_number', label: 'PO#' },
   { key: 'carrier_name', label: 'Carrier Name' },
@@ -161,9 +162,12 @@ function TableRow({
         </td>
 
         <Cell padding={cellPadding}>{formatDate(s.ship_date)}</Cell>
-        <Cell padding={cellPadding}>{formatDate(s.delivery_date)}</Cell>
+        <td style={{ padding: cellPadding, color: s.delivery_date ? 'var(--text-primary)' : 'var(--text-secondary)', fontStyle: s.delivery_date ? 'normal' : 'italic' }}>
+          {s.delivery_date ? formatDate(s.delivery_date) : 'TBD'}
+        </td>
         <Cell padding={cellPadding}>{s.customer_name}</Cell>
         <Cell padding={cellPadding}>{s.city}{s.state ? `, ${s.state}` : ''}</Cell>
+        <Cell padding={cellPadding}>{s.loading_building || 'Building A'}</Cell>
         <MaterialsCell padding={cellPadding} shipment={s} />
         <Cell padding={cellPadding}>{s.po_number}</Cell>
         <Cell padding={cellPadding}>{s.carrier_name}</Cell>
