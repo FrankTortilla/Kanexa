@@ -23,6 +23,7 @@ const INITIAL = {
   weight: '',
   total_mileage: '',
   special_instructions: '',
+  price: '',
   status: 'Pending',
 };
 
@@ -58,6 +59,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
           weight: editingShipment.weight ?? '',
           total_mileage: editingShipment.total_mileage ?? '',
           special_instructions: editingShipment.special_instructions || '',
+          price: editingShipment.price ?? '',
           status: editingShipment.status || 'Pending',
         });
         // Populate materials from shipment_materials, or fall back to legacy material/quantity
@@ -136,6 +138,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
         tracking_number: form.tracking_number || null,
         trailer_type: form.trailer_type || null,
         special_instructions: form.special_instructions || null,
+        price: form.price !== '' ? Number(form.price) : null,
         materials: materials.filter(m => m.material_name.trim()),
       };
       await onSave(payload, editingShipment?.id);
@@ -319,6 +322,20 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
             </Field>
             <Field label="Special Instructions" error={errors.special_instructions}>
               <textarea value={form.special_instructions} onChange={e => set('special_instructions', e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+            </Field>
+            <Field label="Price" error={errors.price}>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-primary)', overflow: 'hidden' }}>
+                <span style={{ padding: '10px 10px 10px 12px', fontSize: '15px', color: 'var(--text-secondary)', fontWeight: 600, background: 'transparent', userSelect: 'none' }}>$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.price}
+                  onChange={e => set('price', e.target.value)}
+                  style={{ ...inputStyle, border: 'none', borderRadius: 0, paddingLeft: '0', flex: 1 }}
+                />
+              </div>
             </Field>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>

@@ -4,7 +4,7 @@ import StatusBadge from './StatusBadge';
 import StatusStepper from './StatusStepper';
 import { formatDate, truncateText } from '../utils/formatters';
 
-const COLUMNS = [
+const BASE_COLUMNS = [
   { key: 'ship_date', label: 'Ship Date' },
   { key: 'delivery_date', label: 'Delivery Date' },
   { key: 'customer_name', label: 'Customer' },
@@ -19,6 +19,7 @@ const COLUMNS = [
   { key: 'total_mileage', label: 'Total Mileage' },
   { key: 'special_instructions', label: 'Special Instructions', truncate: true },
   { key: 'status', label: 'Status' },
+  { key: 'price', label: 'Price' }, // hidden in warehouse view
 ];
 
 export default function ShipmentTable({
@@ -34,8 +35,12 @@ export default function ShipmentTable({
   onToggleExpand,
   renderActivityLog,
   getUrgencyClass,
-  isHistory,
+  isHistory,    // legacy — treated as tableMode='trash'
+  tableMode,    // 'active' | 'history' | 'trash'
 }) {
+  const effectiveMode = tableMode || (isHistory ? 'trash' : 'active');
+  const COLUMNS = isWarehouse ? BASE_COLUMNS.filter(c => c.key !== 'price') : BASE_COLUMNS;
+
   const baseFontSize = isWarehouse ? '18px' : '15px';
   const headerFontSize = isWarehouse ? '15px' : '12px';
   const cellPadding = isWarehouse ? '14px 12px' : '10px 10px';
@@ -50,7 +55,7 @@ export default function ShipmentTable({
             {COLUMNS.map(col => {
               const sortKey = col.sortKey || col.key;
               const isSorted = sortConfig.key === sortKey;
-              const canSort = col.key !== 'city_state';
+              const canSort = col.key !== 'city_state' && col.key !== 'materials' && col.key !== 'price';
               return (
                 <th
                   key={col.key}
@@ -92,7 +97,8 @@ export default function ShipmentTable({
                 urgencyClass={urgencyClass}
                 isFlashed={isFlashed}
                 isWarehouse={isWarehouse}
-                isHistory={isHistory}
+                effectiveMode={effectiveMode}
+                showPrice={!isWarehouse}
                 cellPadding={cellPadding}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -114,7 +120,8 @@ function TableRow({
   urgencyClass,
   isFlashed,
   isWarehouse,
-  isHistory,
+  effectiveMode,
+  showPrice,
   cellPadding,
   onEdit,
   onDelete,
@@ -172,22 +179,41 @@ function TableRow({
         <Cell padding={cellPadding}>{s.po_number}</Cell>
         <Cell padding={cellPadding}>{s.carrier_name}</Cell>
         <Cell padding={cellPadding}>{s.tracking_number}</Cell>
-        <Cell padding={cellPadding}>{s.trailer_type}</Cell>
+        {/* Trailer Type — Hotshot shown in red */}
+        <td style={{
+          padding: cellPadding,
+          color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',
+          fontWeight: s.trailer_type === 'Hotshot' ? 700 : 400,
+        }}>
+          {s.trailer_type || ''}
+        </td>
         <Cell padding={cellPadding}>{s.weight}</Cell>
         <Cell padding={cellPadding}>{s.total_mileage}</Cell>
         <TruncatedCell padding={cellPadding} text={s.special_instructions} />
         <td style={{ padding: cellPadding }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <StatusBadge status={s.status} isWarehouse={isWarehouse} />
-            {!isWarehouse && <StatusStepper currentStatus={s.status} onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)} />}
+            {!isWarehouse && effectiveMode === 'active' && (
+              <StatusStepper currentStatus={s.status} onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)} />
+            )}
           </div>
         </td>
+        {/* Price — office view only */}
+        {showPrice && (
+          <td style={{ padding: cellPadding, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            {s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}
+          </td>
+        )}
 
         {!isWarehouse && (
           <td style={{ padding: cellPadding, whiteSpace: 'nowrap' }}>
-            {isHistory ? (
+            {effectiveMode === 'trash' && (
               <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-delivered)' }}>Restore</button>
-            ) : (
+            )}
+            {effectiveMode === 'history' && (
+              <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Archive</button>
+            )}
+            {effectiveMode === 'active' && (
               <>
                 <button onClick={() => onEdit(s)} style={actionBtn}>Edit</button>
                 <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Delete</button>

@@ -29,7 +29,7 @@ export default function PrintView({ shipments, statusFilter, searchQuery, totalC
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
           <thead>
             <tr>
-              {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Building', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Miles', 'Instructions', 'Status'].map(h => (
+              {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Building', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Miles', 'Instructions', 'Status', 'Price'].map(h => (
                 <th key={h} style={{ border: '1px solid #333', padding: '4px 6px', background: '#eee', fontWeight: 'bold', textAlign: 'left' }}>
                   {h}
                 </th>
@@ -58,6 +58,7 @@ export default function PrintView({ shipments, statusFilter, searchQuery, totalC
                   <td style={printTd}>{s.total_mileage}</td>
                   <td style={printTd}>{s.special_instructions}</td>
                   <td style={printTd}>{s.status}</td>
+                  <td style={printTd}>{s.price != null ? `$${Number(s.price).toFixed(2)}` : ''}</td>
                 </tr>
               );
             })}

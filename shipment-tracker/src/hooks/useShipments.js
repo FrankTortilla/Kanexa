@@ -176,7 +176,7 @@ export function useShipments() {
     setShipments(prev => prev.filter(s => s.id !== id));
   }, []);
 
-  // Restore
+  // Restore (un-soft-delete)
   const restoreShipment = useCallback(async (id) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { error: restoreError } = await supabase
@@ -184,6 +184,26 @@ export function useShipments() {
       .update({ deleted_at: null })
       .eq('id', id);
     if (restoreError) throw restoreError;
+  }, []);
+
+  // Archive from History (sets archived = true — never deletes data)
+  const archiveShipment = useCallback(async (id) => {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('shipments')
+      .update({ archived: true })
+      .eq('id', id);
+    if (error) throw error;
+  }, []);
+
+  // Unarchive (restore from Trash — sets archived = false)
+  const unarchiveShipment = useCallback(async (id) => {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('shipments')
+      .update({ archived: false })
+      .eq('id', id);
+    if (error) throw error;
   }, []);
 
   // Check duplicate PO#
@@ -263,6 +283,8 @@ export function useShipments() {
     updateShipment,
     deleteShipment,
     restoreShipment,
+    archiveShipment,
+    unarchiveShipment,
     checkDuplicatePO,
     fetchShipments,
     fetchAllShipments,

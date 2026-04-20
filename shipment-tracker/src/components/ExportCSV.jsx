@@ -22,6 +22,7 @@ const CSV_COLUMNS = [
   { key: 'total_mileage', label: 'Total Mileage' },
   { key: 'special_instructions', label: 'Special Instructions' },
   { key: 'status', label: 'Status' },
+  { key: 'price', label: 'Price', format: (v) => v != null ? `$${Number(v).toFixed(2)}` : '' },
 ];
 
 function escapeCSV(val) {

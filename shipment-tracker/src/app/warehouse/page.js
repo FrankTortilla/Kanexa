@@ -69,7 +69,7 @@ export default function WarehousePage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '3px solid #333' }}>
-              {['Status', 'Ship Date', 'Customer', 'City/State', 'Material', 'PO#', 'Carrier', 'Tracking#', 'Qty'].map(h => (
+              {['Status', 'Ship Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Building'].map(h => (
                 <th key={h} style={{
                   textAlign: 'left', padding: '12px 16px',
                   fontFamily: 'Oswald, sans-serif', fontSize: '18px', fontWeight: 600,
@@ -115,11 +115,12 @@ export default function WarehousePage() {
                   <WarehouseCell>{formatDate(s.ship_date)}</WarehouseCell>
                   <WarehouseCell bold>{s.customer_name}</WarehouseCell>
                   <WarehouseCell>{s.city}{s.state ? `, ${s.state}` : ''}</WarehouseCell>
-                  <WarehouseCell>{s.material}</WarehouseCell>
+                  <MaterialsCell shipment={s} />
                   <WarehouseCell>{s.po_number}</WarehouseCell>
                   <WarehouseCell>{s.carrier_name}</WarehouseCell>
                   <WarehouseCell>{s.tracking_number}</WarehouseCell>
-                  <WarehouseCell>{s.quantity}</WarehouseCell>
+                  <TrailerTypeCell trailerType={s.trailer_type} />
+                  <WarehouseCell>{s.loading_building || 'Building A'}</WarehouseCell>
                 </tr>
               );
             })}
@@ -151,6 +152,38 @@ function WarehouseCell({ children, bold }) {
       whiteSpace: 'nowrap',
     }}>
       {children ?? ''}
+    </td>
+  );
+}
+
+function MaterialsCell({ shipment }) {
+  const items = shipment.shipment_materials && shipment.shipment_materials.length > 0
+    ? shipment.shipment_materials
+    : shipment.material
+      ? [{ quantity: shipment.quantity != null ? String(shipment.quantity) : '', material_name: shipment.material }]
+      : [];
+  return (
+    <td style={{ padding: '16px', fontSize: '20px', color: '#ffffff', maxWidth: '260px' }}>
+      {items.map((m, i) => (
+        <div key={i} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
+        </div>
+      ))}
+    </td>
+  );
+}
+
+function TrailerTypeCell({ trailerType }) {
+  const isHotshot = trailerType === 'Hotshot';
+  return (
+    <td style={{
+      padding: '16px',
+      fontSize: '20px',
+      fontWeight: isHotshot ? 700 : 400,
+      color: isHotshot ? '#ff4444' : '#ffffff',
+      whiteSpace: 'nowrap',
+    }}>
+      {trailerType || ''}
     </td>
   );
 }

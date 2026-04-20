@@ -20,6 +20,7 @@ export default function Home() {
     shipments, allShipments, loading, searchQuery, setSearchQuery,
     statusFilter, setStatusFilter, sortConfig, handleSort, flashedId,
     createShipment, updateShipment, deleteShipment, restoreShipment,
+    archiveShipment, unarchiveShipment,
     checkDuplicatePO, fetchShipments, fetchAllShipments,
   } = useShipments();
 
@@ -123,6 +124,8 @@ export default function Home() {
         <ShipmentHistory
           fetchAllShipments={fetchAllShipments}
           restoreShipment={restoreShipment}
+          archiveShipment={archiveShipment}
+          unarchiveShipment={unarchiveShipment}
           sortConfig={sortConfig}
           onSort={handleSort}
           searchQuery={searchQuery}
