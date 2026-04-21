@@ -355,7 +355,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
                     try {
                       await onStatusChange(status);
                     } catch (err) {
-                      console.error('[StatusDropdown] revert triggered. Error:', err?.message, err?.code, err?.details, err?.hint);
+                      console.error('Status update failed:', err?.message);
                       setLocalStatus(prev);        // revert on error
                     }
                   }

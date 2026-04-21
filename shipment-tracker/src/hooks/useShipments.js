@@ -175,11 +175,7 @@ export function useShipments() {
       .eq('id', id)
       .select()
       .single();
-    if (updateError) {
-      console.error('[updateShipment] Supabase error:', JSON.stringify(updateError, null, 2));
-      console.error('[updateShipment] id:', id, 'updates:', JSON.stringify(shipmentUpdates));
-      throw updateError;
-    }
+    if (updateError) throw updateError;
     // Immediately reflect the change in local state — don't wait for realtime
     setShipments(prev => prev.map(s => s.id === id ? { ...s, ...shipmentUpdates } : s));
     // Only touch materials if they were explicitly provided
