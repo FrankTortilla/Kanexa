@@ -1,8 +1,16 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import StatusBadge from './StatusBadge';
-import StatusStepper from './StatusStepper';
 import { formatDate, truncateText } from '../utils/formatters';
+
+// Inline dropdown color palette (solid, white text)
+const STATUS_COLORS_DROPDOWN = {
+  'Pending':    { bg: '#f59e0b', text: '#ffffff' },
+  'Booked':     { bg: '#3b82f6', text: '#ffffff' },
+  'In Transit': { bg: '#f97316', text: '#ffffff' },
+  'Delivered':  { bg: '#22c55e', text: '#ffffff' },
+};
+const STATUS_OPTIONS = ['Pending', 'Booked', 'In Transit', 'Delivered'];
 
 const BASE_COLUMNS = [
   { key: 'ship_date', label: 'Ship Date' },
@@ -42,9 +50,9 @@ export default function ShipmentTable({
   const effectiveMode = tableMode || (isHistory ? 'trash' : 'active');
   const COLUMNS = isWarehouse ? BASE_COLUMNS.filter(c => c.key !== 'price') : BASE_COLUMNS;
 
-  const baseFontSize = isWarehouse ? '18px' : '15px';
+  const baseFontSize = isWarehouse ? '18px' : '14px';
   const headerFontSize = isWarehouse ? '15px' : '12px';
-  const cellPadding = isWarehouse ? '14px 12px' : '10px 10px';
+  const cellPadding = isWarehouse ? '14px 12px' : '9px 10px';
 
   return (
     <div className="animate-fade-in" style={{ overflowX: 'auto', width: '100%' }}>
@@ -52,11 +60,11 @@ export default function ShipmentTable({
         <thead>
           <tr style={{ borderBottom: '2px solid var(--border)' }}>
             {/* Expand column */}
-            <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize, width: '40px' }} />
+            <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize, width: '36px' }} />
             {COLUMNS.map(col => {
               const sortKey = col.sortKey || col.key;
               const isSorted = sortConfig.key === sortKey;
-              const canSort = col.key !== 'city_state' && col.key !== 'materials' && col.key !== 'price';
+              const canSort = col.key !== 'city_state' && col.key !== 'materials' && col.key !== 'price' && col.key !== 'status';
               return (
                 <th
                   key={col.key}
@@ -68,6 +76,8 @@ export default function ShipmentTable({
                     cursor: canSort ? 'pointer' : 'default',
                     userSelect: 'none',
                     whiteSpace: 'nowrap',
+                    maxWidth: col.key === 'status' ? '140px' : undefined,
+                    width: col.key === 'status' ? '140px' : undefined,
                   }}
                 >
                   {col.label}
@@ -80,7 +90,11 @@ export default function ShipmentTable({
               );
             })}
             {/* Actions column */}
-            {!isWarehouse && <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize }}>Actions</th>}
+            {!isWarehouse && (
+              <th style={{ ...thStyle, padding: cellPadding, fontSize: headerFontSize, whiteSpace: 'nowrap' }}>
+                Actions
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -165,7 +179,7 @@ function TableRow({
               border: 'none',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '12px',
               transform: isExpanded ? 'rotate(90deg)' : 'none',
               transition: 'transform 0.2s',
             }}
@@ -175,7 +189,7 @@ function TableRow({
         </td>
 
         <Cell padding={cellPadding}>{formatDate(s.ship_date)}</Cell>
-        <td style={{ padding: cellPadding, color: s.delivery_date ? 'var(--text-primary)' : 'var(--text-secondary)', fontStyle: s.delivery_date ? 'normal' : 'italic' }}>
+        <td style={{ padding: cellPadding, color: s.delivery_date ? 'var(--text-primary)' : 'var(--text-secondary)', fontStyle: s.delivery_date ? 'normal' : 'italic', fontSize: '12px' }}>
           {s.delivery_date ? formatDate(s.delivery_date) : 'TBD'}
         </td>
         <Cell padding={cellPadding}>{s.customer_name}</Cell>
@@ -190,58 +204,55 @@ function TableRow({
           padding: cellPadding,
           color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',
           fontWeight: s.trailer_type === 'Hotshot' ? 700 : 400,
+          fontSize: '12px',
         }}>
           {s.trailer_type || ''}
         </td>
         <Cell padding={cellPadding}>{s.weight}</Cell>
         <Cell padding={cellPadding}>{s.total_mileage}</Cell>
         <TruncatedCell padding={cellPadding} text={s.special_instructions} />
-        <td style={{ padding: cellPadding }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+        {/* Status — interactive dropdown in active mode, static badge otherwise */}
+        <td style={{ padding: cellPadding, maxWidth: '140px', width: '140px' }}>
+          {(!isWarehouse && effectiveMode === 'active') ? (
+            <StatusDropdown
+              currentStatus={s.status}
+              onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)}
+            />
+          ) : (
             <StatusBadge status={s.status} isWarehouse={isWarehouse} />
-            {!isWarehouse && effectiveMode === 'active' && (
-              <StatusStepper currentStatus={s.status} onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)} />
-            )}
-          </div>
+          )}
         </td>
+
         {/* Price — office view only */}
         {showPrice && (
-          <td style={{ padding: cellPadding, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+          <td style={{ padding: cellPadding, color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
             {s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}
           </td>
         )}
 
+        {/* Actions */}
         {!isWarehouse && (
           <td style={{ padding: cellPadding, whiteSpace: 'nowrap' }}>
             {effectiveMode === 'trash' && (
-              <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-delivered)' }}>Restore</button>
+              <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: '#22c55e' }}>Restore</button>
             )}
             {effectiveMode === 'history' && (
               <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Archive</button>
             )}
             {effectiveMode === 'active' && (
               confirmingArchive ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Move to Archive?</span>
-                  <button
-                    onClick={() => setConfirmingArchive(false)}
-                    style={{ ...actionBtn, color: 'var(--text-secondary)' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => { setConfirmingArchive(false); onArchive && onArchive(s); }}
-                    style={{ ...actionBtn, color: 'var(--accent-delivered)', fontWeight: 700 }}
-                  >
-                    Confirm
-                  </button>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Move to Archive?</span>
+                  <button onClick={() => setConfirmingArchive(false)} style={{ ...actionBtn, fontSize: '11px', color: 'var(--text-secondary)' }}>Cancel</button>
+                  <button onClick={() => { setConfirmingArchive(false); onArchive && onArchive(s); }} style={{ ...actionBtn, fontSize: '11px', color: '#22c55e', fontWeight: 700 }}>Confirm</button>
                 </span>
               ) : (
-                <>
+                <span style={{ display: 'inline-flex', gap: '2px' }}>
                   <button onClick={() => onEdit(s)} style={actionBtn}>Edit</button>
                   <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Delete</button>
                   <button onClick={() => setConfirmingArchive(true)} style={{ ...actionBtn, color: 'var(--text-secondary)' }}>Archive</button>
-                </>
+                </span>
               )
             )}
           </td>
@@ -264,6 +275,124 @@ function TableRow({
   );
 }
 
+// ── Inline Status Dropdown ─────────────────────────────────────────
+function StatusDropdown({ currentStatus, onStatusChange }) {
+  const [localStatus, setLocalStatus] = useState(currentStatus);
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Sync if external status changes (e.g. realtime update)
+  useEffect(() => {
+    setLocalStatus(currentStatus);
+  }, [currentStatus]);
+
+  // Click outside → close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const colors = STATUS_COLORS_DROPDOWN[localStatus] || STATUS_COLORS_DROPDOWN['Pending'];
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      {/* Badge button */}
+      <button
+        onClick={() => setIsOpen(prev => !prev)}
+        style={{
+          background: colors.bg,
+          color: colors.text,
+          border: 'none',
+          borderRadius: '20px',
+          padding: '4px 10px',
+          fontSize: '12px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          minWidth: '110px',
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '5px',
+        }}
+      >
+        {localStatus}
+        <span style={{ fontSize: '9px', opacity: 0.8 }}>▾</span>
+      </button>
+
+      {/* Dropdown popover */}
+      {isOpen && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          zIndex: 200,
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          borderRadius: '10px',
+          padding: '6px',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.45)',
+          minWidth: '140px',
+        }}>
+          {STATUS_OPTIONS.map(status => {
+            const sc = STATUS_COLORS_DROPDOWN[status];
+            const isCurrent = status === localStatus;
+            return (
+              <button
+                key={status}
+                onClick={() => {
+                  setIsOpen(false);
+                  if (status !== localStatus) {
+                    setLocalStatus(status);        // optimistic update
+                    onStatusChange(status);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '6px 10px',
+                  marginBottom: '2px',
+                  background: isCurrent ? sc.bg : 'transparent',
+                  border: isCurrent ? 'none' : `1px solid transparent`,
+                  borderRadius: '7px',
+                  color: isCurrent ? sc.text : 'var(--text-primary)',
+                  fontSize: '12px',
+                  fontWeight: isCurrent ? 700 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  whiteSpace: 'nowrap',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: sc.bg,
+                  flexShrink: 0,
+                }} />
+                {status}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Helper cells ───────────────────────────────────────────────────
 function MaterialsCell({ shipment, padding }) {
   const items = shipment.shipment_materials && shipment.shipment_materials.length > 0
     ? shipment.shipment_materials
@@ -274,10 +403,10 @@ function MaterialsCell({ shipment, padding }) {
   if (items.length === 0) return <td style={{ padding, color: 'var(--text-primary)' }} />;
 
   return (
-    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '220px' }}>
+    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '200px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {items.map((m, i) => (
-          <span key={i} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span key={i} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '12px' }}>
             {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
           </span>
         ))}
@@ -287,14 +416,14 @@ function MaterialsCell({ shipment, padding }) {
 }
 
 function Cell({ children, padding }) {
-  return <td style={{ padding, color: 'var(--text-primary)' }}>{children ?? ''}</td>;
+  return <td style={{ padding, color: 'var(--text-primary)', fontSize: '12px' }}>{children ?? ''}</td>;
 }
 
 function TruncatedCell({ text, padding }) {
   const truncated = truncateText(text, 50);
   const needsTooltip = text && text.length > 50;
   return (
-    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '200px' }} title={needsTooltip ? text : undefined}>
+    <td style={{ padding, color: 'var(--text-primary)', maxWidth: '180px', fontSize: '12px' }} title={needsTooltip ? text : undefined}>
       {truncated}
     </td>
   );
@@ -318,7 +447,7 @@ const actionBtn = {
   border: 'none',
   color: 'var(--accent-green)',
   cursor: 'pointer',
-  fontSize: '13px',
+  fontSize: '12px',
   fontWeight: 600,
-  padding: '4px 8px',
+  padding: '4px 6px',
 };

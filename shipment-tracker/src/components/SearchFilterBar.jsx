@@ -1,11 +1,10 @@
 'use client';
-import { STATUS_LIST, BADGE_COLORS } from '../lib/constants';
+import { STATUS_LIST } from '../lib/constants';
 
 export default function SearchFilterBar({
   searchQuery, onSearchChange,
   statusFilter, onStatusFilterChange,
   totalCount, filteredCount,
-  statusCounts,
   isWarehouse,
 }) {
   const fontSize = isWarehouse ? '18px' : '15px';
@@ -41,18 +40,12 @@ export default function SearchFilterBar({
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         {STATUS_LIST.map(status => {
           const isActive = statusFilter === status;
-          const badgeColors = BADGE_COLORS[status];
-          const count = statusCounts ? (statusCounts[status] ?? 0) : null;
-
           return (
             <button
               key={status}
               onClick={() => onStatusFilterChange(status)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '7px 12px',
+                padding: '7px 14px',
                 fontSize: '13px',
                 fontWeight: 700,
                 fontFamily: 'var(--font-heading), Oswald, sans-serif',
@@ -68,33 +61,13 @@ export default function SearchFilterBar({
               }}
             >
               {status}
-              {count !== null && (
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minWidth: '18px',
-                  height: '18px',
-                  padding: '0 5px',
-                  borderRadius: '9px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  background: badgeColors.bg,
-                  color: badgeColors.text,
-                  fontFamily: 'var(--font-body), sans-serif',
-                  textTransform: 'none',
-                  letterSpacing: 0,
-                }}>
-                  {count}
-                </span>
-              )}
             </button>
           );
         })}
       </div>
 
-      <span style={{ fontSize: '14px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-        Showing {filteredCount} of {totalCount} shipments
+      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+        Showing {filteredCount} of {totalCount}
       </span>
     </div>
   );

@@ -25,12 +25,12 @@ export const STATUS_COLORS = {
   Delivered:    { bg: 'var(--accent-delivered)',  text: '#ffffff', glow: 'var(--accent-delivered-glow)'  },
 };
 
-// Office badge colors — light bg, dark text (pill style)
+// Office badge colors — solid bg, white text (pill style)
 export const BADGE_COLORS = {
-  Pending:      { bg: '#faeeda', text: '#854f0b' },
-  Booked:       { bg: '#dbeafe', text: '#1e40af' },
-  'In Transit': { bg: '#fff3cd', text: '#92400e' },
-  Delivered:    { bg: '#dcfce7', text: '#166534' },
+  Pending:      { bg: '#f59e0b', text: '#ffffff' },
+  Booked:       { bg: '#3b82f6', text: '#ffffff' },
+  'In Transit': { bg: '#f97316', text: '#ffffff' },
+  Delivered:    { bg: '#22c55e', text: '#ffffff' },
 };
 
 export const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
