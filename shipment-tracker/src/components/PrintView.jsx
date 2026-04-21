@@ -1,7 +1,7 @@
 'use client';
 import { formatDate } from '../utils/formatters';
 
-export default function PrintView({ shipments, statusFilter, searchQuery, totalCount }) {
+export default function PrintView({ shipments, searchQuery, totalCount }) {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -21,7 +21,6 @@ export default function PrintView({ shipments, statusFilter, searchQuery, totalC
           Printed: {dateStr} at {timeStr}
         </p>
         <p style={{ fontSize: '12px', margin: '0 0 12px', color: '#555' }}>
-          {statusFilter !== 'All' && `Filter: ${statusFilter} | `}
           {searchQuery && `Search: "${searchQuery}" | `}
           Showing {shipments.length} of {totalCount} shipments
         </p>

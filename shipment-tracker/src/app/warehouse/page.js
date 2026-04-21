@@ -9,19 +9,19 @@ const STATUS_ORDER = { 'Pending': 0, 'Booked': 1, 'In Transit': 2, 'Delivered': 
 
 export default function WarehousePage() {
   const {
-    shipments, allShipments, loading, flashedId, fetchShipments,
+    allShipments, loading, flashedId, fetchShipments,
   } = useShipments();
 
   const [expandedId, setExpandedId] = useState(null);
 
   // Sort: Pending first, then Shipped, then Delivered
   const sorted = useMemo(() => {
-    return [...shipments].sort((a, b) => {
+    return [...allShipments].sort((a, b) => {
       const diff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
       if (diff !== 0) return diff;
       return new Date(b.ship_date) - new Date(a.ship_date);
     });
-  }, [shipments]);
+  }, [allShipments]);
 
   const pending    = allShipments.filter(s => s.status === 'Pending').length;
   const booked     = allShipments.filter(s => s.status === 'Booked').length;

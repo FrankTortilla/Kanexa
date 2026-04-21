@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function useShipments() {
@@ -7,7 +7,6 @@ export function useShipments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Pending');
   const [sortConfig, setSortConfig] = useState({ key: 'ship_date', direction: 'desc' });
   const [flashedId, setFlashedId] = useState(null);
 
@@ -251,47 +250,6 @@ export function useShipments() {
     return data && data.length > 0;
   }, []);
 
-  // Client-side sorting
-  const sortedShipments = useMemo(() => {
-    const sorted = [...shipments].sort((a, b) => {
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [shipments, sortConfig]);
-
-  // Client-side search filtering
-  const searchFields = ['customer_name', 'city', 'state', 'material', 'po_number', 'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type', 'loading_building'];
-
-  const filteredShipments = useMemo(() => {
-    let result = sortedShipments;
-
-    if (statusFilter !== 'All') {
-      result = result.filter(s => s.status === statusFilter);
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s => {
-        const directMatch = searchFields.some(field => s[field] && String(s[field]).toLowerCase().includes(q));
-        const materialsMatch = s.shipment_materials && s.shipment_materials.some(m =>
-          (m.material_name && m.material_name.toLowerCase().includes(q)) ||
-          (m.quantity && String(m.quantity).toLowerCase().includes(q))
-        );
-        return directMatch || materialsMatch;
-      });
-    }
-
-    return result;
-  }, [sortedShipments, searchQuery, statusFilter]);
-
   // Toggle sort
   const handleSort = useCallback((key) => {
     setSortConfig(prev => ({
@@ -301,14 +259,11 @@ export function useShipments() {
   }, []);
 
   return {
-    shipments: filteredShipments,
     allShipments: shipments,
     loading,
     error,
     searchQuery,
     setSearchQuery,
-    statusFilter,
-    setStatusFilter,
     sortConfig,
     handleSort,
     flashedId,

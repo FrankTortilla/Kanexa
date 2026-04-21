@@ -44,34 +44,27 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         {/* Tab toggle */}
         <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <button
-            onClick={() => onTabChange('active')}
-            style={{
-              padding: '7px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'active' ? 'var(--accent-green)' : 'transparent',
-              color: activeTab === 'active' ? '#fff' : 'var(--text-secondary)',
-            }}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => onTabChange('history')}
-            style={{
-              padding: '7px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'history' ? 'var(--accent-green)' : 'transparent',
-              color: activeTab === 'history' ? '#fff' : 'var(--text-secondary)',
-            }}
-          >
-            History
-          </button>
+          {[
+            { key: 'active',    label: 'Active'    },
+            { key: 'delivered', label: 'Delivered' },
+            { key: 'history',   label: 'History'   },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => onTabChange(tab.key)}
+              style={{
+                padding: '7px 16px',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === tab.key ? 'var(--accent-green)' : 'transparent',
+                color: activeTab === tab.key ? '#fff' : 'var(--text-secondary)',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <button onClick={onExport} style={btnStyle}>Export CSV</button>

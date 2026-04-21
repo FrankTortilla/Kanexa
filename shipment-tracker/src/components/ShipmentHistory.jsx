@@ -36,7 +36,6 @@ export default function ShipmentHistory({
   sortConfig,
   onSort,
   searchQuery,
-  statusFilter,
   isWarehouse,
   flashedId,
   expandedId,
@@ -78,7 +77,6 @@ export default function ShipmentHistory({
 
   const applyFilters = (list) => {
     let result = list;
-    if (statusFilter !== 'All') result = result.filter(s => s.status === statusFilter);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(s => {
@@ -103,7 +101,7 @@ export default function ShipmentHistory({
       return 0;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allShipments, statusFilter, searchQuery, dateFrom, dateTo]);
+  }, [allShipments, searchQuery, dateFrom, dateTo]);
 
   // Group by month
   const monthGroups = useMemo(() => {
@@ -142,7 +140,7 @@ export default function ShipmentHistory({
       return 0;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allShipments, statusFilter, searchQuery, dateFrom, dateTo]);
+  }, [allShipments, searchQuery, dateFrom, dateTo]);
 
   const paginatedArchive = useMemo(() => {
     const start = (archivePage - 1) * archiveRowsPerPage;

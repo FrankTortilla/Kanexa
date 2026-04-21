@@ -321,14 +321,9 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
                 <option value="House" />
                 <option value="Fenichey" />
                 <option value="Sojourner" />
-                <option value="Old Dominion" />
-                <option value="XPO" />
-                <option value="Estes" />
-                <option value="R+L Carriers" />
-                <option value="Saia" />
+                <option value="Denney" />
                 <option value="LTL" />
                 <option value="FOB" />
-                <option value="Other" />
               </datalist>
             </Field>
             <Field label="Tracking#" error={errors.tracking_number}>
