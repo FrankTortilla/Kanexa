@@ -1,37 +1,56 @@
 'use client';
-import { STATUS_LIST, STATUS_COLORS } from '../lib/constants';
+import { STATUS_LIST, BADGE_COLORS } from '../lib/constants';
 
 export default function StatusStepper({ currentStatus, onStatusChange }) {
   const currentIndex = STATUS_LIST.indexOf(currentStatus);
 
-  const nextStatus = currentIndex < STATUS_LIST.length - 1
-    ? STATUS_LIST[currentIndex + 1]
-    : null;
-
-  if (!nextStatus) return null;
-
-  const colors = STATUS_COLORS[nextStatus];
-
   return (
-    <button
-      onClick={() => onStatusChange(nextStatus)}
-      title={`Mark as ${nextStatus}`}
-      style={{
-        padding: '4px 10px',
-        borderRadius: '6px',
-        fontSize: '12px',
-        fontWeight: 700,
-        fontFamily: 'var(--font-heading), Oswald, sans-serif',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-        border: `1px solid ${colors.bg}`,
-        background: 'transparent',
-        color: colors.bg,
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      → {nextStatus}
-    </button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+      {STATUS_LIST.map((status, i) => {
+        const isCurrent = i === currentIndex;
+        const isNext    = i === currentIndex + 1;
+        const isPast    = i < currentIndex;
+        const colors    = BADGE_COLORS[status] || BADGE_COLORS['Pending'];
+
+        return (
+          <span key={status} style={{ display: 'flex', alignItems: 'center' }}>
+            {i > 0 && (
+              <span style={{
+                color: 'var(--text-secondary)',
+                fontSize: '9px',
+                opacity: 0.4,
+                margin: '0 2px',
+                userSelect: 'none',
+              }}>›</span>
+            )}
+            <button
+              onClick={isNext ? () => onStatusChange(status) : undefined}
+              disabled={!isNext}
+              title={isNext ? `Advance to ${status}` : status}
+              style={{
+                padding: '2px 7px',
+                borderRadius: '10px',
+                fontSize: '10px',
+                fontWeight: isCurrent ? 700 : 500,
+                background: isCurrent ? colors.bg : 'transparent',
+                color: isCurrent
+                  ? colors.text
+                  : isNext
+                    ? colors.text
+                    : 'var(--text-secondary)',
+                border: isNext ? `1px solid ${colors.bg}` : 'none',
+                cursor: isNext ? 'pointer' : 'default',
+                opacity: isPast ? 0.35 : 1,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s',
+                lineHeight: '1.4',
+              }}
+            >
+              {status}
+            </button>
+          </span>
+        );
+      })}
+    </div>
   );
 }

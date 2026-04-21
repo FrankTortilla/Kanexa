@@ -28,6 +28,7 @@ export default function ShipmentTable({
   onSort,
   onEdit,
   onDelete,
+  onArchive,
   onStatusChange,
   isWarehouse,
   flashedId,
@@ -100,8 +101,10 @@ export default function ShipmentTable({
                 effectiveMode={effectiveMode}
                 showPrice={!isWarehouse}
                 cellPadding={cellPadding}
+                numColumns={COLUMNS.length}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onArchive={onArchive}
                 onStatusChange={onStatusChange}
                 renderActivityLog={renderActivityLog}
               />
@@ -123,12 +126,15 @@ function TableRow({
   effectiveMode,
   showPrice,
   cellPadding,
+  numColumns,
   onEdit,
   onDelete,
+  onArchive,
   onStatusChange,
   renderActivityLog,
 }) {
   const [hovered, setHovered] = useState(false);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
   const s = shipment;
 
   const urgencyBorderStyle = urgencyClass === 'danger'
@@ -214,10 +220,29 @@ function TableRow({
               <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Archive</button>
             )}
             {effectiveMode === 'active' && (
-              <>
-                <button onClick={() => onEdit(s)} style={actionBtn}>Edit</button>
-                <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Delete</button>
-              </>
+              confirmingArchive ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Move to Archive?</span>
+                  <button
+                    onClick={() => setConfirmingArchive(false)}
+                    style={{ ...actionBtn, color: 'var(--text-secondary)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { setConfirmingArchive(false); onArchive && onArchive(s); }}
+                    style={{ ...actionBtn, color: 'var(--accent-delivered)', fontWeight: 700 }}
+                  >
+                    Confirm
+                  </button>
+                </span>
+              ) : (
+                <>
+                  <button onClick={() => onEdit(s)} style={actionBtn}>Edit</button>
+                  <button onClick={() => onDelete(s)} style={{ ...actionBtn, color: 'var(--accent-danger)' }}>Delete</button>
+                  <button onClick={() => setConfirmingArchive(true)} style={{ ...actionBtn, color: 'var(--text-secondary)' }}>Archive</button>
+                </>
+              )
             )}
           </td>
         )}
@@ -226,7 +251,7 @@ function TableRow({
       {/* Expanded activity log */}
       {isExpanded && (
         <tr>
-          <td colSpan={COLUMNS.length + (isWarehouse ? 1 : 2)} style={{
+          <td colSpan={(numColumns || 15) + (isWarehouse ? 1 : 2)} style={{
             padding: '0 24px 16px 56px',
             background: 'var(--bg-surface)',
             borderBottom: '1px solid var(--border)',

@@ -7,7 +7,7 @@ export function useShipments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('Pending');
   const [sortConfig, setSortConfig] = useState({ key: 'ship_date', direction: 'desc' });
   const [flashedId, setFlashedId] = useState(null);
 
@@ -26,7 +26,7 @@ export function useShipments() {
     return fallback ? { ...fallback, shipment_materials: [] } : null;
   };
 
-  // Fetch all non-deleted shipments
+  // Fetch all non-deleted, non-archived shipments (active view)
   const fetchShipments = useCallback(async () => {
     if (!supabase) { setLoading(false); return; }
     try {
@@ -34,6 +34,7 @@ export function useShipments() {
         .from('shipments')
         .select('*, shipment_materials(*)')
         .is('deleted_at', null)
+        .is('archived_at', null)
         .order('ship_date', { ascending: false });
       if (fetchError) throw fetchError;
       setShipments(data || []);
@@ -44,6 +45,7 @@ export function useShipments() {
           .from('shipments')
           .select('*')
           .is('deleted_at', null)
+          .is('archived_at', null)
           .order('ship_date', { ascending: false });
         if (fallbackErr) throw fallbackErr;
         setShipments((data || []).map(s => ({ ...s, shipment_materials: [] })));
@@ -99,6 +101,21 @@ export function useShipments() {
             });
             setFlashedId(payload.new.id);
           } else if (payload.eventType === 'UPDATE') {
+            // If the row was just archived, remove it from the active list
+            if (payload.new.archived_at && !payload.old.archived_at) {
+              setShipments(prev => prev.filter(s => s.id !== payload.new.id));
+              return;
+            }
+            // If the row was just unarchived (archived_at cleared), re-fetch it if not deleted
+            if (!payload.new.archived_at && payload.old.archived_at && !payload.new.deleted_at) {
+              const full = await fetchShipmentWithMaterials(payload.new.id);
+              setShipments(prev => {
+                if (prev.some(s => s.id === payload.new.id)) return prev;
+                return [full || payload.new, ...prev];
+              });
+              setFlashedId(payload.new.id);
+              return;
+            }
             const full = await fetchShipmentWithMaterials(payload.new.id);
             setShipments(prev =>
               prev.map(s => s.id === payload.new.id ? (full || payload.new) : s)
@@ -186,22 +203,24 @@ export function useShipments() {
     if (restoreError) throw restoreError;
   }, []);
 
-  // Archive from History (sets archived = true — never deletes data)
+  // Archive — sets archived_at = NOW() (never deletes data)
   const archiveShipment = useCallback(async (id) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('shipments')
-      .update({ archived: true })
+      .update({ archived_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
+    // Remove from active view immediately
+    setShipments(prev => prev.filter(s => s.id !== id));
   }, []);
 
-  // Unarchive (restore from Trash — sets archived = false)
+  // Unarchive — sets archived_at = NULL (returns to active view)
   const unarchiveShipment = useCallback(async (id) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('shipments')
-      .update({ archived: false })
+      .update({ archived_at: null })
       .eq('id', id);
     if (error) throw error;
   }, []);

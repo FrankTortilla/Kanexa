@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useShipments } from '../hooks/useShipments';
 import { DEFAULT_ROWS_PER_PAGE } from '../lib/constants';
 import { getUrgencyLevel } from '../components/UrgencyBadge';
@@ -38,6 +38,13 @@ export default function Home() {
     return shipments.slice(start, start + rowsPerPage);
   }, [shipments, page, rowsPerPage]);
 
+  const statusCounts = useMemo(() => ({
+    Pending:      allShipments.filter(s => s.status === 'Pending').length,
+    Booked:       allShipments.filter(s => s.status === 'Booked').length,
+    'In Transit': allShipments.filter(s => s.status === 'In Transit').length,
+    Delivered:    allShipments.filter(s => s.status === 'Delivered').length,
+  }), [allShipments]);
+
   const handleAddShipment = () => { setEditingShipment(null); setFormOpen(true); };
   const handleEdit = (s) => { setEditingShipment(s); setFormOpen(true); };
 
@@ -51,6 +58,7 @@ export default function Home() {
 
   const handleDelete = async (s) => { await deleteShipment(s.id); };
   const handleStatusChange = async (id, newStatus) => { await updateShipment(id, { status: newStatus }); };
+  const handleArchive = useCallback(async (s) => { await archiveShipment(s.id); }, [archiveShipment]);
   const handleToggleExpand = useCallback((id) => { setExpandedId(prev => prev === id ? null : id); }, []);
   const getUrgencyClass = useCallback((shipment) => getUrgencyLevel(shipment), []);
   const renderActivityLog = useCallback((shipmentId) => <ActivityLog shipmentId={shipmentId} isWarehouse={false} />, []);
@@ -87,6 +95,7 @@ export default function Home() {
         onStatusFilterChange={handleStatusFilterChange}
         totalCount={allShipments.length}
         filteredCount={shipments.length}
+        statusCounts={statusCounts}
         isWarehouse={false}
       />
 
@@ -102,6 +111,7 @@ export default function Home() {
                 onSort={handleSort}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onArchive={handleArchive}
                 onStatusChange={handleStatusChange}
                 isWarehouse={false}
                 flashedId={flashedId}

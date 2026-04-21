@@ -10,12 +10,16 @@
   --accent-green: #4a7c3f;
   --accent-green-hover: #5a9a4a;
   --accent-pending: #e6b800;
+  --accent-booked: #3b82f6;
+  --accent-in-transit: #f97316;
   --accent-shipped: #3b82f6;
   --accent-delivered: #4a7c3f;
   --accent-danger: #dc3545;
   --accent-warning: #e6b800;
   --accent-live: #4a7c3f;
   --accent-pending-glow: rgba(230, 184, 0, 0.25);
+  --accent-booked-glow: rgba(59, 130, 246, 0.25);
+  --accent-in-transit-glow: rgba(249, 115, 22, 0.25);
   --accent-shipped-glow: rgba(59, 130, 246, 0.25);
   --accent-delivered-glow: rgba(74, 124, 63, 0.25);
   --accent-warning-glow: rgba(230, 184, 0, 0.15);
@@ -71,6 +75,17 @@ body {
 }
 .animate-urgency-glow {
   animation: urgency-glow 2s ease-in-out infinite;
+}
+
+/* Make date picker calendar icons visible on dark backgrounds */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 @media print {

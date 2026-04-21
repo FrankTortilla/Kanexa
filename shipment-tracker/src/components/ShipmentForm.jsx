@@ -309,7 +309,20 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
               </select>
             </Field>
             <Field label="Carrier Name" error={errors.carrier_name}>
-              <input type="text" value={form.carrier_name} onChange={e => set('carrier_name', e.target.value)} style={inputStyle} />
+              <input
+                type="text"
+                list="carrier-options"
+                value={form.carrier_name}
+                onChange={e => set('carrier_name', e.target.value)}
+                placeholder="Select or type carrier"
+                style={inputStyle}
+              />
+              <datalist id="carrier-options">
+                <option value="House" />
+                <option value="Fenichey" />
+                <option value="Sojourner" />
+                <option value="Other" />
+              </datalist>
             </Field>
             <Field label="Tracking#" error={errors.tracking_number}>
               <input type="text" value={form.tracking_number} onChange={e => set('tracking_number', e.target.value)} style={inputStyle} />

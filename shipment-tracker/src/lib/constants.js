@@ -8,29 +8,29 @@ export const US_STATES = [
 ];
 
 export const STATUS = {
-  PENDING: 'Pending',
-  SHIPPED: 'Shipped',
-  DELIVERED: 'Delivered',
+  PENDING:    'Pending',
+  BOOKED:     'Booked',
+  IN_TRANSIT: 'In Transit',
+  DELIVERED:  'Delivered',
 };
 
-export const STATUS_LIST = [STATUS.PENDING, STATUS.SHIPPED, STATUS.DELIVERED];
+export const STATUSES    = ['Pending', 'Booked', 'In Transit', 'Delivered'];
+export const STATUS_LIST = STATUSES;
 
+// Warehouse badge colors — dark/colored bg, white text, glow effect
 export const STATUS_COLORS = {
-  [STATUS.PENDING]: {
-    bg: 'var(--accent-pending)',
-    text: '#FFFFFF',
-    glow: 'var(--accent-pending-glow)',
-  },
-  [STATUS.SHIPPED]: {
-    bg: 'var(--accent-shipped)',
-    text: '#FFFFFF',
-    glow: 'var(--accent-shipped-glow)',
-  },
-  [STATUS.DELIVERED]: {
-    bg: 'var(--accent-delivered)',
-    text: '#ffffff',
-    glow: 'var(--accent-delivered-glow)',
-  },
+  Pending:      { bg: 'var(--accent-pending)',    text: '#FFFFFF', glow: 'var(--accent-pending-glow)'    },
+  Booked:       { bg: 'var(--accent-booked)',     text: '#FFFFFF', glow: 'var(--accent-booked-glow)'     },
+  'In Transit': { bg: 'var(--accent-in-transit)', text: '#FFFFFF', glow: 'var(--accent-in-transit-glow)' },
+  Delivered:    { bg: 'var(--accent-delivered)',  text: '#ffffff', glow: 'var(--accent-delivered-glow)'  },
+};
+
+// Office badge colors — light bg, dark text (pill style)
+export const BADGE_COLORS = {
+  Pending:      { bg: '#faeeda', text: '#854f0b' },
+  Booked:       { bg: '#dbeafe', text: '#1e40af' },
+  'In Transit': { bg: '#fff3cd', text: '#92400e' },
+  Delivered:    { bg: '#dcfce7', text: '#166534' },
 };
 
 export const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];

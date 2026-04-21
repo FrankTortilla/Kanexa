@@ -5,7 +5,7 @@ import { formatDate } from '../../utils/formatters';
 import { STATUS_COLORS } from '../../lib/constants';
 import LiveIndicator from '../../components/LiveIndicator';
 
-const STATUS_ORDER = { 'Pending': 0, 'Shipped': 1, 'Delivered': 2 };
+const STATUS_ORDER = { 'Pending': 0, 'Booked': 1, 'In Transit': 2, 'Delivered': 3 };
 
 export default function WarehousePage() {
   const {
@@ -23,9 +23,10 @@ export default function WarehousePage() {
     });
   }, [shipments]);
 
-  const pending = allShipments.filter(s => s.status === 'Pending').length;
-  const shipped = allShipments.filter(s => s.status === 'Shipped').length;
-  const delivered = allShipments.filter(s => s.status === 'Delivered').length;
+  const pending    = allShipments.filter(s => s.status === 'Pending').length;
+  const booked     = allShipments.filter(s => s.status === 'Booked').length;
+  const inTransit  = allShipments.filter(s => s.status === 'In Transit').length;
+  const delivered  = allShipments.filter(s => s.status === 'Delivered').length;
 
   if (loading) {
     return (
@@ -59,9 +60,10 @@ export default function WarehousePage() {
 
       {/* Summary cards */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <SummaryCard label="PENDING" value={pending} color="#e6b800" />
-        <SummaryCard label="SHIPPED" value={shipped} color="#3b82f6" />
-        <SummaryCard label="DELIVERED" value={delivered} color="#4a7c3f" />
+        <SummaryCard label="PENDING"    value={pending}   color="#e6b800" />
+        <SummaryCard label="BOOKED"     value={booked}    color="#3b82f6" />
+        <SummaryCard label="IN TRANSIT" value={inTransit} color="#f97316" />
+        <SummaryCard label="DELIVERED"  value={delivered} color="#4a7c3f" />
       </div>
 
       {/* Table */}

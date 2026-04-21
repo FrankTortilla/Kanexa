@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import ShipmentTable from './ShipmentTable';
+import StatusBadge from './StatusBadge';
 import Pagination from './Pagination';
 import { DEFAULT_ROWS_PER_PAGE } from '../lib/constants';
+import { formatDate } from '../utils/formatters';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -18,6 +20,12 @@ function monthLabel(key, currentKey) {
   if (key === currentKey) return 'This Month';
   const [year, month] = key.split('-');
   return `${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}`;
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function ShipmentHistory({
@@ -55,6 +63,7 @@ export default function ShipmentHistory({
     setLoading(true);
     fetchAllShipments().then(data => {
       if (mounted) {
+        // History shows delivered + soft-deleted records
         setAllShipments(data.filter(s => s.status === 'Delivered' || s.deleted_at));
         setLoading(false);
       }
@@ -81,13 +90,13 @@ export default function ShipmentHistory({
       });
     }
     if (dateFrom) result = result.filter(s => s.ship_date >= dateFrom);
-    if (dateTo) result = result.filter(s => s.ship_date <= dateTo);
+    if (dateTo)   result = result.filter(s => s.ship_date <= dateTo);
     return result;
   };
 
   // History sub-tab: non-archived records
   const historyShipments = useMemo(() => {
-    const base = allShipments.filter(s => !s.archived);
+    const base = allShipments.filter(s => !s.archived_at);
     return applyFilters(base).sort((a, b) => {
       if ((a.ship_date || '') > (b.ship_date || '')) return -1;
       if ((a.ship_date || '') < (b.ship_date || '')) return 1;
@@ -96,7 +105,7 @@ export default function ShipmentHistory({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allShipments, statusFilter, searchQuery, dateFrom, dateTo]);
 
-  // Group by month for History sub-tab
+  // Group by month
   const monthGroups = useMemo(() => {
     const groups = {};
     for (const s of historyShipments) {
@@ -107,32 +116,29 @@ export default function ShipmentHistory({
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [historyShipments]);
 
-  // Initialize collapse state once: most recent month expanded, rest collapsed
+  // Init collapsed: most recent expanded, rest collapsed
   useEffect(() => {
     if (!initDoneRef.current && monthGroups.length > 0) {
       initDoneRef.current = true;
-      const toCollapse = new Set(
-        monthGroups.slice(1).map(([key]) => key)
-      );
-      setCollapsedMonths(toCollapse);
+      setCollapsedMonths(new Set(monthGroups.slice(1).map(([key]) => key)));
     }
   }, [monthGroups]);
 
   const toggleMonth = (key) => {
     setCollapsedMonths(prev => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
   };
 
-  // Archive sub-tab: archived records
+  // Archive sub-tab: archived_at IS NOT NULL
   const archiveShipments = useMemo(() => {
-    const base = allShipments.filter(s => s.archived === true);
+    const base = allShipments.filter(s => !!s.archived_at);
     return applyFilters(base).sort((a, b) => {
-      if ((a.ship_date || '') > (b.ship_date || '')) return -1;
-      if ((a.ship_date || '') < (b.ship_date || '')) return 1;
+      // Sort by archived_at desc
+      if ((a.archived_at || '') > (b.archived_at || '')) return -1;
+      if ((a.archived_at || '') < (b.archived_at || '')) return 1;
       return 0;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,29 +149,26 @@ export default function ShipmentHistory({
     return archiveShipments.slice(start, start + archiveRowsPerPage);
   }, [archiveShipments, archivePage, archiveRowsPerPage]);
 
-  // Archive a history row (move to Archive tab)
-  const handleArchiveClick = (shipment) => {
-    setConfirmArchive(shipment);
-  };
+  const handleArchiveClick = (shipment) => setConfirmArchive(shipment);
 
   const confirmDoArchive = async () => {
     if (!confirmArchive || !archiveShipment) return;
     try {
       await archiveShipment(confirmArchive.id);
+      const now = new Date().toISOString();
       setAllShipments(prev =>
-        prev.map(s => s.id === confirmArchive.id ? { ...s, archived: true } : s)
+        prev.map(s => s.id === confirmArchive.id ? { ...s, archived_at: now } : s)
       );
     } finally {
       setConfirmArchive(null);
     }
   };
 
-  // Restore an archived row (move back to History tab)
-  const handleRestore = async (shipment) => {
+  const handleUnarchive = async (shipment) => {
     if (!unarchiveShipment) return;
     await unarchiveShipment(shipment.id);
     setAllShipments(prev =>
-      prev.map(s => s.id === shipment.id ? { ...s, archived: false } : s)
+      prev.map(s => s.id === shipment.id ? { ...s, archived_at: null } : s)
     );
   };
 
@@ -179,13 +182,12 @@ export default function ShipmentHistory({
 
   const historyCount = historyShipments.length;
   const archiveCount = archiveShipments.length;
-  const activeCount = historySubTab === 'history' ? historyCount : archiveCount;
 
   return (
     <div>
-      {/* Sub-tabs: History | Archive */}
+      {/* Sub-tabs */}
       <div className="no-print" style={{
-        display: 'flex', gap: '0',
+        display: 'flex',
         borderBottom: '2px solid var(--border)',
         padding: '0 24px',
       }}>
@@ -223,25 +225,15 @@ export default function ShipmentHistory({
         alignItems: 'center', flexWrap: 'wrap',
       }}>
         <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>From:</label>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={e => onDateFromChange(e.target.value)}
-          style={dateInputStyle}
-        />
+        <input type="date" value={dateFrom} onChange={e => onDateFromChange(e.target.value)} style={dateInputStyle} />
         <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>To:</label>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={e => onDateToChange(e.target.value)}
-          style={dateInputStyle}
-        />
+        <input type="date" value={dateTo} onChange={e => onDateToChange(e.target.value)} style={dateInputStyle} />
         <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-          {activeCount} record{activeCount !== 1 ? 's' : ''}
+          {historySubTab === 'history' ? historyCount : archiveCount} record{(historySubTab === 'history' ? historyCount : archiveCount) !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* Confirm Archive Dialog */}
+      {/* Archive confirmation dialog */}
       {confirmArchive && (
         <div style={{
           position: 'fixed', inset: 0,
@@ -271,23 +263,13 @@ export default function ShipmentHistory({
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmArchive(null)}
-                style={{
-                  ...dialogBtn,
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
-                }}
+                style={{ ...dialogBtn, background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDoArchive}
-                style={{
-                  ...dialogBtn,
-                  background: 'var(--accent-danger)',
-                  color: '#fff',
-                  border: 'none',
-                }}
+                style={{ ...dialogBtn, background: 'var(--accent-danger)', color: '#fff', border: 'none' }}
               >
                 Archive
               </button>
@@ -308,7 +290,6 @@ export default function ShipmentHistory({
             const label = monthLabel(key, currentMonthKey);
             return (
               <div key={key}>
-                {/* Month section header */}
                 <div
                   onClick={() => toggleMonth(key)}
                   style={{
@@ -322,21 +303,16 @@ export default function ShipmentHistory({
                   }}
                 >
                   <span style={{
-                    fontSize: '11px',
-                    color: 'var(--text-secondary)',
+                    fontSize: '11px', color: 'var(--text-secondary)',
                     display: 'inline-block',
                     transform: isCollapsed ? 'none' : 'rotate(90deg)',
                     transition: 'transform 0.2s',
-                  }}>
-                    ▶
-                  </span>
+                  }}>▶</span>
                   <span style={{
                     fontFamily: 'var(--font-heading), Oswald, sans-serif',
-                    fontWeight: 700,
-                    fontSize: '14px',
+                    fontWeight: 700, fontSize: '14px',
                     color: 'var(--text-primary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    textTransform: 'uppercase', letterSpacing: '0.5px',
                   }}>
                     {label}
                   </span>
@@ -344,8 +320,6 @@ export default function ShipmentHistory({
                     — {rows.length} shipment{rows.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-
-                {/* Rows for this month */}
                 {!isCollapsed && (
                   <ShipmentTable
                     shipments={rows}
@@ -377,21 +351,72 @@ export default function ShipmentHistory({
           </div>
         ) : (
           <>
-            <ShipmentTable
-              shipments={paginatedArchive}
-              sortConfig={sortConfig}
-              onSort={onSort}
-              onEdit={() => {}}
-              onDelete={!isWarehouse ? handleRestore : () => {}}
-              onStatusChange={() => {}}
-              isWarehouse={isWarehouse}
-              flashedId={flashedId}
-              expandedId={expandedId}
-              onToggleExpand={onToggleExpand}
-              renderActivityLog={renderActivityLog}
-              getUrgencyClass={() => null}
-              tableMode="trash"
-            />
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Trailer Type', 'Weight', 'Status', 'Archived On', 'Price', 'Actions'].map(h => (
+                      <th key={h} style={archiveThStyle}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedArchive.map(s => {
+                    const matItems = s.shipment_materials && s.shipment_materials.length > 0
+                      ? s.shipment_materials
+                      : s.material ? [{ quantity: s.quantity != null ? String(s.quantity) : '', material_name: s.material }] : [];
+                    const materialsStr = matItems.map(m => `${m.quantity ? m.quantity + ' ' : ''}${m.material_name}`).join(' / ');
+                    return (
+                      <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <ArchiveCell>{formatDate(s.ship_date)}</ArchiveCell>
+                        <ArchiveCell>{s.delivery_date ? formatDate(s.delivery_date) : <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>TBD</span>}</ArchiveCell>
+                        <ArchiveCell>{s.customer_name}</ArchiveCell>
+                        <ArchiveCell>{s.city}{s.state ? `, ${s.state}` : ''}</ArchiveCell>
+                        <td style={archiveTdStyle}>
+                          <div style={{ maxWidth: '180px' }}>
+                            {matItems.map((m, i) => (
+                              <div key={i} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <ArchiveCell>{s.po_number}</ArchiveCell>
+                        <ArchiveCell>{s.carrier_name}</ArchiveCell>
+                        <td style={{
+                          ...archiveTdStyle,
+                          color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',
+                          fontWeight: s.trailer_type === 'Hotshot' ? 700 : 400,
+                        }}>
+                          {s.trailer_type || ''}
+                        </td>
+                        <ArchiveCell>{s.weight}</ArchiveCell>
+                        <td style={archiveTdStyle}>
+                          <StatusBadge status={s.status} isWarehouse={false} />
+                        </td>
+                        <ArchiveCell>{formatTimestamp(s.archived_at)}</ArchiveCell>
+                        <ArchiveCell>{s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}</ArchiveCell>
+                        <td style={{ ...archiveTdStyle, whiteSpace: 'nowrap' }}>
+                          {!isWarehouse && (
+                            <button
+                              onClick={() => handleUnarchive(s)}
+                              style={{
+                                background: 'none', border: 'none',
+                                color: 'var(--accent-delivered)',
+                                cursor: 'pointer', fontSize: '12px',
+                                fontWeight: 600, padding: '4px 8px',
+                              }}
+                            >
+                              Unarchive
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             <Pagination
               currentPage={archivePage}
               totalItems={archiveShipments.length}
@@ -405,6 +430,31 @@ export default function ShipmentHistory({
     </div>
   );
 }
+
+function ArchiveCell({ children }) {
+  return <td style={archiveTdStyle}>{children ?? ''}</td>;
+}
+
+const archiveTdStyle = {
+  padding: '10px 10px',
+  color: 'var(--text-primary)',
+};
+
+const archiveThStyle = {
+  textAlign: 'left',
+  padding: '10px 10px',
+  fontFamily: 'var(--font-heading), Oswald, sans-serif',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  fontSize: '11px',
+  color: 'var(--text-secondary)',
+  background: 'var(--bg-surface)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+  whiteSpace: 'nowrap',
+};
 
 const dateInputStyle = {
   padding: '8px 12px',
