@@ -347,11 +347,17 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
             return (
               <button
                 key={status}
-                onClick={() => {
+                onClick={async () => {
                   setIsOpen(false);
                   if (status !== localStatus) {
+                    const prev = localStatus;
                     setLocalStatus(status);        // optimistic update
-                    onStatusChange(status);
+                    try {
+                      await onStatusChange(status);
+                    } catch (err) {
+                      console.error('Status update failed:', err);
+                      setLocalStatus(prev);        // revert on error
+                    }
                   }
                 }}
                 style={{

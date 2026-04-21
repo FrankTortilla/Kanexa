@@ -4,7 +4,7 @@ import { STATUS_COLORS, BADGE_COLORS } from '../lib/constants';
 export default function StatusBadge({ status, isWarehouse }) {
   if (isWarehouse) {
     // Warehouse: large dark-bg badge with glow
-    const colors = STATUS_COLORS[status] || STATUS_COLORS['Pending'];
+    const colors = STATUS_COLORS[status] || { bg: '#6b7280', text: '#FFFFFF', glow: 'transparent' };
     return (
       <span style={{
         display: 'inline-block',
@@ -27,7 +27,8 @@ export default function StatusBadge({ status, isWarehouse }) {
   }
 
   // Office: solid-color pill
-  const colors = BADGE_COLORS[status] || BADGE_COLORS['Pending'];
+  const colors = BADGE_COLORS[status] || { bg: '#6b7280', text: '#ffffff' };
+  if (!BADGE_COLORS[status]) console.warn(`StatusBadge: unknown status "${status}"`);
   return (
     <span style={{
       display: 'inline-block',

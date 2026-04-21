@@ -11,6 +11,18 @@ export function useShipments() {
   const [sortConfig, setSortConfig] = useState({ key: 'ship_date', direction: 'desc' });
   const [flashedId, setFlashedId] = useState(null);
 
+  const VALID_STATUSES = ['Pending', 'Booked', 'In Transit', 'Delivered'];
+  function normalizeStatus(status) {
+    if (status === 'Shipped') return 'In Transit';
+    if (!VALID_STATUSES.includes(status)) {
+      console.warn(`Unknown shipment status: "${status}" — keeping raw value`);
+    }
+    return status;
+  }
+  function normalizeShipment(s) {
+    return { ...s, status: normalizeStatus(s.status) };
+  }
+
   // Fetch a single shipment with its materials (used after realtime events)
   const fetchShipmentWithMaterials = async (id) => {
     if (!supabase) return null;
@@ -19,11 +31,11 @@ export function useShipments() {
       .select('*, shipment_materials(*)')
       .eq('id', id)
       .single();
-    if (!error && data) return data;
+    if (!error && data) return normalizeShipment(data);
     // Fallback: shipment_materials table may not exist yet
     const { data: fallback } = await supabase
       .from('shipments').select('*').eq('id', id).single();
-    return fallback ? { ...fallback, shipment_materials: [] } : null;
+    return fallback ? normalizeShipment({ ...fallback, shipment_materials: [] }) : null;
   };
 
   // Fetch all non-deleted, non-archived shipments (active view)
@@ -37,7 +49,7 @@ export function useShipments() {
         .is('archived_at', null)
         .order('ship_date', { ascending: false });
       if (fetchError) throw fetchError;
-      setShipments(data || []);
+      setShipments((data || []).map(normalizeShipment));
     } catch (_joinErr) {
       // Fallback: shipment_materials table may not exist yet — load shipments without it
       try {
@@ -48,7 +60,7 @@ export function useShipments() {
           .is('archived_at', null)
           .order('ship_date', { ascending: false });
         if (fallbackErr) throw fallbackErr;
-        setShipments((data || []).map(s => ({ ...s, shipment_materials: [] })));
+        setShipments((data || []).map(s => normalizeShipment({ ...s, shipment_materials: [] })));
       } catch (err2) {
         setError(err2.message);
       }
@@ -66,7 +78,7 @@ export function useShipments() {
         .select('*, shipment_materials(*)')
         .order('ship_date', { ascending: false });
       if (fetchError) throw fetchError;
-      return data || [];
+      return (data || []).map(normalizeShipment);
     } catch (_joinErr) {
       // Fallback without materials join
       try {
@@ -75,7 +87,7 @@ export function useShipments() {
           .select('*')
           .order('ship_date', { ascending: false });
         if (fallbackErr) throw fallbackErr;
-        return (data || []).map(s => ({ ...s, shipment_materials: [] }));
+        return (data || []).map(s => normalizeShipment({ ...s, shipment_materials: [] }));
       } catch (err2) {
         setError(err2.message);
         return [];
@@ -165,6 +177,8 @@ export function useShipments() {
       .select()
       .single();
     if (updateError) throw updateError;
+    // Immediately reflect the change in local state — don't wait for realtime
+    setShipments(prev => prev.map(s => s.id === id ? { ...s, ...shipmentUpdates } : s));
     // Only touch materials if they were explicitly provided
     if (materials !== undefined) {
       await supabase.from('shipment_materials').delete().eq('shipment_id', id);
