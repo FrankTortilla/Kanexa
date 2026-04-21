@@ -9,6 +9,7 @@ export function useShipments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'ship_date', direction: 'desc' });
   const [flashedId, setFlashedId] = useState(null);
+  const [newShipmentAlert, setNewShipmentAlert] = useState(null); // { id, customer_name }
 
   const VALID_STATUSES = ['Pending', 'Booked', 'In Transit', 'Delivered'];
   function normalizeStatus(status) {
@@ -111,6 +112,9 @@ export function useShipments() {
               return [full || payload.new, ...prev];
             });
             setFlashedId(payload.new.id);
+            const inserted = full || payload.new;
+            setNewShipmentAlert({ id: inserted.id, customer_name: inserted.customer_name || 'New shipment' });
+            setTimeout(() => setNewShipmentAlert(null), 4000);
           } else if (payload.eventType === 'UPDATE') {
             // If the row was just archived, remove it from the active list
             if (payload.new.archived_at && !payload.old.archived_at) {
@@ -267,6 +271,7 @@ export function useShipments() {
     sortConfig,
     handleSort,
     flashedId,
+    newShipmentAlert,
     createShipment,
     updateShipment,
     deleteShipment,

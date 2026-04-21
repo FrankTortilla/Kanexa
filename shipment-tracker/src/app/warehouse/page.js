@@ -9,7 +9,7 @@ const STATUS_ORDER = { 'Pending': 0, 'Booked': 1, 'In Transit': 2, 'Delivered': 
 
 export default function WarehousePage() {
   const {
-    allShipments, loading, flashedId, fetchShipments,
+    allShipments, loading, flashedId, newShipmentAlert, fetchShipments,
   } = useShipments();
 
   const [expandedId, setExpandedId] = useState(null);
@@ -42,6 +42,20 @@ export default function WarehousePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#1a1a1a', color: '#ffffff', padding: '24px 32px' }}>
+      {/* New shipment notification banner */}
+      {newShipmentAlert && (
+        <div style={{
+          position: 'fixed', top: '24px', right: '24px', zIndex: 1000,
+          background: '#4a7c3f', color: '#fff',
+          padding: '14px 22px', borderRadius: '10px',
+          fontFamily: 'Oswald, sans-serif', fontSize: '20px', fontWeight: 700,
+          letterSpacing: '0.5px', textTransform: 'uppercase',
+          boxShadow: '0 4px 24px rgba(74,124,63,0.5)',
+          animation: 'fade-in 0.3s ease-out',
+        }}>
+          ✦ NEW SHIPMENT — {newShipmentAlert.customer_name}
+        </div>
+      )}
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

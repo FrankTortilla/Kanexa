@@ -33,11 +33,13 @@ export default function ShipmentHistory({
   restoreShipment,
   archiveShipment,
   unarchiveShipment,
+  onStatusChange,
   sortConfig,
   onSort,
   searchQuery,
   isWarehouse,
   flashedId,
+  statusChangedId,
   expandedId,
   onToggleExpand,
   renderActivityLog,
@@ -325,9 +327,10 @@ export default function ShipmentHistory({
                     onSort={onSort}
                     onEdit={() => {}}
                     onDelete={!isWarehouse ? handleArchiveClick : () => {}}
-                    onStatusChange={() => {}}
+                    onStatusChange={onStatusChange || (() => {})}
                     isWarehouse={isWarehouse}
                     flashedId={flashedId}
+                    statusChangedId={statusChangedId}
                     expandedId={expandedId}
                     onToggleExpand={onToggleExpand}
                     renderActivityLog={renderActivityLog}

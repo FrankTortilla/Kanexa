@@ -40,6 +40,7 @@ export default function ShipmentTable({
   onStatusChange,
   isWarehouse,
   flashedId,
+  statusChangedId,
   expandedId,
   onToggleExpand,
   renderActivityLog,
@@ -111,6 +112,7 @@ export default function ShipmentTable({
                 onToggleExpand={onToggleExpand}
                 urgencyClass={urgencyClass}
                 isFlashed={isFlashed}
+                statusChanged={statusChangedId === shipment.id}
                 isWarehouse={isWarehouse}
                 effectiveMode={effectiveMode}
                 showPrice={!isWarehouse}
@@ -136,6 +138,7 @@ function TableRow({
   onToggleExpand,
   urgencyClass,
   isFlashed,
+  statusChanged,
   isWarehouse,
   effectiveMode,
   showPrice,
@@ -160,7 +163,7 @@ function TableRow({
   return (
     <>
       <tr
-        className={isFlashed ? 'animate-row-flash' : ''}
+        className={statusChanged ? 'animate-status-flash' : isFlashed ? 'animate-row-flash' : ''}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
@@ -212,9 +215,9 @@ function TableRow({
         <Cell padding={cellPadding}>{s.total_mileage}</Cell>
         <TruncatedCell padding={cellPadding} text={s.special_instructions} />
 
-        {/* Status — interactive dropdown in active mode, static badge otherwise */}
+        {/* Status — interactive dropdown everywhere except warehouse + trash */}
         <td style={{ padding: cellPadding, maxWidth: '140px', width: '140px' }}>
-          {(!isWarehouse && effectiveMode === 'active') ? (
+          {(!isWarehouse && effectiveMode !== 'trash') ? (
             <StatusDropdown
               currentStatus={s.status}
               onStatusChange={(newStatus) => onStatusChange(s.id, newStatus)}
@@ -305,6 +308,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
       {/* Badge button */}
       <button
         onClick={() => setIsOpen(prev => !prev)}
+        className="status-badge-btn"
         style={{
           background: colors.bg,
           color: colors.text,

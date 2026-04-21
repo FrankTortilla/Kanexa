@@ -1,63 +1,63 @@
 'use client';
 
-export default function DashboardSummary({ shipments, isWarehouse }) {
-  const now = new Date();
-
-  // Start of current calendar week (Monday 00:00 local)
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, …
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - daysSinceMonday);
-  weekStart.setHours(0, 0, 0, 0);
-  const weekStartISO = weekStart.toISOString();
-
+export default function DashboardSummary({ shipments, isWarehouse, onCardClick }) {
   const pending   = shipments.filter(s => s.status === 'Pending').length;
   const booked    = shipments.filter(s => s.status === 'Booked').length;
   const inTransit = shipments.filter(s => s.status === 'In Transit').length;
-  const inMotion  = booked + inTransit;   // Booked + In Transit combined
-
-  const deliveredWeek = shipments.filter(s =>
-    s.status === 'Delivered' && s.updated_at && s.updated_at >= weekStartISO
-  ).length;
-
-  const totalActive = shipments.length;
+  const delivered = shipments.filter(s => s.status === 'Delivered').length;
+  const total     = shipments.filter(s => s.status !== 'Delivered').length;
 
   const fontSize  = isWarehouse ? '32px' : '24px';
   const labelSize = isWarehouse ? '14px' : '12px';
 
   const cards = isWarehouse
     ? [
-        { label: 'Pending',             value: pending,      color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
-        { label: 'Booked',              value: booked,       color: 'var(--accent-booked)',     glow: 'var(--accent-booked-glow)'     },
-        { label: 'In Transit',          value: inTransit,    color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
-        { label: 'Delivered This Week', value: deliveredWeek,color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
+        { key: 'pending',    label: 'Pending',    value: pending,   color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
+        { key: 'booked',     label: 'Booked',     value: booked,    color: 'var(--accent-booked)',     glow: 'var(--accent-booked-glow)'     },
+        { key: 'in-transit', label: 'In Transit', value: inTransit, color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
+        { key: 'delivered',  label: 'Delivered',  value: delivered, color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
       ]
     : [
-        { label: 'Pending',             value: pending,      color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
-        { label: 'In Transit',          value: inMotion,     color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
-        { label: 'Delivered This Week', value: deliveredWeek,color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
-        { label: 'Total Active',        value: totalActive,  color: 'var(--text-primary)',      glow: 'transparent'                   },
+        { key: 'pending',    label: 'Pending',      value: pending,   color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
+        { key: 'booked',     label: 'Booked',       value: booked,    color: 'var(--accent-booked)',     glow: 'var(--accent-booked-glow)'     },
+        { key: 'in-transit', label: 'In Transit',   value: inTransit, color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
+        { key: 'delivered',  label: 'Delivered',    value: delivered, color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
+        { key: 'total',      label: 'Total Active', value: total,     color: 'var(--text-primary)',      glow: 'transparent'                   },
       ];
 
   return (
-    <div className="no-print" style={{
+    <div className="no-print summary-cards-scroll" style={{
       display: 'flex',
       gap: '12px',
       padding: '12px 24px',
       background: 'var(--bg-surface)',
       borderBottom: '1px solid var(--border)',
-      flexWrap: 'wrap',
     }}>
       {cards.map(card => (
-        <div key={card.label} style={{
-          flex: '1 1 150px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border)',
-          boxShadow: `0 0 12px ${card.glow}`,
-          minWidth: '120px',
-        }}>
+        <div
+          key={card.key}
+          onClick={() => onCardClick && onCardClick(card.key)}
+          style={{
+            flex: '1 1 120px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border)',
+            boxShadow: `0 0 12px ${card.glow}`,
+            minWidth: '110px',
+            cursor: onCardClick ? 'pointer' : 'default',
+            transition: 'border-color 0.15s, box-shadow 0.15s',
+          }}
+          onMouseEnter={e => {
+            if (!onCardClick) return;
+            e.currentTarget.style.borderColor = card.color;
+            e.currentTarget.style.boxShadow = `0 0 16px ${card.glow}`;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border)';
+            e.currentTarget.style.boxShadow = `0 0 12px ${card.glow}`;
+          }}
+        >
           <div style={{
             fontSize,
             fontWeight: 700,
