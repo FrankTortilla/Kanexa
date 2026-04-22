@@ -242,6 +242,21 @@ export function useShipments() {
     if (error) throw error;
   }, []);
 
+  // Archive all Delivered + unarchived shipments in one batch
+  const archiveAllDelivered = useCallback(async () => {
+    if (!supabase) throw new Error('Supabase not configured');
+    const targets = shipments.filter(s => s.status === 'Delivered' && !s.archived_at);
+    if (targets.length === 0) return 0;
+    const { error } = await supabase
+      .from('shipments')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('status', 'Delivered')
+      .is('archived_at', null);
+    if (error) throw error;
+    setShipments(prev => prev.filter(s => !(s.status === 'Delivered' && !s.archived_at)));
+    return targets.length;
+  }, [shipments]);
+
   // Check duplicate PO#
   const checkDuplicatePO = useCallback(async (poNumber, excludeId = null) => {
     if (!supabase) return false;
@@ -278,6 +293,7 @@ export function useShipments() {
     restoreShipment,
     archiveShipment,
     unarchiveShipment,
+    archiveAllDelivered,
     checkDuplicatePO,
     fetchShipments,
     fetchAllShipments,

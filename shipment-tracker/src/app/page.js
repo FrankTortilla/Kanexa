@@ -49,7 +49,7 @@ export default function Home() {
     allShipments, loading, searchQuery, setSearchQuery,
     sortConfig, handleSort, flashedId,
     createShipment, updateShipment, deleteShipment, restoreShipment,
-    archiveShipment, unarchiveShipment,
+    archiveShipment, unarchiveShipment, archiveAllDelivered,
     checkDuplicatePO, fetchAllShipments,
   } = useShipments();
 
@@ -65,6 +65,8 @@ export default function Home() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [recentlyChangedId, setRecentlyChangedId] = useState(null);
+  const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Active: non-Delivered, optionally filtered by status, search-filtered, sorted
   const sortedActive = useMemo(() => {
@@ -74,9 +76,9 @@ export default function Home() {
     return applySort(result, sortConfig);
   }, [allShipments, activeStatusFilter, searchQuery, sortConfig]);
 
-  // Delivered: status === 'Delivered', search-filtered, sorted
+  // Delivered: status === 'Delivered' AND not archived, search-filtered, sorted
   const sortedDelivered = useMemo(() => {
-    let result = allShipments.filter(s => s.status === 'Delivered');
+    let result = allShipments.filter(s => s.status === 'Delivered' && !s.archived_at);
     result = applySearch(result, searchQuery);
     return applySort(result, sortConfig);
   }, [allShipments, searchQuery, sortConfig]);
@@ -133,6 +135,22 @@ export default function Home() {
   const handleSearchChange = (q) => { setSearchQuery(q); setActivePage(1); setDeliveredPage(1); };
   const handleTabChange = (tab) => { setActiveTab(tab); if (tab !== 'active') setActiveStatusFilter(null); };
 
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleArchiveAllDelivered = async () => {
+    try {
+      const count = await archiveAllDelivered();
+      setArchiveConfirm(false);
+      showToast(`${count} shipment${count !== 1 ? 's' : ''} archived to History`);
+    } catch (err) {
+      setArchiveConfirm(false);
+      showToast(`Archive failed: ${err.message}`);
+    }
+  };
+
   const combinedFlashId = recentlyChangedId || flashedId;
 
   if (loading) {
@@ -148,6 +166,55 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', right: '24px', zIndex: 1100,
+          background: 'var(--accent-green)', color: '#fff',
+          padding: '14px 22px', borderRadius: '10px',
+          fontSize: '15px', fontWeight: 600,
+          boxShadow: '0 4px 24px rgba(74,124,63,0.4)',
+          animation: 'fade-in 0.3s ease-out',
+        }}>
+          {toast}
+        </div>
+      )}
+
+      {/* Archive All Delivered confirmation modal */}
+      {archiveConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--bg-surface)', border: '1px solid var(--border)',
+            borderRadius: '12px', padding: '28px 32px', maxWidth: '420px', width: '90%',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: '18px', fontWeight: 700 }}>
+              Archive All Delivered?
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 24px', lineHeight: 1.6 }}>
+              This will move <strong style={{ color: 'var(--text-primary)' }}>{sortedDelivered.length} shipment{sortedDelivered.length !== 1 ? 's' : ''}</strong> to History. They can be recovered from the History tab.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setArchiveConfirm(false)}
+                style={{ padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchiveAllDelivered}
+                style={{ padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: 'var(--accent-green)', color: '#fff', border: 'none' }}
+              >
+                Archive All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Header
         onAddShipment={handleAddShipment}
         onPrint={handlePrint}
@@ -234,6 +301,19 @@ export default function Home() {
           <EmptyState isWarehouse={false} />
         ) : (
           <>
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 24px' }}>
+              <button
+                onClick={() => setArchiveConfirm(true)}
+                style={{
+                  padding: '8px 18px', borderRadius: '6px', border: '1px solid var(--border)',
+                  background: 'transparent', color: 'var(--text-secondary)',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Archive All Delivered
+              </button>
+            </div>
             <ShipmentTable
               shipments={paginatedDelivered}
               sortConfig={sortConfig}
@@ -264,19 +344,9 @@ export default function Home() {
       {activeTab === 'history' && (
         <ShipmentHistory
           fetchAllShipments={fetchAllShipments}
-          restoreShipment={restoreShipment}
-          archiveShipment={archiveShipment}
           unarchiveShipment={unarchiveShipment}
-          onStatusChange={handleStatusChange}
-          sortConfig={sortConfig}
-          onSort={handleSort}
           searchQuery={searchQuery}
           isWarehouse={false}
-          flashedId={flashedId}
-          statusChangedId={recentlyChangedId}
-          expandedId={expandedId}
-          onToggleExpand={handleToggleExpand}
-          renderActivityLog={renderActivityLog}
           dateFrom={dateFrom}
           dateTo={dateTo}
           onDateFromChange={setDateFrom}
