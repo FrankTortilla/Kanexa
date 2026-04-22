@@ -31,7 +31,8 @@ export default function ShipmentHistory({
     setLoading(true);
     fetchAllShipments().then(data => {
       if (mounted) {
-        setAllShipments(data.filter(s => !!s.archived_at));
+        // Show archived records AND soft-deleted records
+        setAllShipments(data.filter(s => !!s.archived_at || !!s.deleted_at));
         setLoading(false);
       }
     });
