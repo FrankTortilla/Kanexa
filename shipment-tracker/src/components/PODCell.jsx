@@ -8,6 +8,7 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export default function PODCell({ shipment, isWarehouse, onPodUpdate }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [pillHovered, setPillHovered] = useState(false);
   const [error, setError] = useState(null);
 
   const hasPod = !!shipment.pod_file_path;
@@ -67,39 +68,59 @@ export default function PODCell({ shipment, isWarehouse, onPodUpdate }) {
   };
 
   return (
-    <td style={{ padding: '9px 10px', whiteSpace: 'nowrap', fontSize: '12px' }}>
+    <td style={{ padding: '9px 10px', whiteSpace: 'nowrap', fontSize: '12px', minWidth: '80px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {hasPod ? (
+          /* POD exists — paperclip + "View" in blue */
           <button
             onClick={handleOpen}
             title="View POD"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '16px', lineHeight: 1, padding: '2px',
-              color: 'var(--accent-booked)',
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              padding: '2px 0', color: '#38BDF8', fontSize: '12px', fontWeight: 600,
             }}
           >
-            📎
+            <span style={{ fontSize: '13px', lineHeight: 1 }}>📎</span>
+            <span>View</span>
           </button>
         ) : (
-          <span style={{ color: 'var(--text-secondary)' }}>—</span>
+          /* No POD — faint upload icon + "Upload" label */
+          !isWarehouse && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              color: '#64748B', fontSize: '11px',
+            }}>
+              <span style={{ fontSize: '11px', opacity: 0.7 }}>↑</span>
+              <span>Upload</span>
+            </span>
+          )
         )}
 
+        {/* Upload pill — office staff only, always visible as replace or initial upload */}
         {!isWarehouse && (
           <>
             <button
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
               title={hasPod ? 'Replace POD' : 'Upload POD'}
+              onMouseEnter={() => setPillHovered(true)}
+              onMouseLeave={() => setPillHovered(false)}
               style={{
-                background: 'none', border: '1px solid var(--border)',
-                borderRadius: '4px', cursor: uploading ? 'wait' : 'pointer',
-                fontSize: '10px', fontWeight: 600, padding: '2px 6px',
-                color: 'var(--text-secondary)',
+                background: '#1E293B',
+                border: `1px solid ${pillHovered ? '#949494' : '#334155'}`,
+                borderRadius: '6px',
+                cursor: uploading ? 'wait' : 'pointer',
+                fontSize: '12px',
+                fontWeight: 500,
+                padding: '4px 10px',
+                color: '#94A3B8',
                 opacity: uploading ? 0.5 : 1,
+                transition: 'border-color 0.15s',
+                lineHeight: 1,
               }}
             >
-              {uploading ? '…' : hasPod ? '↑' : '↑'}
+              {uploading ? '…' : hasPod ? 'Replace' : ''}
             </button>
             <input
               ref={inputRef}
