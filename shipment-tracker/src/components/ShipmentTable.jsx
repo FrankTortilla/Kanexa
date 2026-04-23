@@ -29,7 +29,7 @@ const BASE_COLUMNS = [
   { key: 'special_instructions', label: 'Special Instructions', truncate: true },
   { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price' }, // hidden in warehouse view
-  { key: 'pod', label: 'POD' },
+  { key: 'pod', label: 'POD', minWidth: '80px' },
 ];
 
 export default function ShipmentTable({
@@ -82,6 +82,7 @@ export default function ShipmentTable({
                     whiteSpace: 'nowrap',
                     maxWidth: col.key === 'status' ? '140px' : undefined,
                     width: col.key === 'status' ? '140px' : undefined,
+                    minWidth: col.minWidth || undefined,
                   }}
                 >
                   {col.label}
@@ -173,7 +174,7 @@ function TableRow({
         onMouseLeave={() => setHovered(false)}
         style={{
           borderBottom: '1px solid var(--border)',
-          background: hovered ? 'var(--bg-hover)' : 'transparent',
+          background: hovered ? '#1E2A38' : 'transparent',
           transition: 'background 0.15s',
           ...urgencyBorderStyle,
         }}
@@ -454,7 +455,7 @@ const thStyle = {
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
   color: '#111827',
-  background: '#E8E8E8',
+  background: '#949494',
   position: 'sticky',
   top: 0,
   zIndex: 1,

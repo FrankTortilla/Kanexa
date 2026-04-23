@@ -30,8 +30,8 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick }
       display: 'flex',
       gap: '12px',
       padding: '12px 24px',
-      background: '#E8E8E8',
-      borderBottom: '1px solid #c8c8c8',
+      background: '#949494',
+      borderBottom: '1px solid #7a7a7a',
     }}>
       {cards.map(card => (
         <div
@@ -41,7 +41,7 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick }
             flex: '1 1 120px',
             padding: '12px 16px',
             borderRadius: '8px',
-            background: 'var(--bg-primary)',
+            background: '#1E293B',
             border: '1px solid var(--border)',
             boxShadow: `0 0 12px ${card.glow}`,
             minWidth: '110px',

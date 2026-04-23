@@ -205,7 +205,7 @@ const archiveThStyle = {
   letterSpacing: '0.5px',
   fontSize: '11px',
   color: '#111827',
-  background: '#E8E8E8',
+  background: '#949494',
   position: 'sticky',
   top: 0,
   zIndex: 1,
