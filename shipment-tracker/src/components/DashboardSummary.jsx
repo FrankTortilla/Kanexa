@@ -30,8 +30,8 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick }
       display: 'flex',
       gap: '12px',
       padding: '12px 24px',
-      background: '#949494',
-      borderBottom: '1px solid #7a7a7a',
+      background: '#363636',
+      borderBottom: '1px solid #2a2a2a',
     }}>
       {cards.map(card => (
         <div

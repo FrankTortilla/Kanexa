@@ -8,7 +8,7 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export default function PODCell({ shipment, isWarehouse, onPodUpdate }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const [pillHovered, setPillHovered] = useState(false);
+  const [iconHovered, setIconHovered] = useState(false);
   const [error, setError] = useState(null);
 
   const hasPod = !!shipment.pod_file_path;
@@ -85,51 +85,57 @@ export default function PODCell({ shipment, isWarehouse, onPodUpdate }) {
             <span>View</span>
           </button>
         ) : (
-          /* No POD — faint upload icon + "Upload" label */
+          /* No POD — icon-only upload trigger for office, nothing for warehouse */
           !isWarehouse && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-              color: '#64748B', fontSize: '11px',
-            }}>
-              <span style={{ fontSize: '11px', opacity: 0.7 }}>↑</span>
-              <span>Upload</span>
-            </span>
-          )
-        )}
-
-        {/* Upload pill — office staff only, always visible as replace or initial upload */}
-        {!isWarehouse && (
-          <>
             <button
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              title={hasPod ? 'Replace POD' : 'Upload POD'}
-              onMouseEnter={() => setPillHovered(true)}
-              onMouseLeave={() => setPillHovered(false)}
+              title="Upload POD"
+              onMouseEnter={() => setIconHovered(true)}
+              onMouseLeave={() => setIconHovered(false)}
               style={{
-                background: '#1E293B',
-                border: `1px solid ${pillHovered ? '#949494' : '#334155'}`,
-                borderRadius: '6px',
-                cursor: uploading ? 'wait' : 'pointer',
-                fontSize: '12px',
-                fontWeight: 500,
-                padding: '4px 10px',
-                color: '#94A3B8',
-                opacity: uploading ? 0.5 : 1,
-                transition: 'border-color 0.15s',
-                lineHeight: 1,
+                background: 'none', border: 'none', cursor: uploading ? 'wait' : 'pointer',
+                padding: '2px 4px', lineHeight: 1,
+                color: iconHovered ? '#94A3B8' : '#64748B',
+                fontSize: '14px',
+                transition: 'color 0.15s',
+                opacity: uploading ? 0.4 : 1,
               }}
             >
-              {uploading ? '…' : hasPod ? 'Replace' : ''}
+              ↑
             </button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-          </>
+          )
+        )}
+
+        {/* Replace button — only shown when POD exists, office only */}
+        {hasPod && !isWarehouse && (
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            title="Replace POD"
+            onMouseEnter={() => setIconHovered(true)}
+            onMouseLeave={() => setIconHovered(false)}
+            style={{
+              background: 'none', border: 'none', cursor: uploading ? 'wait' : 'pointer',
+              padding: '2px 4px', lineHeight: 1,
+              color: iconHovered ? '#94A3B8' : '#64748B',
+              fontSize: '14px',
+              transition: 'color 0.15s',
+              opacity: uploading ? 0.4 : 1,
+            }}
+          >
+            ↑
+          </button>
+        )}
+
+        {!isWarehouse && (
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
         )}
       </div>
       {error && (
