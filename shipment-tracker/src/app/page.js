@@ -305,8 +305,8 @@ export default function Home() {
               <button
                 onClick={() => setArchiveConfirm(true)}
                 style={{
-                  padding: '8px 18px', borderRadius: '6px', border: '1px solid var(--border)',
-                  background: 'transparent', color: 'var(--text-secondary)',
+                  padding: '8px 18px', borderRadius: '6px', border: '1px solid var(--accent-danger)',
+                  background: 'transparent', color: 'var(--accent-danger)',
                   fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
