@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-surface: #1a1a1a;
+  --bg-hover: #2e2e2e;
+  --text-primary: #CBD5E1;
+  --text-secondary: #a0a0a0;
+  --border: #333333;
+  --accent-green: #4a7c3f;
+  --accent-green-hover: #5a9a4a;
+  --accent-pending: #FF8C00;
+  --accent-booked: #3b82f6;
+  --accent-in-transit: #38BDF8;
+  --accent-shipped: #3b82f6;
+  --accent-delivered: #4a7c3f;
+  --accent-danger: #FF1744;
+  --accent-warning: #e6b800;
+  --accent-live: #4a7c3f;
+  --accent-pending-glow: rgba(255, 140, 0, 0.25);
+  --accent-booked-glow: rgba(59, 130, 246, 0.25);
+  --accent-in-transit-glow: rgba(56, 189, 248, 0.25);
+  --accent-shipped-glow: rgba(59, 130, 246, 0.25);
+  --accent-delivered-glow: rgba(74, 124, 63, 0.25);
+  --accent-warning-glow: rgba(230, 184, 0, 0.15);
+  --accent-danger-glow: rgba(255, 23, 68, 0.15);
+}
+
+@theme inline {
+  --font-heading: var(--font-oswald);
+  --font-body: var(--font-ibm-plex-sans);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body), "IBM Plex Sans", sans-serif;
+}
+
+@keyframes pending-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-pending-pulse {
+  animation: pending-pulse 2s ease-in-out infinite;
+}
+
+@keyframes row-flash {
+  0% { background-color: rgba(255, 255, 255, 0.15); }
+  100% { background-color: transparent; }
+}
+.animate-row-flash {
+  animation: row-flash 1s ease-out;
+}
+
+@keyframes status-flash {
+  0%   { background-color: rgba(74, 124, 63, 0.35); }
+  60%  { background-color: rgba(74, 124, 63, 0.20); }
+  100% { background-color: transparent; }
+}
+.animate-status-flash {
+  animation: status-flash 1.5s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+.animate-live-pulse {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes urgency-glow {
+  0%, 100% { box-shadow: inset 4px 0 0 var(--accent-danger); }
+  50% { box-shadow: inset 4px 0 0 var(--accent-danger), 0 0 8px var(--accent-danger-glow); }
+}
+.animate-urgency-glow {
+  animation: urgency-glow 2s ease-in-out infinite;
+}
+
+/* Make date picker calendar icons visible on dark backgrounds */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* ── Mobile responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Summary cards: horizontal scroll so they never wrap to tiny sizes */
+  .summary-cards-scroll {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .summary-cards-scroll::-webkit-scrollbar { display: none; }
+  .summary-cards-scroll > div {
+    flex-shrink: 0;
+    min-width: 110px;
+  }
+
+  /* Header: stack logo + tabs/actions vertically */
+  header { padding: 10px 14px !important; }
+
+  /* Tabs: larger touch targets */
+  .tab-btn { padding: 10px 14px !important; font-size: 12px !important; min-height: 44px; }
+
+  /* Status badge button: comfortable tap target */
+  .status-badge-btn { min-height: 36px !important; padding: 6px 12px !important; }
+
+  /* Search bar: full width */
+  .search-filter-bar input { width: 100% !important; }
+
+  /* Table: horizontal scroll (already set inline, reinforce) */
+  .table-scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Action buttons: more padding for touch */
+  .action-btn { padding: 6px 10px !important; font-size: 12px !important; min-height: 36px; }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: black;
+  }
+  th {
+    background: #eee !important;
+    font-weight: bold;
+  }
+}

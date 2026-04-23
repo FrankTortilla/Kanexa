@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <!-- I-beam left bracket -->
+  <path d="M8 8h16v6H18v52h6v6H8v-6h6V14H8V8z" fill="#a0a0a0"/>
+  <!-- I-beam right bracket -->
+  <path d="M56 8h16v6h-6v52h6v6H56v-6h6V14h-6V8z" fill="#a0a0a0"/>
+  <!-- GS text -->
+  <text x="40" y="50" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="28" fill="#4a7c3f">GS</text>
+</svg>
