@@ -41,7 +41,7 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick }
             flex: '1 1 120px',
             padding: '12px 16px',
             borderRadius: '8px',
-            background: '#1E293B',
+            background: '#0F172A',
             border: '1px solid var(--border)',
             boxShadow: `0 0 12px ${card.glow}`,
             minWidth: '110px',
