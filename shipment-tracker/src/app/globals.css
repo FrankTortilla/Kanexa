@@ -4,26 +4,26 @@
   --bg-primary: #1a1a1a;
   --bg-surface: #1a1a1a;
   --bg-hover: #2e2e2e;
-  --text-primary: #ffffff;
+  --text-primary: #CBD5E1;
   --text-secondary: #a0a0a0;
   --border: #333333;
   --accent-green: #4a7c3f;
   --accent-green-hover: #5a9a4a;
-  --accent-pending: #e6b800;
+  --accent-pending: #FF8C00;
   --accent-booked: #3b82f6;
-  --accent-in-transit: #f97316;
+  --accent-in-transit: #38BDF8;
   --accent-shipped: #3b82f6;
   --accent-delivered: #4a7c3f;
-  --accent-danger: #dc3545;
+  --accent-danger: #FF1744;
   --accent-warning: #e6b800;
   --accent-live: #4a7c3f;
-  --accent-pending-glow: rgba(230, 184, 0, 0.25);
+  --accent-pending-glow: rgba(255, 140, 0, 0.25);
   --accent-booked-glow: rgba(59, 130, 246, 0.25);
-  --accent-in-transit-glow: rgba(249, 115, 22, 0.25);
+  --accent-in-transit-glow: rgba(56, 189, 248, 0.25);
   --accent-shipped-glow: rgba(59, 130, 246, 0.25);
   --accent-delivered-glow: rgba(74, 124, 63, 0.25);
   --accent-warning-glow: rgba(230, 184, 0, 0.15);
-  --accent-danger-glow: rgba(220, 53, 69, 0.15);
+  --accent-danger-glow: rgba(255, 23, 68, 0.15);
 }
 
 @theme inline {

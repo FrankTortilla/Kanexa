@@ -50,7 +50,7 @@ export default function Home() {
     sortConfig, handleSort, flashedId,
     createShipment, updateShipment, deleteShipment, restoreShipment,
     archiveShipment, unarchiveShipment, archiveAllDelivered,
-    checkDuplicatePO, fetchAllShipments,
+    checkDuplicatePO, fetchAllShipments, updatePodPath,
   } = useShipments();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -277,6 +277,7 @@ export default function Home() {
               onDelete={handleDelete}
               onArchive={handleArchive}
               onStatusChange={handleStatusChange}
+              onPodUpdate={updatePodPath}
               isWarehouse={false}
               flashedId={flashedId}
               statusChangedId={recentlyChangedId}
@@ -322,6 +323,7 @@ export default function Home() {
               onDelete={handleDelete}
               onArchive={handleArchive}
               onStatusChange={handleStatusChange}
+              onPodUpdate={updatePodPath}
               isWarehouse={false}
               flashedId={flashedId}
               statusChangedId={recentlyChangedId}

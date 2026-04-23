@@ -27,9 +27,9 @@ export const STATUS_COLORS = {
 
 // Office badge colors — solid bg, white text (pill style)
 export const BADGE_COLORS = {
-  Pending:      { bg: '#f59e0b', text: '#ffffff' },
+  Pending:      { bg: '#FF8C00', text: '#ffffff' },
   Booked:       { bg: '#3b82f6', text: '#ffffff' },
-  'In Transit': { bg: '#f97316', text: '#ffffff' },
+  'In Transit': { bg: '#38BDF8', text: '#ffffff' },
   Delivered:    { bg: '#22c55e', text: '#ffffff' },
 };
 

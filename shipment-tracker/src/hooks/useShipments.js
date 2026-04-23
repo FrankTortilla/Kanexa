@@ -198,15 +198,23 @@ export function useShipments() {
     return data;
   }, []);
 
-  // Soft-delete
+  // Soft-delete (also removes POD file from storage if one exists)
   const deleteShipment = useCallback(async (id) => {
     if (!supabase) throw new Error('Supabase not configured');
+    // Fetch pod_file_path before deleting so we can clean up storage
+    const { data: existing } = await supabase
+      .from('shipments')
+      .select('pod_file_path')
+      .eq('id', id)
+      .single();
     const { error: deleteError } = await supabase
       .from('shipments')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
     if (deleteError) throw deleteError;
-    // Remove from local state immediately
+    if (existing?.pod_file_path) {
+      await supabase.storage.from('pod-documents').remove([existing.pod_file_path]);
+    }
     setShipments(prev => prev.filter(s => s.id !== id));
   }, []);
 
@@ -277,6 +285,11 @@ export function useShipments() {
     }));
   }, []);
 
+  // Optimistically update pod_file_path in local state after a successful upload
+  const updatePodPath = useCallback((id, filePath) => {
+    setShipments(prev => prev.map(s => s.id === id ? { ...s, pod_file_path: filePath } : s));
+  }, []);
+
   return {
     allShipments: shipments,
     loading,
@@ -297,5 +310,6 @@ export function useShipments() {
     checkDuplicatePO,
     fetchShipments,
     fetchAllShipments,
+    updatePodPath,
   };
 }

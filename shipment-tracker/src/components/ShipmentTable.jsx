@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import StatusBadge from './StatusBadge';
+import PODCell from './PODCell';
 import { formatDate, truncateText } from '../utils/formatters';
 
 // Inline dropdown color palette (solid, white text)
 const STATUS_COLORS_DROPDOWN = {
-  'Pending':    { bg: '#f59e0b', text: '#ffffff' },
+  'Pending':    { bg: '#FF8C00', text: '#ffffff' },
   'Booked':     { bg: '#3b82f6', text: '#ffffff' },
-  'In Transit': { bg: '#f97316', text: '#ffffff' },
+  'In Transit': { bg: '#38BDF8', text: '#ffffff' },
   'Delivered':  { bg: '#22c55e', text: '#ffffff' },
 };
 const STATUS_OPTIONS = ['Pending', 'Booked', 'In Transit', 'Delivered'];
@@ -28,6 +29,7 @@ const BASE_COLUMNS = [
   { key: 'special_instructions', label: 'Special Instructions', truncate: true },
   { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price' }, // hidden in warehouse view
+  { key: 'pod', label: 'POD' },
 ];
 
 export default function ShipmentTable({
@@ -38,6 +40,7 @@ export default function ShipmentTable({
   onDelete,
   onArchive,
   onStatusChange,
+  onPodUpdate,
   isWarehouse,
   flashedId,
   statusChangedId,
@@ -65,7 +68,7 @@ export default function ShipmentTable({
             {COLUMNS.map(col => {
               const sortKey = col.sortKey || col.key;
               const isSorted = sortConfig.key === sortKey;
-              const canSort = col.key !== 'city_state' && col.key !== 'materials' && col.key !== 'price' && col.key !== 'status';
+              const canSort = col.key !== 'city_state' && col.key !== 'materials' && col.key !== 'price' && col.key !== 'status' && col.key !== 'pod';
               return (
                 <th
                   key={col.key}
@@ -122,6 +125,7 @@ export default function ShipmentTable({
                 onDelete={onDelete}
                 onArchive={onArchive}
                 onStatusChange={onStatusChange}
+                onPodUpdate={onPodUpdate}
                 renderActivityLog={renderActivityLog}
               />
             );
@@ -148,6 +152,7 @@ function TableRow({
   onDelete,
   onArchive,
   onStatusChange,
+  onPodUpdate,
   renderActivityLog,
 }) {
   const [hovered, setHovered] = useState(false);
@@ -233,6 +238,9 @@ function TableRow({
             {s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}
           </td>
         )}
+
+        {/* POD */}
+        <PODCell shipment={s} isWarehouse={isWarehouse} onPodUpdate={onPodUpdate || (() => {})} />
 
         {/* Actions */}
         {!isWarehouse && (
@@ -445,8 +453,8 @@ const thStyle = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
-  color: 'var(--text-secondary)',
-  background: 'var(--bg-surface)',
+  color: '#111827',
+  background: '#E8E8E8',
   position: 'sticky',
   top: 0,
   zIndex: 1,
