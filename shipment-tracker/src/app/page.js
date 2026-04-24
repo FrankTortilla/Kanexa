@@ -50,7 +50,7 @@ export default function Home() {
     sortConfig, handleSort, flashedId,
     createShipment, updateShipment, deleteShipment, restoreShipment,
     archiveShipment, unarchiveShipment, archiveAllDelivered,
-    checkDuplicatePO, fetchAllShipments, updatePodPath,
+    checkDuplicatePO, fetchAllShipments, updatePodPath, permanentDeleteShipment,
   } = useShipments();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -347,6 +347,7 @@ export default function Home() {
         <ShipmentHistory
           fetchAllShipments={fetchAllShipments}
           unarchiveShipment={unarchiveShipment}
+          permanentDeleteShipment={permanentDeleteShipment}
           searchQuery={searchQuery}
           isWarehouse={false}
           dateFrom={dateFrom}

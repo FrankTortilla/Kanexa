@@ -23,6 +23,7 @@ const CSV_COLUMNS = [
   { key: 'special_instructions', label: 'Special Instructions' },
   { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price', format: (v) => v != null ? `$${Number(v).toFixed(2)}` : '' },
+  { key: 'pod_attached', label: 'POD Attached', format: (_, s) => s.pod_file_path ? 'Yes' : 'No' },
 ];
 
 function escapeCSV(val) {
@@ -34,7 +35,7 @@ function escapeCSV(val) {
   return str;
 }
 
-export function exportToCSV(shipments) {
+export function exportToCSV(shipments, tag = 'shipments') {
   const header = CSV_COLUMNS.map(c => c.label).join(',');
   const rows = shipments.map(s =>
     CSV_COLUMNS.map(c => {
@@ -49,7 +50,7 @@ export function exportToCSV(shipments) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `shipments-export-${today}.csv`;
+  link.download = `${tag}-export-${today}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }

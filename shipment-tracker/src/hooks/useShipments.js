@@ -250,6 +250,45 @@ export function useShipments() {
     if (error) throw error;
   }, []);
 
+  // Hard-delete a shipment record permanently (History tab only)
+  // Order: Storage → notes → materials → shipment row. Aborts if Storage delete fails.
+  const permanentDeleteShipment = useCallback(async (id) => {
+    if (!supabase) throw new Error('Supabase not configured');
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from('shipments')
+      .select('pod_file_path')
+      .eq('id', id)
+      .single();
+    if (fetchErr) throw fetchErr;
+
+    if (existing?.pod_file_path) {
+      const { error: storageErr } = await supabase.storage
+        .from('pod-documents')
+        .remove([existing.pod_file_path]);
+      if (storageErr) throw storageErr;
+    }
+
+    // Explicitly delete child rows in case FK lacks ON DELETE CASCADE
+    const { error: notesErr } = await supabase
+      .from('shipment_notes')
+      .delete()
+      .eq('shipment_id', id);
+    if (notesErr) throw notesErr;
+
+    const { error: matsErr } = await supabase
+      .from('shipment_materials')
+      .delete()
+      .eq('shipment_id', id);
+    if (matsErr) throw matsErr;
+
+    const { error: deleteErr } = await supabase
+      .from('shipments')
+      .delete()
+      .eq('id', id);
+    if (deleteErr) throw deleteErr;
+  }, []);
+
   // Archive all Delivered + unarchived shipments in one batch
   const archiveAllDelivered = useCallback(async () => {
     if (!supabase) throw new Error('Supabase not configured');
@@ -311,5 +350,6 @@ export function useShipments() {
     fetchShipments,
     fetchAllShipments,
     updatePodPath,
+    permanentDeleteShipment,
   };
 }
