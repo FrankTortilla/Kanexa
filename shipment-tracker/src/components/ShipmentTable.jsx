@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import StatusBadge from './StatusBadge';
 import PODCell from './PODCell';
 import { formatDate, truncateText } from '../utils/formatters';
@@ -287,22 +288,29 @@ function TableRow({
   );
 }
 
-// ── Inline Status Dropdown ─────────────────────────────────────────
+// ── Inline Status Dropdown (portal-based to escape overflow clipping) ──
 function StatusDropdown({ currentStatus, onStatusChange }) {
   const [localStatus, setLocalStatus] = useState(currentStatus);
   const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
+  const [portalStyle, setPortalStyle] = useState({});
+  const btnRef = useRef(null);
+  const dropdownRef = useRef(null);
 
-  // Sync if external status changes (e.g. realtime update)
-  useEffect(() => {
-    setLocalStatus(currentStatus);
-  }, [currentStatus]);
+  useEffect(() => { setLocalStatus(currentStatus); }, [currentStatus]);
+
+  const handleToggle = () => {
+    if (!isOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPortalStyle({ top: rect.bottom + 4, left: rect.left });
+    }
+    setIsOpen(prev => !prev);
+  };
 
   // Click outside → close
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (!btnRef.current?.contains(e.target) && !dropdownRef.current?.contains(e.target)) {
         setIsOpen(false);
       }
     };
@@ -310,13 +318,85 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [isOpen]);
 
+  // Scroll → close so fixed position doesn't go stale
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = () => setIsOpen(false);
+    window.addEventListener('scroll', handler, true);
+    return () => window.removeEventListener('scroll', handler, true);
+  }, [isOpen]);
+
   const colors = STATUS_COLORS_DROPDOWN[localStatus] || STATUS_COLORS_DROPDOWN['Pending'];
 
+  const dropdownContent = (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: 'fixed',
+        top: portalStyle.top,
+        left: portalStyle.left,
+        zIndex: 9999,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '10px',
+        padding: '6px',
+        boxShadow: '0 6px 24px rgba(0,0,0,0.45)',
+        minWidth: '140px',
+      }}
+    >
+      {STATUS_OPTIONS.map(status => {
+        const sc = STATUS_COLORS_DROPDOWN[status];
+        const isCurrent = status === localStatus;
+        return (
+          <button
+            key={status}
+            onClick={async () => {
+              setIsOpen(false);
+              if (status !== localStatus) {
+                const prev = localStatus;
+                setLocalStatus(status);
+                try {
+                  await onStatusChange(status);
+                } catch (err) {
+                  console.error('Status update failed:', err?.message);
+                  setLocalStatus(prev);
+                }
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              width: '100%',
+              padding: '6px 10px',
+              marginBottom: '2px',
+              background: isCurrent ? sc.bg : 'transparent',
+              border: isCurrent ? 'none' : '1px solid transparent',
+              borderRadius: '7px',
+              color: isCurrent ? sc.text : 'var(--text-primary)',
+              fontSize: '12px',
+              fontWeight: isCurrent ? 700 : 500,
+              cursor: 'pointer',
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: sc.bg, flexShrink: 0 }} />
+            {status}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      {/* Badge button */}
+    <div style={{ display: 'inline-block' }}>
       <button
-        onClick={() => setIsOpen(prev => !prev)}
+        ref={btnRef}
+        onClick={handleToggle}
         className="status-badge-btn"
         style={{
           background: colors.bg,
@@ -339,74 +419,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
         {localStatus}
         <span style={{ fontSize: '9px', opacity: 0.8 }}>▾</span>
       </button>
-
-      {/* Dropdown popover */}
-      {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          zIndex: 200,
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '10px',
-          padding: '6px',
-          boxShadow: '0 6px 24px rgba(0,0,0,0.45)',
-          minWidth: '140px',
-        }}>
-          {STATUS_OPTIONS.map(status => {
-            const sc = STATUS_COLORS_DROPDOWN[status];
-            const isCurrent = status === localStatus;
-            return (
-              <button
-                key={status}
-                onClick={async () => {
-                  setIsOpen(false);
-                  if (status !== localStatus) {
-                    const prev = localStatus;
-                    setLocalStatus(status);        // optimistic update
-                    try {
-                      await onStatusChange(status);
-                    } catch (err) {
-                      console.error('Status update failed:', err?.message);
-                      setLocalStatus(prev);        // revert on error
-                    }
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '6px 10px',
-                  marginBottom: '2px',
-                  background: isCurrent ? sc.bg : 'transparent',
-                  border: isCurrent ? 'none' : `1px solid transparent`,
-                  borderRadius: '7px',
-                  color: isCurrent ? sc.text : 'var(--text-primary)',
-                  fontSize: '12px',
-                  fontWeight: isCurrent ? 700 : 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  whiteSpace: 'nowrap',
-                  transition: 'background 0.1s',
-                }}
-                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: sc.bg,
-                  flexShrink: 0,
-                }} />
-                {status}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {isOpen && createPortal(dropdownContent, document.body)}
     </div>
   );
 }

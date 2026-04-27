@@ -1,12 +1,35 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import StatusBadge from './StatusBadge';
 import PODCell from './PODCell';
-import Pagination from './Pagination';
-import { DEFAULT_ROWS_PER_PAGE } from '../lib/constants';
 import { formatDate } from '../utils/formatters';
 import { supabase } from '../lib/supabase';
 import { exportToCSV } from './ExportCSV';
+
+// ── Week helpers ──────────────────────────────────────────────────────────────
+
+function getWeekKey(dateStr) {
+  if (!dateStr || dateStr === 'TBD') return null;
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  const day = d.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day; // shift back to Monday
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10); // "YYYY-MM-DD" of that Monday
+}
+
+function formatWeekLabel(mondayStr) {
+  const monday = new Date(mondayStr + 'T12:00:00');
+  const friday = new Date(mondayStr + 'T12:00:00');
+  friday.setDate(friday.getDate() + 4);
+
+  if (monday.getFullYear() !== friday.getFullYear()) {
+    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+    return `${monday.toLocaleDateString('en-US', opts)} – ${friday.toLocaleDateString('en-US', opts)}`;
+  }
+  const opts = { month: 'short', day: 'numeric' };
+  return `${monday.toLocaleDateString('en-US', opts)} – ${friday.toLocaleDateString('en-US', opts)}`;
+}
 
 function formatTimestamp(ts) {
   if (!ts) return '';
@@ -19,6 +42,13 @@ function isAuthError(err) {
   const msg = (err.message || '').toLowerCase();
   return msg.includes('jwt') || msg.includes('not authenticated') || err.status === 401;
 }
+
+const SEARCH_FIELDS = [
+  'customer_name', 'city', 'state', 'material', 'po_number',
+  'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type',
+];
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function ShipmentHistory({
   fetchAllShipments,
@@ -33,9 +63,10 @@ export default function ShipmentHistory({
 }) {
   const [allShipments, setAllShipments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [archivePage, setArchivePage] = useState(1);
-  const [archiveRowsPerPage, setArchiveRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
-  const [confirmDelete, setConfirmDelete] = useState(null); // shipment object or null
+  const [selectedWeek, setSelectedWeek] = useState('all');
+  const [expandedWeeks, setExpandedWeeks] = useState(new Set());
+  const hasInitialized = useRef(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -44,6 +75,7 @@ export default function ShipmentHistory({
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Load data
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -56,16 +88,14 @@ export default function ShipmentHistory({
     return () => { mounted = false; };
   }, [fetchAllShipments]);
 
-  // Realtime: remove hard-deleted rows from local state for all users
+  // Realtime: remove hard-deleted rows
   useEffect(() => {
     if (!supabase) return;
     const channel = supabase
       .channel('history-shipments-deletes')
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'shipments' },
-        (payload) => {
-          setAllShipments(prev => prev.filter(s => s.id !== payload.old.id));
-        }
+        (payload) => { setAllShipments(prev => prev.filter(s => s.id !== payload.old.id)); }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -75,37 +105,100 @@ export default function ShipmentHistory({
     setAllShipments(prev => prev.map(s => s.id === id ? { ...s, pod_file_path: filePath } : s));
   };
 
-  const searchFields = [
-    'customer_name', 'city', 'state', 'material', 'po_number',
-    'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type',
-  ];
+  // ── Filtering pipeline ──────────────────────────────────────────────────────
 
-  const archiveShipments = useMemo(() => {
-    let result = allShipments;
-    if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s => {
-        const direct = searchFields.some(f => s[f] && String(s[f]).toLowerCase().includes(q));
-        const matMatch = s.shipment_materials && s.shipment_materials.some(m =>
-          (m.material_name && m.material_name.toLowerCase().includes(q))
-        );
-        return direct || matMatch;
-      });
-    }
+  // 1. Search filter applied to all
+  const searchFiltered = useMemo(() => {
+    if (!searchQuery?.trim()) return allShipments;
+    const q = searchQuery.toLowerCase();
+    return allShipments.filter(s => {
+      const direct = SEARCH_FIELDS.some(f => s[f] && String(s[f]).toLowerCase().includes(q));
+      const matMatch = s.shipment_materials?.some(m => m.material_name?.toLowerCase().includes(q));
+      return direct || matMatch;
+    });
+  }, [allShipments, searchQuery]);
+
+  // 2. Split dated vs undated (undated always visible regardless of date filter)
+  const undatedShipments = useMemo(
+    () => searchFiltered.filter(s => !s.ship_date || s.ship_date === 'TBD'),
+    [searchFiltered]
+  );
+
+  const datedShipments = useMemo(
+    () => searchFiltered.filter(s => s.ship_date && s.ship_date !== 'TBD'),
+    [searchFiltered]
+  );
+
+  // 3. Date range applied to dated only
+  const dateFilteredDated = useMemo(() => {
+    let result = datedShipments;
     if (dateFrom) result = result.filter(s => s.ship_date >= dateFrom);
     if (dateTo)   result = result.filter(s => s.ship_date <= dateTo);
-    return [...result].sort((a, b) => {
-      if ((a.archived_at || '') > (b.archived_at || '')) return -1;
-      if ((a.archived_at || '') < (b.archived_at || '')) return 1;
-      return 0;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allShipments, searchQuery, dateFrom, dateTo]);
+    return result;
+  }, [datedShipments, dateFrom, dateTo]);
 
-  const paginatedArchive = useMemo(() => {
-    const start = (archivePage - 1) * archiveRowsPerPage;
-    return archiveShipments.slice(start, start + archiveRowsPerPage);
-  }, [archiveShipments, archivePage, archiveRowsPerPage]);
+  // 4. Build week groups (sorted newest-first within each week)
+  const weekData = useMemo(() => {
+    const weekMap = {};
+    dateFilteredDated.forEach(s => {
+      const key = getWeekKey(s.ship_date);
+      if (!key) return;
+      if (!weekMap[key]) weekMap[key] = [];
+      weekMap[key].push(s);
+    });
+    Object.values(weekMap).forEach(arr =>
+      arr.sort((a, b) => b.ship_date.localeCompare(a.ship_date))
+    );
+    const sortedKeys = Object.keys(weekMap).sort((a, b) => b.localeCompare(a));
+    return { weekMap, sortedKeys };
+  }, [dateFilteredDated]);
+
+  // 5. Auto-expand most recent week on first data load
+  useEffect(() => {
+    if (!hasInitialized.current && weekData.sortedKeys.length > 0) {
+      setExpandedWeeks(new Set([weekData.sortedKeys[0]]));
+      hasInitialized.current = true;
+    }
+  }, [weekData.sortedKeys]);
+
+  // 6. Reset selectedWeek if it becomes empty after date filter change
+  useEffect(() => {
+    if (selectedWeek !== 'all' && !weekData.weekMap[selectedWeek]) {
+      setSelectedWeek('all');
+    }
+  }, [weekData, selectedWeek]);
+
+  // 7. Which week keys to render
+  const visibleWeekKeys = selectedWeek === 'all'
+    ? weekData.sortedKeys
+    : weekData.sortedKeys.filter(k => k === selectedWeek);
+
+  // 8. What CSV export sees (respects both filters)
+  const exportShipments = useMemo(() => {
+    const weekShipments = visibleWeekKeys.flatMap(k => weekData.weekMap[k] || []);
+    const exportUndated = selectedWeek === 'all' ? undatedShipments : [];
+    return [...weekShipments, ...exportUndated];
+  }, [visibleWeekKeys, weekData, selectedWeek, undatedShipments]);
+
+  const totalVisible = exportShipments.length;
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  const handleWeekSelect = (weekKey) => {
+    setSelectedWeek(weekKey);
+    if (weekKey !== 'all') {
+      setExpandedWeeks(new Set([weekKey]));
+    }
+  };
+
+  const toggleWeek = (key) => {
+    setExpandedWeeks(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const handleUnarchive = async (shipment) => {
     if (!unarchiveShipment) return;
@@ -132,6 +225,8 @@ export default function ShipmentHistory({
       setDeleting(false);
     }
   };
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -175,8 +270,6 @@ export default function ShipmentHistory({
             <h3 style={{ margin: '0 0 8px', color: '#FF1744', fontSize: '18px', fontWeight: 700 }}>
               Permanently Delete Shipment?
             </h3>
-
-            {/* Shipment summary */}
             <div style={{
               background: 'var(--bg-primary)', borderRadius: '8px',
               padding: '12px 16px', margin: '12px 0 16px',
@@ -186,7 +279,6 @@ export default function ShipmentHistory({
               <SummaryRow label="PO#" value={confirmDelete.po_number} />
               <SummaryRow label="Ship Date" value={formatDate(confirmDelete.ship_date)} />
             </div>
-
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 24px', lineHeight: 1.6 }}>
               This will <strong style={{ color: '#FF1744' }}>permanently delete</strong> this shipment record.
               This action cannot be undone.
@@ -221,7 +313,37 @@ export default function ShipmentHistory({
         </div>
       )}
 
-      {/* Date range pickers + export */}
+      {/* ── Week selector ────────────────────────────────────────────── */}
+      <div className="no-print" style={{
+        display: 'flex', gap: '10px', padding: '12px 24px 0',
+        alignItems: 'center', flexWrap: 'wrap',
+      }}>
+        <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          Week:
+        </label>
+        <select
+          value={selectedWeek}
+          onChange={e => handleWeekSelect(e.target.value)}
+          style={{
+            padding: '7px 12px',
+            fontSize: '13px',
+            borderRadius: '6px',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+          }}
+        >
+          <option value="all">All Weeks</option>
+          {weekData.sortedKeys.map(key => (
+            <option key={key} value={key}>{formatWeekLabel(key)}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* ── Date range pickers + export ──────────────────────────────── */}
       <div className="no-print" style={{
         display: 'flex', gap: '12px', padding: '12px 24px',
         alignItems: 'center', flexWrap: 'wrap',
@@ -231,11 +353,11 @@ export default function ShipmentHistory({
         <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>To:</label>
         <input type="date" value={dateTo} onChange={e => onDateToChange(e.target.value)} style={dateInputStyle} />
         <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-          {archiveShipments.length} record{archiveShipments.length !== 1 ? 's' : ''}
+          {totalVisible} record{totalVisible !== 1 ? 's' : ''}
         </span>
-        {archiveShipments.length > 0 && (
+        {totalVisible > 0 && (
           <button
-            onClick={() => exportToCSV(archiveShipments, 'history')}
+            onClick={() => exportToCSV(exportShipments, 'history')}
             className="no-print"
             style={{
               marginLeft: 'auto', padding: '7px 16px', borderRadius: '6px',
@@ -249,122 +371,225 @@ export default function ShipmentHistory({
         )}
       </div>
 
-      {archiveShipments.length === 0 ? (
+      {/* ── Content ──────────────────────────────────────────────────── */}
+      {totalVisible === 0 ? (
         <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           No archived records.
         </div>
       ) : (
-        <>
+        <div>
+          {visibleWeekKeys.map(weekKey => (
+            <WeekGroup
+              key={weekKey}
+              label={formatWeekLabel(weekKey)}
+              loads={weekData.weekMap[weekKey] || []}
+              isExpanded={expandedWeeks.has(weekKey)}
+              onToggle={() => toggleWeek(weekKey)}
+              isWarehouse={isWarehouse}
+              onUnarchive={handleUnarchive}
+              onDelete={(s) => setConfirmDelete(s)}
+              onPodUpdate={handlePodUpdate}
+            />
+          ))}
+
+          {/* Undated group — only when All Weeks and undated exist */}
+          {selectedWeek === 'all' && undatedShipments.length > 0 && (
+            <WeekGroup
+              label="Undated"
+              loads={undatedShipments}
+              isExpanded={expandedWeeks.has('__undated__')}
+              onToggle={() => toggleWeek('__undated__')}
+              isWarehouse={isWarehouse}
+              onUnarchive={handleUnarchive}
+              onDelete={(s) => setConfirmDelete(s)}
+              onPodUpdate={handlePodUpdate}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Week group section ────────────────────────────────────────────────────────
+
+function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchive, onDelete, onPodUpdate }) {
+  const count = loads.length;
+  return (
+    <div style={{ borderBottom: '1px solid var(--border)' }}>
+      {/* Group header */}
+      <button
+        onClick={onToggle}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          width: '100%',
+          padding: '12px 24px',
+          background: '#363636',
+          border: 'none',
+          borderTop: '1px solid var(--border)',
+          cursor: 'pointer',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+        }}
+      >
+        {/* Chevron */}
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#94A3B8',
+          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s ease',
+          flexShrink: 0,
+        }}>
+          ▶
+        </span>
+        {/* Week label */}
+        <span style={{
+          fontFamily: 'var(--font-heading), Oswald, sans-serif',
+          fontWeight: 600,
+          fontSize: '14px',
+          color: 'var(--text-primary)',
+          letterSpacing: '0.3px',
+          textTransform: 'uppercase',
+        }}>
+          {label}
+        </span>
+        {/* Load count badge */}
+        <span style={{
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          fontWeight: 500,
+          fontFamily: 'var(--font-body), inherit',
+          textTransform: 'none',
+          letterSpacing: 0,
+        }}>
+          · {count} {count === 1 ? 'load' : 'loads'}
+        </span>
+      </button>
+
+      {/* Collapsible body */}
+      {isExpanded && (
+        count === 0 ? (
+          <div style={{ padding: '24px', color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center' }}>
+            No shipments found for this period.
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)' }}>
                   {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Trailer Type', 'Weight', 'Status', 'Archived On', 'Price', 'POD', 'Actions'].map(h => (
-                    <th key={h} style={archiveThStyle}>{h}</th>
+                    <th key={h} style={thStyle}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {paginatedArchive.map(s => {
-                  const matItems = s.shipment_materials && s.shipment_materials.length > 0
-                    ? s.shipment_materials
-                    : s.material ? [{ quantity: s.quantity != null ? String(s.quantity) : '', material_name: s.material }] : [];
-                  return (
-                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <ArchiveCell>{formatDate(s.ship_date)}</ArchiveCell>
-                      <ArchiveCell>{s.delivery_date ? formatDate(s.delivery_date) : <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>TBD</span>}</ArchiveCell>
-                      <ArchiveCell>{s.customer_name}</ArchiveCell>
-                      <ArchiveCell>{s.city}{s.state ? `, ${s.state}` : ''}</ArchiveCell>
-                      <td style={archiveTdStyle}>
-                        <div style={{ maxWidth: '180px' }}>
-                          {matItems.map((m, i) => (
-                            <div key={i} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <ArchiveCell>{s.po_number}</ArchiveCell>
-                      <ArchiveCell>{s.carrier_name}</ArchiveCell>
-                      <td style={{
-                        ...archiveTdStyle,
-                        color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',
-                        fontWeight: s.trailer_type === 'Hotshot' ? 700 : 400,
-                      }}>
-                        {s.trailer_type || ''}
-                      </td>
-                      <ArchiveCell>{s.weight}</ArchiveCell>
-                      <td style={archiveTdStyle}>
-                        <StatusBadge status={s.status} isWarehouse={false} />
-                      </td>
-                      <ArchiveCell>{formatTimestamp(s.archived_at)}</ArchiveCell>
-                      <ArchiveCell>{s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}</ArchiveCell>
-
-                      {/* POD column */}
-                      <PODCell
-                        shipment={s}
-                        isWarehouse={isWarehouse}
-                        onPodUpdate={handlePodUpdate}
-                      />
-
-                      {/* Actions */}
-                      <td style={{ ...archiveTdStyle, whiteSpace: 'nowrap' }}>
-                        {!isWarehouse && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <button
-                              onClick={() => handleUnarchive(s)}
-                              style={{
-                                background: 'none', border: 'none',
-                                color: 'var(--accent-delivered)',
-                                cursor: 'pointer', fontSize: '12px',
-                                fontWeight: 600, padding: '4px 8px',
-                                fontFamily: 'inherit',
-                              }}
-                            >
-                              Unarchive
-                            </button>
-
-                            {/* Visual divider between Unarchive and Delete */}
-                            <span style={{
-                              display: 'inline-block', width: '1px', height: '16px',
-                              background: 'var(--border)', margin: '0 6px', flexShrink: 0,
-                            }} />
-
-                            <button
-                              onClick={() => setConfirmDelete(s)}
-                              style={{
-                                background: 'none', border: 'none',
-                                color: '#FF1744',
-                                cursor: 'pointer', fontSize: '12px',
-                                fontWeight: 600, padding: '4px 8px',
-                                fontFamily: 'inherit',
-                                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              }}
-                            >
-                              <HistoryTrashIcon />
-                              Delete
-                            </button>
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {loads.map(s => (
+                  <HistoryRow
+                    key={s.id}
+                    shipment={s}
+                    isWarehouse={isWarehouse}
+                    onUnarchive={onUnarchive}
+                    onDelete={onDelete}
+                    onPodUpdate={onPodUpdate}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
-          <Pagination
-            currentPage={archivePage}
-            totalItems={archiveShipments.length}
-            rowsPerPage={archiveRowsPerPage}
-            onPageChange={setArchivePage}
-            onRowsPerPageChange={p => { setArchiveRowsPerPage(p); setArchivePage(1); }}
-          />
-        </>
+        )
       )}
     </div>
   );
 }
+
+// ── History table row ─────────────────────────────────────────────────────────
+
+function HistoryRow({ shipment: s, isWarehouse, onUnarchive, onDelete, onPodUpdate }) {
+  const matItems = s.shipment_materials && s.shipment_materials.length > 0
+    ? s.shipment_materials
+    : s.material ? [{ quantity: s.quantity != null ? String(s.quantity) : '', material_name: s.material }] : [];
+
+  return (
+    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+      <td style={tdStyle}>{formatDate(s.ship_date)}</td>
+      <td style={tdStyle}>
+        {s.delivery_date
+          ? formatDate(s.delivery_date)
+          : <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>TBD</span>}
+      </td>
+      <td style={tdStyle}>{s.customer_name}</td>
+      <td style={tdStyle}>{s.city}{s.state ? `, ${s.state}` : ''}</td>
+      <td style={tdStyle}>
+        <div style={{ maxWidth: '180px' }}>
+          {matItems.map((m, i) => (
+            <div key={i} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
+            </div>
+          ))}
+        </div>
+      </td>
+      <td style={tdStyle}>{s.po_number}</td>
+      <td style={tdStyle}>{s.carrier_name}</td>
+      <td style={{
+        ...tdStyle,
+        color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',
+        fontWeight: s.trailer_type === 'Hotshot' ? 700 : 400,
+      }}>
+        {s.trailer_type || ''}
+      </td>
+      <td style={tdStyle}>{s.weight}</td>
+      <td style={tdStyle}>
+        <StatusBadge status={s.status} isWarehouse={false} />
+      </td>
+      <td style={tdStyle}>{formatTimestamp(s.archived_at)}</td>
+      <td style={tdStyle}>{s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}</td>
+
+      <PODCell shipment={s} isWarehouse={isWarehouse} onPodUpdate={onPodUpdate} />
+
+      <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+        {!isWarehouse && (
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <button
+              onClick={() => onUnarchive(s)}
+              style={{
+                background: 'none', border: 'none',
+                color: 'var(--accent-delivered)',
+                cursor: 'pointer', fontSize: '12px',
+                fontWeight: 600, padding: '4px 8px',
+                fontFamily: 'inherit',
+              }}
+            >
+              Unarchive
+            </button>
+            <span style={{
+              display: 'inline-block', width: '1px', height: '16px',
+              background: 'var(--border)', margin: '0 6px', flexShrink: 0,
+            }} />
+            <button
+              onClick={() => onDelete(s)}
+              style={{
+                background: 'none', border: 'none',
+                color: '#FF1744',
+                cursor: 'pointer', fontSize: '12px',
+                fontWeight: 600, padding: '4px 8px',
+                fontFamily: 'inherit',
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+              }}
+            >
+              <TrashIcon />
+              Delete
+            </button>
+          </span>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ── Small helpers ─────────────────────────────────────────────────────────────
 
 function SummaryRow({ label, value }) {
   return (
@@ -375,11 +600,7 @@ function SummaryRow({ label, value }) {
   );
 }
 
-function ArchiveCell({ children }) {
-  return <td style={archiveTdStyle}>{children ?? ''}</td>;
-}
-
-function HistoryTrashIcon() {
+function TrashIcon() {
   return (
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -392,12 +613,13 @@ function HistoryTrashIcon() {
   );
 }
 
-const archiveTdStyle = {
+const tdStyle = {
   padding: '10px 10px',
   color: 'var(--text-primary)',
+  fontSize: '13px',
 };
 
-const archiveThStyle = {
+const thStyle = {
   textAlign: 'left',
   padding: '10px 10px',
   fontFamily: 'var(--font-heading), Oswald, sans-serif',
