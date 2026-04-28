@@ -9,7 +9,7 @@ import { formatDate, truncateText } from '../utils/formatters';
 const STATUS_COLORS_DROPDOWN = {
   'Pending':    { bg: '#FF8C00', text: '#ffffff' },
   'Booked':     { bg: '#3b82f6', text: '#ffffff' },
-  'In Transit': { bg: '#38BDF8', text: '#ffffff' },
+  'In Transit': { bg: '#a524e8', text: '#ffffff' },
   'Delivered':  { bg: '#22c55e', text: '#ffffff' },
 };
 const STATUS_OPTIONS = ['Pending', 'Booked', 'In Transit', 'Delivered'];
@@ -175,7 +175,7 @@ function TableRow({
         onMouseLeave={() => setHovered(false)}
         style={{
           borderBottom: '1px solid var(--border)',
-          background: hovered ? '#1E2A38' : 'transparent',
+          background: hovered ? '#222222' : 'transparent',
           transition: 'background 0.15s',
           ...urgencyBorderStyle,
         }}

@@ -145,7 +145,7 @@ export default function PODCell({ shipment, isWarehouse, onPodUpdate }) {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
-                padding: '2px 0', color: '#38BDF8', fontSize: '12px', fontWeight: 600,
+                padding: '2px 0', color: '#a524e8', fontSize: '12px', fontWeight: 600,
               }}
             >
               <span style={{ fontSize: '13px', lineHeight: 1 }}>📎</span>

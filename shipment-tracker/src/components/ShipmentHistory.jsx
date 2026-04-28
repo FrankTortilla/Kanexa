@@ -480,7 +480,7 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                  {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Trailer Type', 'Weight', 'Status', 'Archived On', 'Price', 'POD', 'Actions'].map(h => (
+                  {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Status', 'Archived On', 'Price', 'POD', 'Actions'].map(h => (
                     <th key={h} style={thStyle}>{h}</th>
                   ))}
                 </tr>
@@ -533,6 +533,7 @@ function HistoryRow({ shipment: s, isWarehouse, onUnarchive, onDelete, onPodUpda
       </td>
       <td style={tdStyle}>{s.po_number}</td>
       <td style={tdStyle}>{s.carrier_name}</td>
+      <td style={tdStyle}>{s.tracking_number}</td>
       <td style={{
         ...tdStyle,
         color: s.trailer_type === 'Hotshot' ? 'var(--accent-danger)' : 'var(--text-primary)',

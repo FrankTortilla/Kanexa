@@ -46,11 +46,11 @@ export default function WarehousePage() {
       {newShipmentAlert && (
         <div style={{
           position: 'fixed', top: '24px', right: '24px', zIndex: 1000,
-          background: '#4a7c3f', color: '#fff',
+          background: '#96ba94', color: '#fff',
           padding: '14px 22px', borderRadius: '10px',
           fontFamily: 'Oswald, sans-serif', fontSize: '20px', fontWeight: 700,
           letterSpacing: '0.5px', textTransform: 'uppercase',
-          boxShadow: '0 4px 24px rgba(74,124,63,0.5)',
+          boxShadow: '0 4px 24px rgba(150,186,148,0.5)',
           animation: 'fade-in 0.3s ease-out',
         }}>
           ✦ NEW SHIPMENT — {newShipmentAlert.customer_name}

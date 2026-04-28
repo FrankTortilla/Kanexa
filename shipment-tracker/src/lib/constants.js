@@ -29,7 +29,7 @@ export const STATUS_COLORS = {
 export const BADGE_COLORS = {
   Pending:      { bg: '#FF8C00', text: '#ffffff' },
   Booked:       { bg: '#3b82f6', text: '#ffffff' },
-  'In Transit': { bg: '#38BDF8', text: '#ffffff' },
+  'In Transit': { bg: '#a524e8', text: '#ffffff' },
   Delivered:    { bg: '#22c55e', text: '#ffffff' },
 };
 
