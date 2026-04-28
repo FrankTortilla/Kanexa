@@ -77,7 +77,7 @@ export default function WarehousePage() {
         <SummaryCard label="PENDING"    value={pending}   color="#e6b800" />
         <SummaryCard label="BOOKED"     value={booked}    color="#3b82f6" />
         <SummaryCard label="IN TRANSIT" value={inTransit} color="#f97316" />
-        <SummaryCard label="DELIVERED"  value={delivered} color="#4a7c3f" />
+        <SummaryCard label="DELIVERED"  value={delivered} color="#22c55e" />
       </div>
 
       {/* Table */}

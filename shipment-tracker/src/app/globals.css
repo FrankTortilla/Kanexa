@@ -13,7 +13,7 @@
   --accent-booked: #3b82f6;
   --accent-in-transit: #a524e8;
   --accent-shipped: #3b82f6;
-  --accent-delivered: #4a7c3f;
+  --accent-delivered: #22c55e;
   --accent-danger: #FF1744;
   --accent-warning: #e6b800;
   --accent-live: #96ba94;
@@ -21,7 +21,7 @@
   --accent-booked-glow: rgba(59, 130, 246, 0.25);
   --accent-in-transit-glow: rgba(165, 36, 232, 0.25);
   --accent-shipped-glow: rgba(59, 130, 246, 0.25);
-  --accent-delivered-glow: rgba(74, 124, 63, 0.25);
+  --accent-delivered-glow: rgba(34, 197, 94, 0.25);
   --accent-warning-glow: rgba(230, 184, 0, 0.15);
   --accent-danger-glow: rgba(255, 23, 68, 0.15);
 }
