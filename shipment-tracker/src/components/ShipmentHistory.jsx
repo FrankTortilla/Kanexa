@@ -66,9 +66,18 @@ export default function ShipmentHistory({
   const [selectedWeek, setSelectedWeek] = useState('all');
   const [expandedWeeks, setExpandedWeeks] = useState(new Set());
   const hasInitialized = useRef(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'delivery_date', direction: 'desc' });
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const handleSort = (key) => {
+    setSortConfig(prev =>
+      prev.key === key
+        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: 'desc' }
+    );
+  };
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -137,7 +146,7 @@ export default function ShipmentHistory({
     return result;
   }, [datedShipments, dateFrom, dateTo]);
 
-  // 4. Build week groups (sorted newest-first within each week)
+  // 4. Build week groups; rows sorted by sortConfig within each week
   const weekData = useMemo(() => {
     const weekMap = {};
     dateFilteredDated.forEach(s => {
@@ -147,11 +156,16 @@ export default function ShipmentHistory({
       weekMap[key].push(s);
     });
     Object.values(weekMap).forEach(arr =>
-      arr.sort((a, b) => b.ship_date.localeCompare(a.ship_date))
+      arr.sort((a, b) => {
+        const aVal = a[sortConfig.key] || '';
+        const bVal = b[sortConfig.key] || '';
+        const cmp = aVal.localeCompare(bVal);
+        return sortConfig.direction === 'desc' ? -cmp : cmp;
+      })
     );
     const sortedKeys = Object.keys(weekMap).sort((a, b) => b.localeCompare(a));
     return { weekMap, sortedKeys };
-  }, [dateFilteredDated]);
+  }, [dateFilteredDated, sortConfig]);
 
   // 5. Auto-expand most recent week on first data load
   useEffect(() => {
@@ -389,6 +403,8 @@ export default function ShipmentHistory({
               onUnarchive={handleUnarchive}
               onDelete={(s) => setConfirmDelete(s)}
               onPodUpdate={handlePodUpdate}
+              sortConfig={sortConfig}
+              onSort={handleSort}
             />
           ))}
 
@@ -403,6 +419,8 @@ export default function ShipmentHistory({
               onUnarchive={handleUnarchive}
               onDelete={(s) => setConfirmDelete(s)}
               onPodUpdate={handlePodUpdate}
+              sortConfig={sortConfig}
+              onSort={handleSort}
             />
           )}
         </div>
@@ -413,7 +431,25 @@ export default function ShipmentHistory({
 
 // ── Week group section ────────────────────────────────────────────────────────
 
-function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchive, onDelete, onPodUpdate }) {
+const SORTABLE_COLS = [
+  { label: 'Ship Date',    key: 'ship_date' },
+  { label: 'Del. Date',   key: 'delivery_date' },
+  { label: 'Customer',    key: null },
+  { label: 'City/State',  key: null },
+  { label: 'Materials',   key: null },
+  { label: 'PO#',         key: null },
+  { label: 'Carrier',     key: null },
+  { label: 'Tracking#',   key: null },
+  { label: 'Trailer Type',key: null },
+  { label: 'Weight',      key: null },
+  { label: 'Status',      key: null },
+  { label: 'Archived On', key: null },
+  { label: 'Price',       key: null },
+  { label: 'POD',         key: null },
+  { label: 'Actions',     key: null },
+];
+
+function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchive, onDelete, onPodUpdate, sortConfig, onSort }) {
   const count = loads.length;
   return (
     <div style={{ borderBottom: '1px solid var(--border)' }}>
@@ -434,7 +470,6 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
           fontFamily: 'inherit',
         }}
       >
-        {/* Chevron */}
         <span style={{
           display: 'inline-block',
           fontSize: '11px',
@@ -442,10 +477,7 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
           transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
           transition: 'transform 0.2s ease',
           flexShrink: 0,
-        }}>
-          ▶
-        </span>
-        {/* Week label */}
+        }}>▶</span>
         <span style={{
           fontFamily: 'var(--font-heading), Oswald, sans-serif',
           fontWeight: 600,
@@ -453,10 +485,7 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
           color: 'var(--text-primary)',
           letterSpacing: '0.3px',
           textTransform: 'uppercase',
-        }}>
-          {label}
-        </span>
-        {/* Load count badge */}
+        }}>{label}</span>
         <span style={{
           fontSize: '12px',
           color: 'var(--text-secondary)',
@@ -464,9 +493,7 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
           fontFamily: 'var(--font-body), inherit',
           textTransform: 'none',
           letterSpacing: 0,
-        }}>
-          · {count} {count === 1 ? 'load' : 'loads'}
-        </span>
+        }}>· {count} {count === 1 ? 'load' : 'loads'}</span>
       </button>
 
       {/* Collapsible body */}
@@ -480,9 +507,29 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                  {['Ship Date', 'Del. Date', 'Customer', 'City/State', 'Materials', 'PO#', 'Carrier', 'Tracking#', 'Trailer Type', 'Weight', 'Status', 'Archived On', 'Price', 'POD', 'Actions'].map(h => (
-                    <th key={h} style={thStyle}>{h}</th>
-                  ))}
+                  {SORTABLE_COLS.map(col => {
+                    const isSorted = sortConfig.key === col.key;
+                    const canSort = !!col.key;
+                    return (
+                      <th
+                        key={col.label}
+                        onClick={() => canSort && onSort(col.key)}
+                        style={{
+                          ...thStyle,
+                          cursor: canSort ? 'pointer' : 'default',
+                          userSelect: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {col.label}
+                        {isSorted && (
+                          <span style={{ marginLeft: '4px' }}>
+                            {sortConfig.direction === 'asc' ? '▲' : '▼'}
+                          </span>
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>

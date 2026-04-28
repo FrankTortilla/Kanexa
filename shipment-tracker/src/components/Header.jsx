@@ -14,7 +14,7 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <img
-          src="/logo-icon.svg"
+          src="/logo-icon.png"
           alt="Green Steel"
           style={{ height: '36px', width: 'auto' }}
         />
