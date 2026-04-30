@@ -185,15 +185,24 @@ export function useShipments() {
     // Only touch materials if they were explicitly provided
     if (materials !== undefined) {
       await supabase.from('shipment_materials').delete().eq('shipment_id', id);
+      let savedMaterials = [];
       if (materials.length > 0) {
-        const rows = materials.map(m => ({
+        savedMaterials = materials.map(m => ({
           shipment_id: id,
           quantity: m.quantity || null,
           material_name: m.material_name,
         }));
-        const { error: matError } = await supabase.from('shipment_materials').insert(rows);
+        const { error: matError } = await supabase.from('shipment_materials').insert(savedMaterials);
         if (matError) throw matError;
       }
+      // Write the authoritative final materials into local state AFTER the DB insert
+      // completes. This wins the race against the realtime handler, which may have
+      // fetched the shipment during the delete→insert window and returned [] materials.
+      setShipments(prev => prev.map(s =>
+        s.id === id
+          ? { ...s, ...shipmentUpdates, shipment_materials: savedMaterials }
+          : s
+      ));
     }
     return data;
   }, []);
