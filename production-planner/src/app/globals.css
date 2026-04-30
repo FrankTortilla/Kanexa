@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-surface: #1a1a1a;
+  --bg-hover: #2e2e2e;
+  --text-primary: #CBD5E1;
+  --text-secondary: #a0a0a0;
+  --border: #333333;
+  --accent-green: #96ba94;
+  --accent-green-hover: #5a9a4a;
+  --accent-cpu-asap: #FF8C00;
+  --accent-danger: #FF1744;
+  --accent-warning: #FFD700;
+}
+
+@theme inline {
+  --font-heading: var(--font-oswald);
+  --font-body: var(--font-ibm-plex-sans);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body), "IBM Plex Sans", sans-serif;
+}
+
+@keyframes row-flash {
+  0% { background-color: rgba(255, 255, 255, 0.15); }
+  100% { background-color: transparent; }
+}
+.animate-row-flash {
+  animation: row-flash 1s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Slide-out panel */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in-right 0.25s ease-out;
+}
+
+/* Table row hover */
+tr.order-row:hover td {
+  background: var(--bg-hover);
+}
+
+/* CPU ASAP row left border accent */
+tr.cpu-asap-row td:first-child {
+  border-left: 3px solid var(--accent-cpu-asap);
+}
