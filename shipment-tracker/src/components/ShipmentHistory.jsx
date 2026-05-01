@@ -445,7 +445,7 @@ const SORTABLE_COLS = [
 function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchive, onDelete, onPodUpdate, sortConfig, onSort }) {
   const count = loads.length;
   return (
-    <div style={{ borderBottom: '1px solid var(--border)' }}>
+    <div>
       {/* Group header */}
       <button
         onClick={onToggle}
@@ -454,10 +454,11 @@ function WeekGroup({ label, loads, isExpanded, onToggle, isWarehouse, onUnarchiv
           alignItems: 'center',
           gap: '10px',
           width: '100%',
-          padding: '12px 24px',
-          background: '#363636',
-          border: 'none',
-          borderTop: '1px solid var(--border)',
+          padding: '14px 18px',
+          background: 'rgba(255,255,255,0.04)',
+          border: '0.5px solid rgba(255,255,255,0.08)',
+          borderRadius: '8px',
+          marginBottom: '10px',
           cursor: 'pointer',
           textAlign: 'left',
           fontFamily: 'inherit',
