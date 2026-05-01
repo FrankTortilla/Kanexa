@@ -46,11 +46,11 @@ export default function WarehousePage() {
       {newShipmentAlert && (
         <div style={{
           position: 'fixed', top: '24px', right: '24px', zIndex: 1000,
-          background: '#4a7c3f', color: '#fff',
+          background: '#96ba94', color: '#fff',
           padding: '14px 22px', borderRadius: '10px',
           fontFamily: 'Oswald, sans-serif', fontSize: '20px', fontWeight: 700,
           letterSpacing: '0.5px', textTransform: 'uppercase',
-          boxShadow: '0 4px 24px rgba(74,124,63,0.5)',
+          boxShadow: '0 4px 24px rgba(150,186,148,0.5)',
           animation: 'fade-in 0.3s ease-out',
         }}>
           ✦ NEW SHIPMENT — {newShipmentAlert.customer_name}
@@ -77,7 +77,7 @@ export default function WarehousePage() {
         <SummaryCard label="PENDING"    value={pending}   color="#e6b800" />
         <SummaryCard label="BOOKED"     value={booked}    color="#3b82f6" />
         <SummaryCard label="IN TRANSIT" value={inTransit} color="#f97316" />
-        <SummaryCard label="DELIVERED"  value={delivered} color="#4a7c3f" />
+        <SummaryCard label="DELIVERED"  value={delivered} color="#22c55e" />
       </div>
 
       {/* Table */}
