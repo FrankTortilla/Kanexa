@@ -1,6 +1,6 @@
 'use client';
 
-export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, activeTab, onTabChange, onLogout }) {
+export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, activeTab, onTabChange }) {
   return (
     <header className="no-print" style={{
       background: 'var(--bg-surface)',
@@ -82,19 +82,6 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
           </button>
         )}
 
-        {onLogout && (
-          <button
-            onClick={onLogout}
-            title="Sign out"
-            style={{
-              ...btnStyle,
-              color: 'var(--text-secondary)',
-              padding: '7px 10px',
-            }}
-          >
-            ⏻
-          </button>
-        )}
       </div>
     </header>
   );

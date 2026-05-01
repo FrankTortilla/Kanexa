@@ -1,6 +1,5 @@
 'use client';
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useCallback } from 'react';
 import { useShipments } from '../hooks/useShipments';
 import { BADGE_COLORS, DEFAULT_ROWS_PER_PAGE } from '../lib/constants';
 import { getUrgencyLevel } from '../components/UrgencyBadge';
@@ -11,7 +10,6 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import ShipmentTable from '../components/ShipmentTable';
 import ShipmentForm from '../components/ShipmentForm';
 import ShipmentHistory from '../components/ShipmentHistory';
-import { supabase } from '../lib/supabase';
 import EmptyState from '../components/EmptyState';
 import Pagination from '../components/Pagination';
 import ActivityLog from '../components/ActivityLog';
@@ -47,33 +45,6 @@ function applySort(list, sortConfig) {
 }
 
 export default function Home() {
-  const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
-  const [session, setSession] = useState(null);
-
-  // Auth guard — redirect to /login if no active session
-  useEffect(() => {
-    if (!supabase) { setAuthChecked(true); return; }
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (!s) {
-        router.replace('/login');
-      } else {
-        setSession(s);
-        setAuthChecked(true);
-      }
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      if (!s) router.replace('/login');
-    });
-    return () => subscription.unsubscribe();
-  }, [router]);
-
-  const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
-    router.replace('/login');
-  };
-
   const {
     allShipments, loading, searchQuery, setSearchQuery,
     sortConfig, handleSort, flashedId,
@@ -182,15 +153,6 @@ export default function Home() {
 
   const combinedFlashId = recentlyChangedId || flashedId;
 
-  // Wait for auth check before rendering anything
-  if (!authChecked) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--text-secondary)', fontSize: '18px' }}>
-        Loading…
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--text-secondary)', fontSize: '18px' }}>
@@ -260,7 +222,6 @@ export default function Home() {
         isWarehouse={false}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        onLogout={handleLogout}
       />
 
       <DashboardSummary
