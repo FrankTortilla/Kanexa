@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import StatusBadge from './StatusBadge';
 import PODCell from './PODCell';
 import { formatDate } from '../utils/formatters';
@@ -65,7 +65,6 @@ export default function ShipmentHistory({
   const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState('all');
   const [expandedWeeks, setExpandedWeeks] = useState(new Set());
-  const hasInitialized = useRef(false);
   const [sortConfig, setSortConfig] = useState({ key: 'delivery_date', direction: 'desc' });
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -167,13 +166,7 @@ export default function ShipmentHistory({
     return { weekMap, sortedKeys };
   }, [dateFilteredDated, sortConfig]);
 
-  // 5. Auto-expand most recent week on first data load
-  useEffect(() => {
-    if (!hasInitialized.current && weekData.sortedKeys.length > 0) {
-      setExpandedWeeks(new Set([weekData.sortedKeys[0]]));
-      hasInitialized.current = true;
-    }
-  }, [weekData.sortedKeys]);
+  // All weeks start collapsed — user expands on demand
 
   // 6. Reset selectedWeek if it becomes empty after date filter change
   useEffect(() => {
