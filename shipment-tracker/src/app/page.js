@@ -44,6 +44,13 @@ function applySort(list, sortConfig) {
   });
 }
 
+function sumNumericField(list, field) {
+  return list.reduce((total, shipment) => {
+    const value = Number(shipment[field]);
+    return Number.isFinite(value) ? total + value : total;
+  }, 0);
+}
+
 export default function Home() {
   const {
     allShipments, loading, searchQuery, setSearchQuery,
@@ -92,6 +99,16 @@ export default function Home() {
     const start = (deliveredPage - 1) * deliveredRowsPerPage;
     return sortedDelivered.slice(start, start + deliveredRowsPerPage);
   }, [sortedDelivered, deliveredPage, deliveredRowsPerPage]);
+
+  const visibleSummaryMetrics = useMemo(() => {
+    if (activeTab === 'history') return null;
+    const visibleShipments = activeTab === 'delivered' ? sortedDelivered : sortedActive;
+
+    return {
+      totalPrice: sumNumericField(visibleShipments, 'price'),
+      totalWeight: sumNumericField(visibleShipments, 'weight'),
+    };
+  }, [activeTab, sortedActive, sortedDelivered]);
 
   // Dashboard card click → navigate to correct tab + set optional status filter
   const handleCardClick = useCallback((key) => {
@@ -228,6 +245,7 @@ export default function Home() {
         shipments={allShipments}
         isWarehouse={false}
         onCardClick={handleCardClick}
+        metrics={visibleSummaryMetrics}
       />
 
       {activeTab !== 'history' && (
