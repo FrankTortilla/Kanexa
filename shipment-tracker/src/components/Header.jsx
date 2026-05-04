@@ -5,83 +5,83 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
     <header className="no-print" style={{
       background: 'var(--bg-surface)',
       borderBottom: '1px solid var(--border)',
-      padding: '12px 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: '12px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* Row 1: Logo + Actions */}
+      <div style={{
+        padding: '10px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+      }}>
         <img
-          src="/logo-icon.png"
-          alt="Green Steel"
-          style={{ height: '36px', width: 'auto' }}
+          src="/green_steel_LOGO_copy.png"
+          alt="SureBuilT"
+          style={{ height: '44px', width: 'auto' }}
         />
-        <div>
-          <h1 style={{
-            fontFamily: 'var(--font-heading), Oswald, sans-serif',
-            fontSize: '20px',
-            fontWeight: 700,
-            margin: 0,
-            color: 'var(--text-primary)',
-            letterSpacing: '0.5px',
-            lineHeight: 1.1,
-          }}>
-            Shipment Tracker
-          </h1>
-          <span style={{
-            fontSize: '11px',
-            color: 'var(--text-secondary)',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-          }}>
-            Green Steel Manufacturing
-          </span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button onClick={onExport} style={btnStyle}>
+            <span className="btn-icon">↓</span>
+            <span className="btn-label">Export CSV</span>
+          </button>
+          <button onClick={onPrint} style={btnStyle}>
+            <span className="btn-icon">🖨</span>
+            <span className="btn-label">Print</span>
+          </button>
+          {!isWarehouse && (
+            <button onClick={onAddShipment} style={{
+              ...btnStyle,
+              background: 'var(--accent-green)',
+              border: '1px solid var(--accent-green)',
+              color: '#fff',
+              fontWeight: 700,
+            }}>
+              <span className="btn-icon" style={{ fontWeight: 700 }}>+</span>
+              <span className="btn-label">Add Shipment</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        {/* Tab toggle */}
-        <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          {[
-            { key: 'active',    label: 'Active'    },
-            { key: 'delivered', label: 'Delivered' },
-            { key: 'history',   label: 'History'   },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              style={{
-                padding: '7px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                background: activeTab === tab.key ? 'var(--accent-green)' : 'transparent',
-                color: activeTab === tab.key ? '#fff' : 'var(--text-secondary)',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <button onClick={onExport} style={btnStyle}>Export CSV</button>
-        <button onClick={onPrint} style={btnStyle}>Print</button>
-
-        {!isWarehouse && (
-          <button onClick={onAddShipment} style={{
-            ...btnStyle,
-            background: 'var(--accent-green)',
-            border: '1px solid var(--accent-green)',
-            color: '#fff',
-            fontWeight: 700,
-          }}>
-            + Add Shipment
+      {/* Row 2: Tabs */}
+      <div style={{
+        display: 'flex',
+        borderTop: '1px solid var(--border)',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}>
+        {[
+          { key: 'active',    label: 'Active'    },
+          { key: 'delivered', label: 'Delivered' },
+          { key: 'history',   label: 'History'   },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => onTabChange(tab.key)}
+            className="tab-btn"
+            style={{
+              padding: '10px 20px',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === tab.key ? '2px solid var(--accent-green)' : '2px solid transparent',
+              color: activeTab === tab.key ? 'var(--accent-green)' : 'var(--text-secondary)',
+              fontSize: '13px',
+              fontWeight: activeTab === tab.key ? 700 : 500,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'color 0.15s',
+              whiteSpace: 'nowrap',
+              marginBottom: '-1px',
+            }}
+          >
+            {tab.label}
           </button>
-        )}
-
+        ))}
       </div>
     </header>
   );
@@ -96,4 +96,7 @@ const btnStyle = {
   background: 'transparent',
   color: 'var(--text-secondary)',
   cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '5px',
 };

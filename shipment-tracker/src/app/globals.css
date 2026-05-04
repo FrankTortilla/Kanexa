@@ -97,6 +97,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
+/* Header btn-icon always visible; btn-label hidden on narrow screens */
+.btn-icon { display: inline; }
+.btn-label { display: inline; }
+
+/* Tab row scrollbar hidden */
+header div::-webkit-scrollbar { display: none; }
+
 /* ── Mobile responsive ───────────────────────────────────────────── */
 @media (max-width: 640px) {
   /* Summary cards: horizontal scroll so they never wrap to tiny sizes */
@@ -113,8 +120,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     min-width: 110px;
   }
 
-  /* Header: stack logo + tabs/actions vertically */
-  header { padding: 10px 14px !important; }
+  /* Header: compact padding */
+  header { padding: 0 14px !important; }
 
   /* Tabs: larger touch targets */
   .tab-btn { padding: 10px 14px !important; font-size: 12px !important; min-height: 44px; }
@@ -128,8 +135,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   /* Table: horizontal scroll (already set inline, reinforce) */
   .table-scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-  /* Action buttons: more padding for touch */
-  .action-btn { padding: 6px 10px !important; font-size: 12px !important; min-height: 36px; }
+  /* Action buttons: icon-only on mobile */
+  .btn-label { display: none; }
 }
 
 @media print {
