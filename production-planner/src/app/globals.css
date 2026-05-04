@@ -60,6 +60,16 @@ tr.cpu-asap-row td:first-child {
   border-left: 3px solid var(--accent-cpu-asap);
 }
 
+/* Make date picker calendar icons visible on dark backgrounds */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.85;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 /* Header btn-icon always visible; btn-label hidden on narrow screens */
 .btn-icon { display: inline; }
 .btn-label { display: inline; }
