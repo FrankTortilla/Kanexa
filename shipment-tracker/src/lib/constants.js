@@ -12,9 +12,10 @@ export const STATUS = {
   BOOKED:     'Booked',
   IN_TRANSIT: 'In Transit',
   DELIVERED:  'Delivered',
+  CANCELLED:  'Cancelled',
 };
 
-export const STATUSES    = ['Pending', 'Booked', 'In Transit', 'Delivered'];
+export const STATUSES    = ['Pending', 'Booked', 'In Transit', 'Delivered', 'Cancelled'];
 export const STATUS_LIST = STATUSES;
 
 // Warehouse badge colors — dark/colored bg, white text, glow effect
@@ -23,6 +24,7 @@ export const STATUS_COLORS = {
   Booked:       { bg: 'var(--accent-booked)',     text: '#FFFFFF', glow: 'var(--accent-booked-glow)'     },
   'In Transit': { bg: 'var(--accent-in-transit)', text: '#FFFFFF', glow: 'var(--accent-in-transit-glow)' },
   Delivered:    { bg: 'var(--accent-delivered)',  text: '#ffffff', glow: 'var(--accent-delivered-glow)'  },
+  Cancelled:    { bg: 'var(--accent-danger)',     text: '#ffffff', glow: 'var(--accent-danger-glow)'     },
 };
 
 // Office badge colors — solid bg, white text (pill style)
@@ -31,6 +33,7 @@ export const BADGE_COLORS = {
   Booked:       { bg: '#3b82f6', text: '#ffffff' },
   'In Transit': { bg: '#a524e8', text: '#ffffff' },
   Delivered:    { bg: '#22c55e', text: '#ffffff' },
+  Cancelled:    { bg: '#FF1744', text: '#ffffff' },
 };
 
 export const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];

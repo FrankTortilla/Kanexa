@@ -11,8 +11,9 @@ const STATUS_COLORS_DROPDOWN = {
   'Booked':     { bg: '#3b82f6', text: '#ffffff' },
   'In Transit': { bg: '#a524e8', text: '#ffffff' },
   'Delivered':  { bg: '#22c55e', text: '#ffffff' },
+  'Cancelled':  { bg: '#FF1744', text: '#ffffff' },
 };
-const STATUS_OPTIONS = ['Pending', 'Booked', 'In Transit', 'Delivered'];
+const STATUS_OPTIONS = ['Pending', 'Booked', 'In Transit', 'Delivered', 'Cancelled'];
 
 const BASE_COLUMNS = [
   { key: 'ship_date', label: 'Ship Date' },
