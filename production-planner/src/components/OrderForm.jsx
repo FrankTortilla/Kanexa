@@ -6,12 +6,12 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const inputStyle = {
   width: '100%',
-  padding: '9px 12px',
-  background: '#111',
+  padding: '10px 12px',
+  background: 'var(--bg-primary)',
   border: '1px solid var(--border)',
-  borderRadius: '7px',
+  borderRadius: '6px',
   color: 'var(--text-primary)',
-  fontSize: '14px',
+  fontSize: '15px',
   fontFamily: 'inherit',
   outline: 'none',
   boxSizing: 'border-box',
@@ -19,12 +19,10 @@ const inputStyle = {
 
 const labelStyle = {
   display: 'block',
-  fontSize: '12px',
+  fontSize: '13px',
   fontWeight: 600,
   color: 'var(--text-secondary)',
-  marginBottom: '5px',
-  letterSpacing: '0.3px',
-  textTransform: 'uppercase',
+  marginBottom: '4px',
 };
 
 function Field({ label, required, children }) {
@@ -200,7 +198,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-heading), Oswald, sans-serif' }}>
             {isEdit ? 'Edit Order' : 'Add Production Order'}
           </h2>
           <button
@@ -308,16 +306,18 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
                   type="button"
                   onClick={() => set('status', s)}
                   style={{
-                    padding: '7px 14px',
+                    padding: '4px 12px',
                     borderRadius: '20px',
-                    border: `2px solid ${form.status === s ? 'var(--accent-green)' : 'var(--border)'}`,
-                    background: form.status === s ? 'rgba(74,124,63,0.2)' : 'transparent',
-                    color: form.status === s ? 'var(--accent-green)' : 'var(--text-secondary)',
-                    fontSize: '13px',
+                    border: `1px solid ${form.status === s ? 'var(--accent-green)' : 'var(--border)'}`,
+                    background: form.status === s ? 'var(--accent-green)' : 'transparent',
+                    color: form.status === s ? '#fff' : 'var(--text-secondary)',
+                    fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     transition: 'all 0.15s',
+                    minWidth: '110px',
+                    textAlign: 'center',
                   }}
                 >
                   {s}
@@ -399,10 +399,12 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
             onClick={handleSubmit}
             disabled={saving}
             style={{
-              padding: '10px 24px', borderRadius: '7px',
+              padding: '12px 24px', borderRadius: '6px',
               border: 'none', background: saving ? '#333' : 'var(--accent-green)',
-              color: '#fff', fontSize: '14px', fontWeight: 700,
-              cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              color: '#fff', fontSize: '15px', fontWeight: 700,
+              cursor: saving ? 'not-allowed' : 'pointer',
+              fontFamily: 'var(--font-heading), Oswald, sans-serif',
+              textTransform: 'uppercase', letterSpacing: '0.5px',
             }}
           >
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Order'}

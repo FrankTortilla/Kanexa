@@ -24,37 +24,15 @@ export default function Header({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '14px 0 10px',
+        padding: '10px 0',
         gap: '16px',
       }}>
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '6px',
-            background: 'var(--accent-green)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2"/>
-              <path d="M8 21h8M12 17v4"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{
-              fontFamily: 'var(--font-heading), Oswald, sans-serif',
-              fontSize: '18px',
-              fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '0.5px',
-              lineHeight: 1.1,
-            }}>
-              Production Planner
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>
-              GREEN STEEL
-            </div>
-          </div>
-        </div>
+        {/* Logo */}
+        <img
+          src="/green_steel_LOGO_copy.png"
+          alt="SureBuilT"
+          style={{ height: '44px', width: 'auto' }}
+        />
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -64,16 +42,20 @@ export default function Header({
               padding: '8px 16px',
               borderRadius: '7px',
               border: `1px solid ${showArchived ? 'var(--accent-green)' : 'var(--border)'}`,
-              background: showArchived ? 'rgba(74,124,63,0.15)' : 'transparent',
+              background: showArchived ? 'rgba(150,186,148,0.15)' : 'transparent',
               color: showArchived ? 'var(--accent-green)' : 'var(--text-secondary)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'all 0.15s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
           >
-            {showArchived ? '← Active' : '🗄 Archived'}
+            <span className="btn-icon">{showArchived ? '←' : '🗄'}</span>
+            <span className="btn-label">{showArchived ? ' Active' : ' Archived'}</span>
           </button>
           <button
             onClick={onExport}
@@ -87,9 +69,13 @@ export default function Header({
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
           >
-            ↓ CSV
+            <span className="btn-icon">↓</span>
+            <span className="btn-label"> CSV</span>
           </button>
           <button
             onClick={onAddOrder}
@@ -104,15 +90,26 @@ export default function Header({
               cursor: 'pointer',
               fontFamily: 'inherit',
               letterSpacing: '0.3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
           >
-            + Add Order
+            <span className="btn-icon">+</span>
+            <span className="btn-label"> Add Order</span>
           </button>
         </div>
       </div>
 
       {/* Tab row */}
-      <div style={{ display: 'flex', gap: '0', borderTop: '1px solid var(--border)' }}>
+      <div style={{
+        display: 'flex',
+        gap: '0',
+        borderTop: '1px solid var(--border)',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}>
         {ORDER_TYPES.map((type) => {
           const isActive = activeTab === type;
           const count = tabCounts[type] ?? 0;
@@ -135,6 +132,7 @@ export default function Header({
                 gap: '7px',
                 transition: 'color 0.15s',
                 marginBottom: '-1px',
+                whiteSpace: 'nowrap',
               }}
             >
               {type}

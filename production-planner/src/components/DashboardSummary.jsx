@@ -23,10 +23,10 @@ export default function DashboardSummary({ orders }) {
         <div
           key={label}
           style={{
-            background: '#1E293B',
+            background: '#1a1a1a',
             border: '1px solid var(--border)',
-            borderRadius: '10px',
-            padding: '14px 24px',
+            borderRadius: '8px',
+            padding: '12px 16px',
             minWidth: '160px',
           }}
         >

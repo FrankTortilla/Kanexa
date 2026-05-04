@@ -6,17 +6,15 @@ export default function StatusBadge({ status }) {
   return (
     <span style={{
       display: 'inline-block',
-      padding: '4px 10px',
+      padding: '4px 12px',
       borderRadius: '20px',
-      fontSize: '11px',
-      fontWeight: 700,
+      fontSize: '12px',
+      fontWeight: 600,
       background: colors.bg,
       color: colors.text,
       whiteSpace: 'nowrap',
-      minWidth: '108px',
+      minWidth: '110px',
       textAlign: 'center',
-      letterSpacing: '0.3px',
-      textTransform: 'uppercase',
     }}>
       {status}
     </span>
