@@ -190,19 +190,33 @@ export default function ShipmentHistory({
 
   const totalVisible = exportShipments.length;
 
-  // Report price/weight totals to parent whenever filtered set changes
+  // Determines which loads the summary cards should sum:
+  // - Custom date range active → always use the full date-filtered set
+  // - Any accordions expanded  → sum only the expanded week sections
+  // - All collapsed            → fall back to full visible set
+  const metricsSource = useMemo(() => {
+    if (dateFrom || dateTo) return exportShipments;
+    if (expandedWeeks.size > 0) {
+      return [...expandedWeeks].flatMap(key =>
+        key === '__undated__' ? undatedShipments : (weekData.weekMap[key] || [])
+      );
+    }
+    return exportShipments;
+  }, [dateFrom, dateTo, expandedWeeks, exportShipments, undatedShipments, weekData]);
+
+  // Report totals to parent whenever metricsSource changes
   useEffect(() => {
     if (!onMetricsChange) return;
-    const totalPrice = exportShipments.reduce((sum, s) => {
+    const totalPrice = metricsSource.reduce((sum, s) => {
       const v = Number(s.price);
       return Number.isFinite(v) ? sum + v : sum;
     }, 0);
-    const totalWeight = exportShipments.reduce((sum, s) => {
+    const totalWeight = metricsSource.reduce((sum, s) => {
       const v = Number(s.weight);
       return Number.isFinite(v) ? sum + v : sum;
     }, 0);
     onMetricsChange({ totalPrice, totalWeight });
-  }, [exportShipments, onMetricsChange]);
+  }, [metricsSource, onMetricsChange]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
