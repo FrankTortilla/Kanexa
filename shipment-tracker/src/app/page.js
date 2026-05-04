@@ -71,6 +71,7 @@ export default function Home() {
   const [deliveredRowsPerPage, setDeliveredRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [historyMetrics, setHistoryMetrics] = useState(null);
   const [recentlyChangedId, setRecentlyChangedId] = useState(null);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [toast, setToast] = useState(null);
@@ -101,14 +102,14 @@ export default function Home() {
   }, [sortedDelivered, deliveredPage, deliveredRowsPerPage]);
 
   const visibleSummaryMetrics = useMemo(() => {
-    if (activeTab === 'history') return null;
+    if (activeTab === 'history') return historyMetrics;
     const visibleShipments = activeTab === 'delivered' ? sortedDelivered : sortedActive;
 
     return {
       totalPrice: sumNumericField(visibleShipments, 'price'),
       totalWeight: sumNumericField(visibleShipments, 'weight'),
     };
-  }, [activeTab, sortedActive, sortedDelivered]);
+  }, [activeTab, sortedActive, sortedDelivered, historyMetrics]);
 
   // Dashboard card click → navigate to correct tab + set optional status filter
   const handleCardClick = useCallback((key) => {
@@ -372,6 +373,7 @@ export default function Home() {
           dateTo={dateTo}
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
+          onMetricsChange={setHistoryMetrics}
         />
       )}
 

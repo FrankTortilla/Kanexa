@@ -60,6 +60,7 @@ export default function ShipmentHistory({
   dateTo,
   onDateFromChange,
   onDateToChange,
+  onMetricsChange,
 }) {
   const [allShipments, setAllShipments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,6 +189,20 @@ export default function ShipmentHistory({
   }, [visibleWeekKeys, weekData, selectedWeek, undatedShipments]);
 
   const totalVisible = exportShipments.length;
+
+  // Report price/weight totals to parent whenever filtered set changes
+  useEffect(() => {
+    if (!onMetricsChange) return;
+    const totalPrice = exportShipments.reduce((sum, s) => {
+      const v = Number(s.price);
+      return Number.isFinite(v) ? sum + v : sum;
+    }, 0);
+    const totalWeight = exportShipments.reduce((sum, s) => {
+      const v = Number(s.weight);
+      return Number.isFinite(v) ? sum + v : sum;
+    }, 0);
+    onMetricsChange({ totalPrice, totalWeight });
+  }, [exportShipments, onMetricsChange]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
