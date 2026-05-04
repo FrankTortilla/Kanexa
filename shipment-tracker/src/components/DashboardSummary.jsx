@@ -39,17 +39,17 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick, 
   const metricCards = metrics
     ? [
         {
-          key: 'total-price',
-          label: 'Total Price',
-          value: currencyFormatter.format(metrics.totalPrice || 0),
-          color: '#96ba94',
-          isMetric: true,
-        },
-        {
           key: 'total-weight',
           label: 'Total Weight',
           value: `${numberFormatter.format(metrics.totalWeight || 0)} lbs`,
           color: '#B8C7D9',
+          isMetric: true,
+        },
+        {
+          key: 'total-price',
+          label: 'Total Price',
+          value: currencyFormatter.format(metrics.totalPrice || 0),
+          color: '#96ba94',
           isMetric: true,
         },
       ]
