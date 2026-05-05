@@ -19,11 +19,11 @@ END
 WHERE archived_at IS NULL;
 
 -- 3. Backfill pre_archive fields for archived rows that have no snapshot yet.
---    These rows were archived before this feature existed; we default to 'pending'
+--    These rows were archived before this feature existed; we default to 'Pending'
 --    as the safest restore target (spec requirement).
 UPDATE shipments
 SET
   pre_archive_stage  = 'pending',
-  pre_archive_status = 'pending'
+  pre_archive_status = 'Pending'
 WHERE archived_at IS NOT NULL
   AND (pre_archive_stage IS NULL OR pre_archive_status IS NULL);

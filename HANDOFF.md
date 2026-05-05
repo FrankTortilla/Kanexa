@@ -1,5 +1,5 @@
 # Handoff — Green Steel Shipment Tracker
-_Last updated: 2026-05-05 (Session 4)_
+_Last updated: 2026-05-05 (Session 5)_
 
 ## Project Safety Rule
 Before making edits, migrations, commits, or deployments, every AI tool must verify it is working in the correct existing project. Do not create a new project, app folder, repo, worktree, or branch unless the user explicitly asks.
@@ -27,9 +27,27 @@ Required preflight before deployment:
 Use this same safety rule as the template for other projects: each project should list its own active app folder, branch/context, migration system, and deploy target in its `HANDOFF.md` or project intelligence file.
 
 ## 🔄 Current Task
-Session 4 just wrapped up. Code committed and deployed to production. No in-flight changes.
+Session 5 database/recovery safety pass completed. Supabase migration blocker is resolved in production. No app feature code has been deployed from this pass.
 
 ## ✅ What Was Just Completed
+**Session 5 (2026-05-05)** focused on Supabase migration safety and recovery protocol:
+
+1. **Confirmed Supabase project** — production database is `FrankTortilla's Project` / `ntfblbamjejyctcgtmls`, shared by Waypoint (`shipments`, `shipment_materials`, `shipment_notes`) and Production Planner (`production_orders`, `production_order_activity`).
+2. **Applied Waypoint archive/cancel migrations** — production Supabase now has `stage`, `pre_archive_stage`, `pre_archive_status`, `archive_shipment(p_id uuid)`, and `unarchive_shipment(p_id uuid)`.
+3. **Allowed `Cancelled` status** — added migration `20260505000004_allow_cancelled_status.sql` and applied it in production so `shipments_status_check` now allows `Pending`, `Booked`, `In Transit`, `Delivered`, and `Cancelled`.
+4. **Hardened archive RPCs** — added/applied `20260505000005_harden_archive_rpc_functions.sql`; archive/unarchive RPCs are now `SECURITY INVOKER` with `search_path=public`, and `update_updated_at()` has a fixed search path.
+5. **Rollback-safe RPC smoke test** — ran archive/unarchive inside a transaction followed by `ROLLBACK`; no test changes persisted.
+6. **Recovery protocol added** — see `shipment-tracker/docs/RECOVERY_PROTOCOL.md`.
+7. **Manual backup script added** — see `shipment-tracker/scripts/supabase-backup.sh`; requires `SUPABASE_DB_URL` and writes gitignored exports under `backups/`.
+8. **Gitignore updated** — `supabase/.temp/` and `backups/` are ignored.
+
+Remaining Supabase advisor notes after hardening:
+- Production Planner tables `production_orders` and `production_order_activity` have RLS disabled.
+- Waypoint tables still use intentionally open RLS policies (`Allow all access`), matching the current no-auth app design.
+- Some foreign keys are unindexed; performance improvement, not an active blocker.
+
+---
+
 **Session 4 (2026-05-05)** focused on Cancelled stat card, un-cancel routing, archive/unarchive state restoration, and a race condition fix in `useShipments`:
 
 1. **Cancelled stat card** — `DashboardSummary.jsx` now renders a Cancelled tile (count + routing). Clicking it navigates to the filtered Cancelled view.
@@ -55,9 +73,9 @@ Session 4 just wrapped up. Code committed and deployed to production. No in-flig
 6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
 ## 🔜 Next Steps (in order)
-1. **Apply Supabase migrations** — The three migration files in `supabase/migrations/` need to be run against the production Supabase project (`npx supabase db push` or apply via Supabase Studio). Until they're applied, archive/unarchive RPCs and un-cancel routing will error.
-2. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
-3. **Supabase schema for Production Planner** — design and apply migrations for the production orders table (analogous to `shipments` in the tracker).
+1. **Fix dashboard totals/cancelled UI regression** — Total Weight/Price should follow the selected card/tab; Cancelled count and Cancelled filtered page should update immediately after status changes.
+2. **Decide Production Planner RLS/security model** — Supabase advisors flag `production_orders` and `production_order_activity` because RLS is disabled.
+3. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
 4. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.
 5. **`newShipmentAlert` not wired up** — `useShipments.js` returns `newShipmentAlert: { id, customer_name }` (clears after 4s) but `page.js` never renders it. A toast/banner for incoming real-time shipments would be quick to add.
 6. **Mobile responsiveness** — `ShipmentTable.jsx` uses a fixed-column HTML table with no responsive breakpoints. Card-based layout for small screens would be a significant rewrite.
@@ -69,7 +87,9 @@ Session 4 just wrapped up. Code committed and deployed to production. No in-flig
 - **Summary cards react to accordion state** — decided to count only shipments in *expanded* week groups, so the summary reflects what the user is currently looking at rather than all filtered results.
 
 ## 🐛 Known Bugs / Blockers
-- ⚠️ **Supabase migrations not yet applied** — `archive_shipment`/`unarchive_shipment` RPCs and `stage`/`pre_archive_*` columns don't exist in production until migrations are run. App will error on archive/unarchive until then.
+- **Lint still fails** — `LiveIndicator.jsx` has one React lint error; there are also warnings about `<img>` and hook dependencies.
+- **Dashboard totals/cancelled regression still open** — reviewed but not fixed yet.
+- **Supabase security advisors remain** — Production Planner RLS is disabled; Waypoint has intentionally open policies because auth is currently removed.
 - Production Planner is scaffold-only — not functional yet.
 - `newShipmentAlert` is computed but never displayed (low priority).
 

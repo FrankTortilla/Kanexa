@@ -9,7 +9,7 @@
 --   with the latest live values, which correctly handles repeated archive/unarchive cycles.
 --
 -- unarchive_shipment(p_id):
---   Reads pre_archive_stage / pre_archive_status (falls back to 'pending' if null).
+--   Reads pre_archive_stage / pre_archive_status (falls back to 'pending' / 'Pending' if null).
 --   Writes stage and status back to those values and clears archived_at atomically.
 
 -- ── archive_shipment ──────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ BEGIN
   -- Read pre-archive snapshot (lock row for atomicity)
   SELECT
     COALESCE(pre_archive_stage,  'pending'),
-    COALESCE(pre_archive_status, 'pending')
+    COALESCE(pre_archive_status, 'Pending')
   INTO v_restore_stage, v_restore_status
   FROM shipments
   WHERE id = p_id
