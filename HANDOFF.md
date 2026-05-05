@@ -1,6 +1,31 @@
 # Handoff — Green Steel Shipment Tracker
 _Last updated: 2026-05-05 (Session 4)_
 
+## Project Safety Rule
+Before making edits, migrations, commits, or deployments, every AI tool must verify it is working in the correct existing project. Do not create a new project, app folder, repo, worktree, or branch unless the user explicitly asks.
+
+For this project, the active app folder is:
+
+```text
+/Users/stephengutierrez/Desktop/Green Steel Shipment Tracker/.claude/worktrees/sleepy-ramanujan-27251b/shipment-tracker
+```
+
+Required preflight before editing:
+1. Confirm the current folder matches the active app folder above.
+2. Confirm the app structure exists: `package.json`, `src/app`, `src/components`, and `supabase/migrations`.
+3. Check `git status --short --branch` and the latest commit.
+4. Read this `HANDOFF.md`.
+5. If the folder, branch, latest commit, or handoff context does not match, stop and ask the user before continuing.
+
+Required preflight before deployment:
+1. Run lint and a production build.
+2. Check whether Supabase migrations are required.
+3. Confirm the Vercel project link before deploying.
+4. If migrations are required, apply or confirm the database changes before deploying code that depends on them.
+5. Verify the live site after deploy, especially the specific feature that changed.
+
+Use this same safety rule as the template for other projects: each project should list its own active app folder, branch/context, migration system, and deploy target in its `HANDOFF.md` or project intelligence file.
+
 ## 🔄 Current Task
 Session 4 just wrapped up. Code committed and deployed to production. No in-flight changes.
 
