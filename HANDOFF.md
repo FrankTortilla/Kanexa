@@ -27,7 +27,7 @@ Required preflight before deployment:
 Use this same safety rule as the template for other projects: each project should list its own active app folder, branch/context, migration system, and deploy target in its `HANDOFF.md` or project intelligence file.
 
 ## 🔄 Current Task
-Session 5 app regression fix completed after the database/recovery safety pass. Supabase migration blocker is resolved in production. Dashboard/cancelled/totals fixes are committed locally and ready for push/deploy after final approval.
+Session 5 app regression fix completed after the database/recovery safety pass. Supabase migration blocker is resolved in production. Dashboard/cancelled/totals fixes were pushed and deployed to production.
 
 ## ✅ What Was Just Completed
 **Session 5 (2026-05-05)** focused on Supabase migration safety and recovery protocol:
@@ -43,6 +43,7 @@ Session 5 app regression fix completed after the database/recovery safety pass. 
 9. **Dashboard/cancelled regression fixed** — Total Weight/Price now follow the selected dashboard card/tab and active search; the Cancelled card count now matches the visible Cancelled filtered page immediately.
 10. **Lint cleanup** — fixed the `LiveIndicator.jsx` React lint error and replaced the remaining plain logo `<img>` tags with Next `<Image>`.
 11. **Verification** — `npm run lint` passes cleanly. `npm run build` passes; local build prints the expected missing `.env.local` Supabase warning because local env vars are not present in this worktree.
+12. **Production deployment** — pushed branch `claude/sleepy-ramanujan-27251b` and deployed with Vercel CLI. Production alias is live at `https://shipment-tracker-one.vercel.app`; deployment id `dpl_7YwSccmbUrXmaDXGEpNbH4287vEA`; deployment URL `https://shipment-tracker-er66xwknf-steve-6797s-projects.vercel.app`.
 
 Remaining Supabase advisor notes after hardening:
 - Production Planner tables `production_orders` and `production_order_activity` have RLS disabled.
@@ -76,7 +77,7 @@ Remaining Supabase advisor notes after hardening:
 6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
 ## 🔜 Next Steps (in order)
-1. **Push and deploy Waypoint** — branch has local commits that need to be pushed, then deploy to Vercel and verify live Cancelled/totals behavior.
+1. **Live UI verification with real data** — manually test Pending/Booked/In Transit/Delivered/Cancelled card clicks and totals on the production site.
 2. **Decide Production Planner RLS/security model** — Supabase advisors flag `production_orders` and `production_order_activity` because RLS is disabled.
 3. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
 4. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.
