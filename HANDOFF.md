@@ -44,6 +44,10 @@ Session 5 app regression fix completed after the database/recovery safety pass. 
 10. **Lint cleanup** — fixed the `LiveIndicator.jsx` React lint error and replaced the remaining plain logo `<img>` tags with Next `<Image>`.
 11. **Verification** — `npm run lint` passes cleanly. `npm run build` passes; local build prints the expected missing `.env.local` Supabase warning because local env vars are not present in this worktree.
 12. **Production deployment** — pushed branch `claude/sleepy-ramanujan-27251b` and deployed with Vercel CLI. Production alias is live at `https://shipment-tracker-one.vercel.app`; deployment id `dpl_7YwSccmbUrXmaDXGEpNbH4287vEA`; deployment URL `https://shipment-tracker-er66xwknf-steve-6797s-projects.vercel.app`.
+13. **Price/special-instructions preservation fix** — status-only changes now explicitly preserve `price` and `special_instructions`, and un-cancelling routes a load back to the stage matching the chosen status instead of always forcing `pending`.
+14. **History special instructions column** — History now displays Special Instructions so archived loads visibly keep that field.
+15. **Stage correction migration** — added/applied `20260505000006_sync_active_stage_to_status.sql` so active non-cancelled shipments have `stage` aligned with `status`; Cancelled rows keep their prior-stage value.
+16. **Verification** — `npm run lint` passes, `npm run build` passes, and a rollback-safe Supabase smoke test confirmed archive/unarchive preserves `price` and `special_instructions`.
 
 Remaining Supabase advisor notes after hardening:
 - Production Planner tables `production_orders` and `production_order_activity` have RLS disabled.
@@ -77,7 +81,7 @@ Remaining Supabase advisor notes after hardening:
 6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
 ## 🔜 Next Steps (in order)
-1. **Live UI verification with real data** — manually test Pending/Booked/In Transit/Delivered/Cancelled card clicks and totals on the production site.
+1. **Push and deploy latest Waypoint preservation fix** — commit/push/deploy the price/special-instructions preservation changes, then manually verify live status changes and History display.
 2. **Decide Production Planner RLS/security model** — Supabase advisors flag `production_orders` and `production_order_activity` because RLS is disabled.
 3. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
 4. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.

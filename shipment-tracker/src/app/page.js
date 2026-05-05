@@ -16,6 +16,12 @@ import ActivityLog from '../components/ActivityLog';
 import PrintView from '../components/PrintView';
 
 const SEARCH_FIELDS = ['customer_name', 'city', 'state', 'material', 'po_number', 'carrier_name', 'tracking_number', 'special_instructions', 'trailer_type', 'loading_building'];
+const STATUS_STAGE = {
+  Pending: 'pending',
+  Booked: 'booked',
+  'In Transit': 'in-transit',
+  Delivered: 'delivered',
+};
 
 function applySearch(list, query) {
   if (!query.trim()) return list;
@@ -190,8 +196,8 @@ export default function Home() {
   // ── Status change with un-cancel routing (spec) ────────────────────────────
   //
   // Rule: if previousStatus === 'cancelled' && newStatus !== 'cancelled'
-  //   → write stage = 'pending' AND status = newStatus
-  //   This routes the shipment back to the Pending tab immediately.
+  //   → write the stage that matches newStatus.
+  //   This routes the shipment back to the correct tab/status immediately.
   //   This condition fires ONLY when coming FROM cancelled; all other transitions
   //   are plain status updates and must not alter stage.
   const handleStatusChange = useCallback(async (id, newStatus) => {
@@ -199,10 +205,16 @@ export default function Home() {
     const previousStatus = shipment?.status;
 
     const updates = { status: newStatus };
+    if (shipment && Object.prototype.hasOwnProperty.call(shipment, 'price')) {
+      updates.price = shipment.price;
+    }
+    if (shipment && Object.prototype.hasOwnProperty.call(shipment, 'special_instructions')) {
+      updates.special_instructions = shipment.special_instructions;
+    }
 
-    // Un-cancel routing: restore shipment to pending tab
+    // Un-cancel routing: restore shipment to the tab that matches the chosen status.
     if (previousStatus === 'Cancelled' && newStatus !== 'Cancelled') {
-      updates.stage = 'pending';
+      updates.stage = STATUS_STAGE[newStatus] || 'pending';
     }
 
     await updateShipment(id, updates);

@@ -464,6 +464,7 @@ const SORTABLE_COLS = [
   { label: 'Tracking#',   key: null },
   { label: 'Trailer Type',key: null },
   { label: 'Weight',      key: null },
+  { label: 'Special Instructions', key: null },
   { label: 'Status',      key: null },
   { label: 'Archived On', key: null },
   { label: 'Price',       key: null },
@@ -612,6 +613,11 @@ function HistoryRow({ shipment: s, isWarehouse, onUnarchive, onDelete, onPodUpda
         {s.trailer_type || ''}
       </td>
       <td style={tdStyle}>{s.weight}</td>
+      <td style={tdStyle} title={s.special_instructions || ''}>
+        <div style={{ maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {s.special_instructions || '—'}
+        </div>
+      </td>
       <td style={tdStyle}>
         <StatusBadge status={s.status} isWarehouse={false} />
       </td>
