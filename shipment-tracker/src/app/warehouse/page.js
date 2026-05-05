@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useMemo, useCallback } from 'react';
 import { useShipments } from '../../hooks/useShipments';
 import { formatDate } from '../../utils/formatters';
@@ -62,7 +63,7 @@ export default function WarehousePage() {
         marginBottom: '24px', flexWrap: 'wrap', gap: '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <img src="/logo-icon.svg" alt="GS" style={{ height: '56px' }} />
+          <Image src="/logo-icon.svg" alt="GS" width={74} height={56} style={{ height: '56px', width: 'auto' }} />
           <h1 style={{
             fontFamily: 'Oswald, sans-serif', fontSize: '42px', fontWeight: 700,
             margin: 0, letterSpacing: '1px',

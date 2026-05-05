@@ -27,7 +27,7 @@ Required preflight before deployment:
 Use this same safety rule as the template for other projects: each project should list its own active app folder, branch/context, migration system, and deploy target in its `HANDOFF.md` or project intelligence file.
 
 ## 🔄 Current Task
-Session 5 database/recovery safety pass completed. Supabase migration blocker is resolved in production. No app feature code has been deployed from this pass.
+Session 5 app regression fix completed after the database/recovery safety pass. Supabase migration blocker is resolved in production. Dashboard/cancelled/totals fixes are committed locally and ready for push/deploy after final approval.
 
 ## ✅ What Was Just Completed
 **Session 5 (2026-05-05)** focused on Supabase migration safety and recovery protocol:
@@ -40,6 +40,9 @@ Session 5 database/recovery safety pass completed. Supabase migration blocker is
 6. **Recovery protocol added** — see `shipment-tracker/docs/RECOVERY_PROTOCOL.md`.
 7. **Manual backup script added** — see `shipment-tracker/scripts/supabase-backup.sh`; requires `SUPABASE_DB_URL` and writes gitignored exports under `backups/`.
 8. **Gitignore updated** — `supabase/.temp/` and `backups/` are ignored.
+9. **Dashboard/cancelled regression fixed** — Total Weight/Price now follow the selected dashboard card/tab and active search; the Cancelled card count now matches the visible Cancelled filtered page immediately.
+10. **Lint cleanup** — fixed the `LiveIndicator.jsx` React lint error and replaced the remaining plain logo `<img>` tags with Next `<Image>`.
+11. **Verification** — `npm run lint` passes cleanly. `npm run build` passes; local build prints the expected missing `.env.local` Supabase warning because local env vars are not present in this worktree.
 
 Remaining Supabase advisor notes after hardening:
 - Production Planner tables `production_orders` and `production_order_activity` have RLS disabled.
@@ -73,7 +76,7 @@ Remaining Supabase advisor notes after hardening:
 6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
 ## 🔜 Next Steps (in order)
-1. **Fix dashboard totals/cancelled UI regression** — Total Weight/Price should follow the selected card/tab; Cancelled count and Cancelled filtered page should update immediately after status changes.
+1. **Push and deploy Waypoint** — branch has local commits that need to be pushed, then deploy to Vercel and verify live Cancelled/totals behavior.
 2. **Decide Production Planner RLS/security model** — Supabase advisors flag `production_orders` and `production_order_activity` because RLS is disabled.
 3. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
 4. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.
@@ -87,8 +90,7 @@ Remaining Supabase advisor notes after hardening:
 - **Summary cards react to accordion state** — decided to count only shipments in *expanded* week groups, so the summary reflects what the user is currently looking at rather than all filtered results.
 
 ## 🐛 Known Bugs / Blockers
-- **Lint still fails** — `LiveIndicator.jsx` has one React lint error; there are also warnings about `<img>` and hook dependencies.
-- **Dashboard totals/cancelled regression still open** — reviewed but not fixed yet.
+- **No current deploy blocker found** — lint and production build pass locally.
 - **Supabase security advisors remain** — Production Planner RLS is disabled; Waypoint has intentionally open policies because auth is currently removed.
 - Production Planner is scaffold-only — not functional yet.
 - `newShipmentAlert` is computed but never displayed (low priority).

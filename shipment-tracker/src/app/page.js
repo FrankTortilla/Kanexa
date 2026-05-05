@@ -54,7 +54,7 @@ function sumNumericField(list, field) {
 export default function Home() {
   const {
     allShipments, loading, searchQuery, setSearchQuery,
-    sortConfig, handleSort, flashedId, cancelledCount,
+    sortConfig, handleSort, flashedId,
     createShipment, updateShipment, deleteShipment, restoreShipment,
     archiveShipment, unarchiveShipment, archiveAllDelivered,
     checkDuplicatePO, fetchAllShipments, updatePodPath, permanentDeleteShipment,
@@ -117,16 +117,27 @@ export default function Home() {
   }, [sortedDelivered, deliveredPage, deliveredRowsPerPage]);
 
   // ── Metric cards: Total Weight and Total Price ─────────────────────────────
-  // Spec: SUM weight WHERE stage != 'archived' AND status != 'cancelled'
-  //   allShipments is already non-archived; filter out Cancelled for the totals.
+  // Totals follow the selected dashboard card/tab and respect active search.
   const visibleSummaryMetrics = useMemo(() => {
     if (activeTab === 'history') return historyMetrics;
-    const nonCancelled = allShipments.filter(s => s.status !== 'Cancelled');
+    const searched = applySearch(allShipments, searchQuery);
+
+    let metricShipments;
+    if (activeFilter === 'cancelled') {
+      metricShipments = searched.filter(s => s.status === 'Cancelled');
+    } else if (activeTab === 'delivered') {
+      metricShipments = searched.filter(s => s.status === 'Delivered' && !s.archived_at);
+    } else if (activeStatusFilter) {
+      metricShipments = searched.filter(s => s.status === activeStatusFilter);
+    } else {
+      metricShipments = searched.filter(s => s.status !== 'Cancelled');
+    }
+
     return {
-      totalPrice:  sumNumericField(nonCancelled, 'price'),
-      totalWeight: sumNumericField(nonCancelled, 'weight'),
+      totalPrice:  sumNumericField(metricShipments, 'price'),
+      totalWeight: sumNumericField(metricShipments, 'weight'),
     };
-  }, [activeTab, allShipments, historyMetrics]);
+  }, [activeFilter, activeStatusFilter, activeTab, allShipments, historyMetrics, searchQuery]);
 
   // ── Determine which dashboard card is currently active (for highlighting) ──
   const activeCard = useMemo(() => {
@@ -308,7 +319,7 @@ export default function Home() {
         isWarehouse={false}
         onCardClick={handleCardClick}
         metrics={visibleSummaryMetrics}
-        cancelledCount={cancelledCount}
+        cancelledCount={sortedCancelled.length}
         activeCard={activeCard}
       />
 

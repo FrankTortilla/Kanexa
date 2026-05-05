@@ -1,14 +1,9 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LiveIndicator({ isWarehouse, onFallbackRefetch }) {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [connected, setConnected] = useState(true);
-
-  // Update timestamp whenever this component re-renders from parent (realtime event)
-  useEffect(() => {
-    setLastUpdated(new Date());
-  }, []);
 
   // Listen for online/offline as a proxy for connection status
   useEffect(() => {
@@ -31,9 +26,6 @@ export default function LiveIndicator({ isWarehouse, onFallbackRefetch }) {
     }, 60000);
     return () => clearInterval(interval);
   }, [isWarehouse, onFallbackRefetch]);
-
-  // Expose a way for parent to bump the timestamp
-  const bump = useCallback(() => setLastUpdated(new Date()), []);
 
   if (!isWarehouse) return null;
 

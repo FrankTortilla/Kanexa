@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 
 export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, activeTab, onTabChange }) {
   return (
@@ -17,9 +18,11 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
         justifyContent: 'space-between',
         gap: '12px',
       }}>
-        <img
+        <Image
           src="/green_steel_LOGO_copy.png"
           alt="SureBuilT"
+          width={142}
+          height={44}
           style={{ height: '44px', width: 'auto' }}
         />
 

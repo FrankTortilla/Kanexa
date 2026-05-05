@@ -2,6 +2,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
+const VALID_STATUSES = ['Pending', 'Booked', 'In Transit', 'Delivered', 'Cancelled'];
+
+function normalizeStatus(status) {
+  if (status === 'Shipped') return 'In Transit';
+  if (!VALID_STATUSES.includes(status)) {
+    console.warn(`Unknown shipment status: "${status}" — keeping raw value`);
+  }
+  return status;
+}
+
+function normalizeShipment(s) {
+  return { ...s, status: normalizeStatus(s.status) };
+}
+
 export function useShipments() {
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,20 +47,8 @@ export function useShipments() {
   // are identified and discarded before they can overwrite a newer save.
   const saveSeqMap = useRef({}); // { [id]: currentSeq }
 
-  const VALID_STATUSES = ['Pending', 'Booked', 'In Transit', 'Delivered', 'Cancelled'];
-  function normalizeStatus(status) {
-    if (status === 'Shipped') return 'In Transit';
-    if (!VALID_STATUSES.includes(status)) {
-      console.warn(`Unknown shipment status: "${status}" — keeping raw value`);
-    }
-    return status;
-  }
-  function normalizeShipment(s) {
-    return { ...s, status: normalizeStatus(s.status) };
-  }
-
   // Fetch a single shipment with its materials (used after realtime events)
-  const fetchShipmentWithMaterials = async (id) => {
+  const fetchShipmentWithMaterials = useCallback(async (id) => {
     if (!supabase) return null;
     const { data, error } = await supabase
       .from('shipments')
@@ -58,7 +60,7 @@ export function useShipments() {
     const { data: fallback } = await supabase
       .from('shipments').select('*').eq('id', id).single();
     return fallback ? normalizeShipment({ ...fallback, shipment_materials: [] }) : null;
-  };
+  }, []);
 
   // Fetch all non-deleted, non-archived shipments (active view)
   const fetchShipments = useCallback(async () => {
@@ -211,7 +213,7 @@ export function useShipments() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchShipments, fetchCancelledCount]);
+  }, [fetchCancelledCount, fetchShipmentWithMaterials, fetchShipments]);
 
   // ── Create ─────────────────────────────────────────────────────────────────
   const createShipment = useCallback(async (shipmentData) => {
@@ -265,6 +267,10 @@ export function useShipments() {
 
     if (updateError) throw updateError;
 
+    if ('status' in updates) {
+      fetchCancelledCount();
+    }
+
     // Only touch materials if they were explicitly provided
     if (materials !== undefined) {
       await supabase.from('shipment_materials').delete().eq('shipment_id', id);
@@ -288,7 +294,7 @@ export function useShipments() {
     }
 
     return data;
-  }, [markDirty]);
+  }, [fetchCancelledCount, markDirty]);
 
   // ── Soft-delete (also removes POD file from storage) ──────────────────────
   const deleteShipment = useCallback(async (id) => {
