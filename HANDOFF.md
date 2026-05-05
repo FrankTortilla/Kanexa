@@ -27,7 +27,7 @@ Required preflight before deployment:
 Use this same safety rule as the template for other projects: each project should list its own active app folder, branch/context, migration system, and deploy target in its `HANDOFF.md` or project intelligence file.
 
 ## 🔄 Current Task
-Session 5 app regression fix completed after the database/recovery safety pass. Supabase migration blocker is resolved in production. Dashboard/cancelled/totals fixes were pushed and deployed to production.
+Session 5 app regression fixes are complete and live in production. Supabase migration blocker is resolved in production. Dashboard/cancelled/totals fixes and price/special-instructions preservation fixes were pushed and deployed to production.
 
 ## ✅ What Was Just Completed
 **Session 5 (2026-05-05)** focused on Supabase migration safety and recovery protocol:
@@ -48,6 +48,7 @@ Session 5 app regression fix completed after the database/recovery safety pass. 
 14. **History special instructions column** — History now displays Special Instructions so archived loads visibly keep that field.
 15. **Stage correction migration** — added/applied `20260505000006_sync_active_stage_to_status.sql` so active non-cancelled shipments have `stage` aligned with `status`; Cancelled rows keep their prior-stage value.
 16. **Verification** — `npm run lint` passes, `npm run build` passes, and a rollback-safe Supabase smoke test confirmed archive/unarchive preserves `price` and `special_instructions`.
+17. **Production deployment for preservation fix** — pushed branch `claude/sleepy-ramanujan-27251b` and deployed with Vercel CLI. Production alias is live at `https://shipment-tracker-one.vercel.app`; deployment id `dpl_CgfBTmuJa9yKvbqKEqvzD2kTgHtf`; deployment URL `https://shipment-tracker-nu0nelg0g-steve-6797s-projects.vercel.app`; commit `6ee2a2be`.
 
 Remaining Supabase advisor notes after hardening:
 - Production Planner tables `production_orders` and `production_order_activity` have RLS disabled.
@@ -81,7 +82,7 @@ Remaining Supabase advisor notes after hardening:
 6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
 ## 🔜 Next Steps (in order)
-1. **Push and deploy latest Waypoint preservation fix** — commit/push/deploy the price/special-instructions preservation changes, then manually verify live status changes and History display.
+1. **Manual live Waypoint verification** — on `https://shipment-tracker-one.vercel.app`, move a real load to Cancelled and then back to its intended status; confirm rate/price remains and the load returns to the correct card/tab. Archive a delivered load and confirm Special Instructions are visible in History.
 2. **Decide Production Planner RLS/security model** — Supabase advisors flag `production_orders` and `production_order_activity` because RLS is disabled.
 3. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
 4. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.
@@ -162,7 +163,7 @@ Soft-delete: `deleted_at`. Archive: `archived_at` (saves state to `pre_archive_s
 - `archive_shipment(shipment_id)` — sets `archived_at`, saves current status/stage to `pre_archive_*`
 - `unarchive_shipment(shipment_id)` — clears `archived_at`, restores `status`/`stage` from `pre_archive_*`
 
-⚠️ **Migrations must be applied** — files are in `shipment-tracker/supabase/migrations/`. Run `npx supabase db push` or apply manually.
+✅ **Migrations applied in production** — Session 5 migrations through `20260505000006_sync_active_stage_to_status.sql` have been applied to Supabase project `ntfblbamjejyctcgtmls`. Future sessions should still check for new pending migrations before deploy.
 
 ## 📋 Changelog
 - [2026-05-01 ~14:00] Session 2: HANDOFF.md created; standalone git repo initialized in shipment-tracker/ (initial commit 9684fe1); not yet pushed to GitHub
@@ -172,3 +173,4 @@ Soft-delete: `deleted_at`. Archive: `archived_at` (saves state to `pre_archive_s
 - [2026-05-04 15:08] Session 3d: Cancelled status added as first-class status (#FF1744 / accent-danger) in constants.js and ShipmentTable.jsx dropdown
 - [2026-05-04 15:30] Session 3 handoff: HANDOFF.md rewritten to reflect full current state; .claude/commands/ directory created
 - [2026-05-05] Session 4: Cancelled stat card + routing; un-cancel flow; archive/unarchive with pre-archive state restoration (pre_archive_status/stage columns + RPCs); race condition fix (dirty flag in useShipments); 3 Supabase migrations added; archive-delivered cron updated; deployed to https://shipment-tracker-one.vercel.app (commit ad23d889)
+- [2026-05-05] Session 5: Applied Supabase migrations/recovery protocol; fixed dashboard totals and Cancelled count/page agreement; fixed rate/price and special-instructions preservation across Cancelled/archive flows; deployed to https://shipment-tracker-one.vercel.app (commit 6ee2a2be, deployment dpl_CgfBTmuJa9yKvbqKEqvzD2kTgHtf)
