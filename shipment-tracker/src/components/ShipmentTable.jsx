@@ -290,16 +290,32 @@ function TableRow({
 }
 
 // ── Inline Status Dropdown (portal-based to escape overflow clipping) ──
+//
+// Race condition guards (spec):
+//   Part A — isSaving flag: dropdown is disabled while a save is in flight.
+//            Re-enabled in the finally block regardless of success or failure.
+//   Part B — saveSeqRef: each save is tagged with an incrementing sequence number.
+//            On response, if responseSeq !== currentSaveSeq the response is
+//            discarded (another save superseded it). This prevents out-of-order
+//            responses from rolling back a newer save.
 function StatusDropdown({ currentStatus, onStatusChange }) {
   const [localStatus, setLocalStatus] = useState(currentStatus);
   const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveSeqRef = useRef(0); // incremented on every save attempt
   const [portalStyle, setPortalStyle] = useState({});
   const btnRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  useEffect(() => { setLocalStatus(currentStatus); }, [currentStatus]);
+  useEffect(() => {
+    // Only sync incoming prop when we're not mid-save to avoid clobbering
+    // an optimistic update that hasn't settled yet.
+    if (!isSaving) setLocalStatus(currentStatus);
+  }, [currentStatus, isSaving]);
 
   const handleToggle = () => {
+    // Don't open the dropdown while a save is in flight (Part A)
+    if (isSaving) return;
     if (!isOpen && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setPortalStyle({ top: rect.bottom + 4, left: rect.left });
@@ -353,14 +369,31 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
             key={status}
             onClick={async () => {
               setIsOpen(false);
-              if (status !== localStatus) {
-                const prev = localStatus;
-                setLocalStatus(status);
-                try {
-                  await onStatusChange(status);
-                } catch (err) {
+              if (status === localStatus || isSaving) return;
+
+              // Part A: lock the dropdown while saving
+              const prev = localStatus;
+              setLocalStatus(status);
+              setIsSaving(true);
+
+              // Part B: tag this request with a sequence number
+              const mySeq = ++saveSeqRef.current;
+
+              try {
+                await onStatusChange(status);
+                // If a newer save was initiated while this one was in flight,
+                // discard this response — the newer one will set final state.
+                if (saveSeqRef.current !== mySeq) return;
+              } catch (err) {
+                // Only revert the optimistic update if this is still the latest save
+                if (saveSeqRef.current === mySeq) {
                   console.error('Status update failed:', err?.message);
                   setLocalStatus(prev);
+                }
+              } finally {
+                // Re-enable the dropdown only for the latest save (Part A)
+                if (saveSeqRef.current === mySeq) {
+                  setIsSaving(false);
                 }
               }
             }}
@@ -377,12 +410,13 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
               color: isCurrent ? sc.text : 'var(--text-primary)',
               fontSize: '12px',
               fontWeight: isCurrent ? 700 : 500,
-              cursor: 'pointer',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
               textAlign: 'left',
               whiteSpace: 'nowrap',
               transition: 'background 0.1s',
+              opacity: isSaving && !isCurrent ? 0.5 : 1,
             }}
-            onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseEnter={e => { if (!isCurrent && !isSaving) e.currentTarget.style.background = 'var(--bg-hover)'; }}
             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
           >
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: sc.bg, flexShrink: 0 }} />
@@ -398,6 +432,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
       <button
         ref={btnRef}
         onClick={handleToggle}
+        disabled={isSaving}
         className="status-badge-btn"
         style={{
           background: colors.bg,
@@ -407,7 +442,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
           padding: '4px 10px',
           fontSize: '12px',
           fontWeight: 600,
-          cursor: 'pointer',
+          cursor: isSaving ? 'wait' : 'pointer',
           minWidth: '110px',
           textAlign: 'center',
           whiteSpace: 'nowrap',
@@ -415,12 +450,14 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '5px',
+          opacity: isSaving ? 0.75 : 1,
+          transition: 'opacity 0.15s',
         }}
       >
         {localStatus}
-        <span style={{ fontSize: '9px', opacity: 0.8 }}>▾</span>
+        <span style={{ fontSize: '9px', opacity: 0.8 }}>{isSaving ? '…' : '▾'}</span>
       </button>
-      {isOpen && createPortal(dropdownContent, document.body)}
+      {isOpen && !isSaving && createPortal(dropdownContent, document.body)}
     </div>
   );
 }

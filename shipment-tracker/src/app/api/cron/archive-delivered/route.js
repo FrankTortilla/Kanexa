@@ -11,9 +11,16 @@ export async function GET(request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
+  // All targets have status='Delivered', so pre_archive values are deterministic.
+  // Setting stage='archived' keeps the new stage field consistent with archived_at.
   const { data, error } = await supabase
     .from('shipments')
-    .update({ archived_at: new Date().toISOString() })
+    .update({
+      archived_at:        new Date().toISOString(),
+      stage:              'archived',
+      pre_archive_stage:  'delivered',
+      pre_archive_status: 'Delivered',
+    })
     .eq('status', 'Delivered')
     .is('archived_at', null)
     .select('id');

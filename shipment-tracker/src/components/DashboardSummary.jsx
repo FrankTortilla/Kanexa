@@ -11,12 +11,32 @@ const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-export default function DashboardSummary({ shipments, isWarehouse, onCardClick, metrics }) {
+// ── DashboardSummary ──────────────────────────────────────────────────────────
+//
+// Props:
+//   shipments    — allShipments from the hook (non-archived, non-deleted)
+//   isWarehouse  — boolean
+//   onCardClick  — (key: string) => void
+//   metrics      — { totalWeight, totalPrice } — pre-computed by page.js
+//   cancelledCount — total cancelled count including archived rows
+//   activeCard   — key string of the currently active/filtered card, or null
+//
+// Stat card calculations (spec):
+//   TOTAL ACTIVE  : COUNT where stage != 'archived' AND status != 'cancelled'
+//     → allShipments (already non-archived) filtered to status !== 'Cancelled'
+//   TOTAL WEIGHT  : handled by page.js passing metrics from the same filter set
+//   TOTAL CANCELLED: provided via cancelledCount prop (includes archived rows)
+
+export default function DashboardSummary({ shipments, isWarehouse, onCardClick, metrics, cancelledCount, activeCard }) {
   const pending   = shipments.filter(s => s.status === 'Pending').length;
   const booked    = shipments.filter(s => s.status === 'Booked').length;
   const inTransit = shipments.filter(s => s.status === 'In Transit').length;
   const delivered = shipments.filter(s => s.status === 'Delivered').length;
-  const total     = shipments.filter(s => s.status !== 'Delivered').length;
+
+  // Total Active: non-archived (shipments prop is already non-archived) AND non-cancelled
+  const total = shipments.filter(s => s.status !== 'Cancelled').length;
+
+  const cancelled = cancelledCount ?? 0;
 
   const fontSize  = isWarehouse ? '32px' : '24px';
   const labelSize = isWarehouse ? '14px' : '12px';
@@ -29,11 +49,13 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick, 
         { key: 'delivered',  label: 'Delivered',  value: delivered, color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
       ]
     : [
-        { key: 'pending',    label: 'Pending',      value: pending,   color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
-        { key: 'booked',     label: 'Booked',       value: booked,    color: 'var(--accent-booked)',     glow: 'var(--accent-booked-glow)'     },
-        { key: 'in-transit', label: 'In Transit',   value: inTransit, color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
-        { key: 'delivered',  label: 'Delivered',    value: delivered, color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
-        { key: 'total',      label: 'Total Active', value: total,     color: 'var(--text-primary)',      glow: 'transparent'                   },
+        { key: 'pending',    label: 'Pending',          value: pending,   color: 'var(--accent-pending)',    glow: 'var(--accent-pending-glow)'    },
+        { key: 'booked',     label: 'Booked',           value: booked,    color: 'var(--accent-booked)',     glow: 'var(--accent-booked-glow)'     },
+        { key: 'in-transit', label: 'In Transit',       value: inTransit, color: 'var(--accent-in-transit)', glow: 'var(--accent-in-transit-glow)' },
+        { key: 'delivered',  label: 'Delivered',        value: delivered, color: 'var(--accent-delivered)',  glow: 'var(--accent-delivered-glow)'  },
+        { key: 'total',      label: 'Total Active',     value: total,     color: 'var(--text-primary)',      glow: 'transparent'                   },
+        // TOTAL CANCELLED — between Total Active and Total Weight (spec)
+        { key: 'cancelled',  label: 'Total Cancelled',  value: cancelled, color: '#FF1744',                  glow: 'rgba(255,23,68,0.25)'          },
       ];
 
   const metricCards = metrics
@@ -65,39 +87,48 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick, 
       borderBottom: '1px solid #2a2a2a',
     }}>
       {/* Status count tiles */}
-      {cards.map(card => (
-        <div
-          key={card.key}
-          onClick={() => onCardClick && onCardClick(card.key)}
-          style={{
-            flex: '1 1 110px',
-            minWidth: '100px',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            background: '#1a1a1a',
-            border: '1px solid var(--border)',
-            boxShadow: `0 0 12px ${card.glow}`,
-            cursor: onCardClick ? 'pointer' : 'default',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
-          }}
-          onMouseEnter={e => {
-            if (!onCardClick) return;
-            e.currentTarget.style.borderColor = card.color;
-            e.currentTarget.style.boxShadow = `0 0 16px ${card.glow}`;
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border)';
-            e.currentTarget.style.boxShadow = `0 0 12px ${card.glow}`;
-          }}
-        >
-          <div style={{ fontSize, fontWeight: 700, fontFamily: 'var(--font-heading), Oswald, sans-serif', color: card.color, lineHeight: 1.1 }}>
-            {card.value}
+      {cards.map(card => {
+        const isActive = activeCard === card.key;
+        return (
+          <div
+            key={card.key}
+            onClick={() => onCardClick && onCardClick(card.key)}
+            style={{
+              flex: '1 1 110px',
+              minWidth: '100px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: isActive ? 'rgba(255,255,255,0.05)' : '#1a1a1a',
+              border: isActive
+                ? `1px solid ${card.color}`
+                : '1px solid var(--border)',
+              boxShadow: isActive
+                ? `0 0 18px ${card.glow}`
+                : `0 0 12px ${card.glow}`,
+              cursor: onCardClick ? 'pointer' : 'default',
+              transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
+            }}
+            onMouseEnter={e => {
+              if (!onCardClick) return;
+              e.currentTarget.style.borderColor = card.color;
+              e.currentTarget.style.boxShadow = `0 0 16px ${card.glow}`;
+              if (!isActive) e.currentTarget.style.background = '#222';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = isActive ? card.color : 'var(--border)';
+              e.currentTarget.style.boxShadow = isActive ? `0 0 18px ${card.glow}` : `0 0 12px ${card.glow}`;
+              e.currentTarget.style.background = isActive ? 'rgba(255,255,255,0.05)' : '#1a1a1a';
+            }}
+          >
+            <div style={{ fontSize, fontWeight: 700, fontFamily: 'var(--font-heading), Oswald, sans-serif', color: card.color, lineHeight: 1.1 }}>
+              {card.value}
+            </div>
+            <div style={{ fontSize: labelSize, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              {card.label}
+            </div>
           </div>
-          <div style={{ fontSize: labelSize, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            {card.label}
-          </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Separator */}
       {metricCards.length > 0 && (
@@ -110,7 +141,7 @@ export default function DashboardSummary({ shipments, isWarehouse, onCardClick, 
         }} />
       )}
 
-      {/* Metric tiles */}
+      {/* Metric tiles (Total Weight, Total Price) */}
       {metricCards.map(card => (
         <div
           key={card.key}

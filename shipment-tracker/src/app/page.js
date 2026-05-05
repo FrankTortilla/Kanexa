@@ -54,7 +54,7 @@ function sumNumericField(list, field) {
 export default function Home() {
   const {
     allShipments, loading, searchQuery, setSearchQuery,
-    sortConfig, handleSort, flashedId,
+    sortConfig, handleSort, flashedId, cancelledCount,
     createShipment, updateShipment, deleteShipment, restoreShipment,
     archiveShipment, unarchiveShipment, archiveAllDelivered,
     checkDuplicatePO, fetchAllShipments, updatePodPath, permanentDeleteShipment,
@@ -63,7 +63,10 @@ export default function Home() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingShipment, setEditingShipment] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
-  const [activeStatusFilter, setActiveStatusFilter] = useState(null); // 'Pending'|'Booked'|'In Transit'|null
+  // activeStatusFilter: 'Pending' | 'Booked' | 'In Transit' | null
+  const [activeStatusFilter, setActiveStatusFilter] = useState(null);
+  // activeFilter: 'cancelled' | null — global card filter, independent of activeStatusFilter
+  const [activeFilter, setActiveFilter] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [activePage, setActivePage] = useState(1);
   const [activeRowsPerPage, setActiveRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
@@ -76,53 +79,88 @@ export default function Home() {
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Active: non-Delivered, optionally filtered by status, search-filtered, sorted
+  // ── Active list: non-Delivered, non-Cancelled, optionally filtered by status ─
+  // Spec: Cancelled shipments are excluded from the normal active view.
+  // They appear only when activeFilter === 'cancelled'.
   const sortedActive = useMemo(() => {
-    let result = allShipments.filter(s => s.status !== 'Delivered');
+    let result = allShipments.filter(s => s.status !== 'Delivered' && s.status !== 'Cancelled');
     if (activeStatusFilter) result = result.filter(s => s.status === activeStatusFilter);
     result = applySearch(result, searchQuery);
     return applySort(result, sortConfig);
   }, [allShipments, activeStatusFilter, searchQuery, sortConfig]);
 
-  // Delivered: status === 'Delivered' AND not archived, search-filtered, sorted
+  // ── Cancelled list (active + non-archived only — archived are in History) ──
+  const sortedCancelled = useMemo(() => {
+    let result = allShipments.filter(s => s.status === 'Cancelled');
+    result = applySearch(result, searchQuery);
+    return applySort(result, sortConfig);
+  }, [allShipments, searchQuery, sortConfig]);
+
+  // ── Delivered: status === 'Delivered', not archived, search-filtered, sorted ─
   const sortedDelivered = useMemo(() => {
     let result = allShipments.filter(s => s.status === 'Delivered' && !s.archived_at);
     result = applySearch(result, searchQuery);
     return applySort(result, sortConfig);
   }, [allShipments, searchQuery, sortConfig]);
 
+  // ── Which list is displayed in the active tab ──────────────────────────────
+  const currentActiveList = activeFilter === 'cancelled' ? sortedCancelled : sortedActive;
+
   const paginatedActive = useMemo(() => {
     const start = (activePage - 1) * activeRowsPerPage;
-    return sortedActive.slice(start, start + activeRowsPerPage);
-  }, [sortedActive, activePage, activeRowsPerPage]);
+    return currentActiveList.slice(start, start + activeRowsPerPage);
+  }, [currentActiveList, activePage, activeRowsPerPage]);
 
   const paginatedDelivered = useMemo(() => {
     const start = (deliveredPage - 1) * deliveredRowsPerPage;
     return sortedDelivered.slice(start, start + deliveredRowsPerPage);
   }, [sortedDelivered, deliveredPage, deliveredRowsPerPage]);
 
+  // ── Metric cards: Total Weight and Total Price ─────────────────────────────
+  // Spec: SUM weight WHERE stage != 'archived' AND status != 'cancelled'
+  //   allShipments is already non-archived; filter out Cancelled for the totals.
   const visibleSummaryMetrics = useMemo(() => {
     if (activeTab === 'history') return historyMetrics;
-    const visibleShipments = activeTab === 'delivered' ? sortedDelivered : sortedActive;
-
+    const nonCancelled = allShipments.filter(s => s.status !== 'Cancelled');
     return {
-      totalPrice: sumNumericField(visibleShipments, 'price'),
-      totalWeight: sumNumericField(visibleShipments, 'weight'),
+      totalPrice:  sumNumericField(nonCancelled, 'price'),
+      totalWeight: sumNumericField(nonCancelled, 'weight'),
     };
-  }, [activeTab, sortedActive, sortedDelivered, historyMetrics]);
+  }, [activeTab, allShipments, historyMetrics]);
 
-  // Dashboard card click → navigate to correct tab + set optional status filter
+  // ── Determine which dashboard card is currently active (for highlighting) ──
+  const activeCard = useMemo(() => {
+    if (activeFilter === 'cancelled') return 'cancelled';
+    if (activeTab === 'delivered') return 'delivered';
+    if (activeTab === 'active' && activeStatusFilter) {
+      // Map status string → card key
+      const keyMap = { 'Pending': 'pending', 'Booked': 'booked', 'In Transit': 'in-transit' };
+      return keyMap[activeStatusFilter] || null;
+    }
+    if (activeTab === 'active' && !activeStatusFilter) return 'total';
+    return null;
+  }, [activeFilter, activeTab, activeStatusFilter]);
+
+  // ── Dashboard card click ───────────────────────────────────────────────────
   const handleCardClick = useCallback((key) => {
-    if (key === 'delivered') {
+    if (key === 'cancelled') {
+      // Toggle the cancelled filter; clicking again clears it
+      setActiveTab('active');
+      setActiveStatusFilter(null);
+      setActiveFilter(prev => prev === 'cancelled' ? null : 'cancelled');
+    } else if (key === 'delivered') {
       setActiveTab('delivered');
       setActiveStatusFilter(null);
+      setActiveFilter(null);
     } else if (key === 'total') {
       setActiveTab('active');
       setActiveStatusFilter(null);
+      setActiveFilter(null);
     } else {
       const statusMap = { pending: 'Pending', booked: 'Booked', 'in-transit': 'In Transit' };
       setActiveTab('active');
       setActiveStatusFilter(statusMap[key] || null);
+      setActiveFilter(null);
     }
     setActivePage(1);
     setDeliveredPage(1);
@@ -138,20 +176,43 @@ export default function Home() {
 
   const handleDelete = async (s) => { await deleteShipment(s.id); };
 
+  // ── Status change with un-cancel routing (spec) ────────────────────────────
+  //
+  // Rule: if previousStatus === 'cancelled' && newStatus !== 'cancelled'
+  //   → write stage = 'pending' AND status = newStatus
+  //   This routes the shipment back to the Pending tab immediately.
+  //   This condition fires ONLY when coming FROM cancelled; all other transitions
+  //   are plain status updates and must not alter stage.
   const handleStatusChange = useCallback(async (id, newStatus) => {
-    await updateShipment(id, { status: newStatus });
+    const shipment = allShipments.find(s => s.id === id);
+    const previousStatus = shipment?.status;
+
+    const updates = { status: newStatus };
+
+    // Un-cancel routing: restore shipment to pending tab
+    if (previousStatus === 'Cancelled' && newStatus !== 'Cancelled') {
+      updates.stage = 'pending';
+    }
+
+    await updateShipment(id, updates);
     setRecentlyChangedId(id);
     setTimeout(() => setRecentlyChangedId(null), 1500);
-  }, [updateShipment]);
+  }, [updateShipment, allShipments]);
 
   const handleArchive = useCallback(async (s) => { await archiveShipment(s.id); }, [archiveShipment]);
   const handleToggleExpand = useCallback((id) => { setExpandedId(prev => prev === id ? null : id); }, []);
   const getUrgencyClass = useCallback((shipment) => getUrgencyLevel(shipment), []);
   const renderActivityLog = useCallback((shipmentId) => <ActivityLog shipmentId={shipmentId} isWarehouse={false} />, []);
   const handlePrint = () => window.print();
-  const handleExport = () => exportToCSV(activeTab === 'delivered' ? sortedDelivered : sortedActive);
+  const handleExport = () => exportToCSV(activeTab === 'delivered' ? sortedDelivered : (activeFilter === 'cancelled' ? sortedCancelled : sortedActive));
   const handleSearchChange = (q) => { setSearchQuery(q); setActivePage(1); setDeliveredPage(1); };
-  const handleTabChange = (tab) => { setActiveTab(tab); if (tab !== 'active') setActiveStatusFilter(null); };
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab !== 'active') {
+      setActiveStatusFilter(null);
+      setActiveFilter(null);
+    }
+  };
 
   const showToast = (msg) => {
     setToast(msg);
@@ -247,19 +308,21 @@ export default function Home() {
         isWarehouse={false}
         onCardClick={handleCardClick}
         metrics={visibleSummaryMetrics}
+        cancelledCount={cancelledCount}
+        activeCard={activeCard}
       />
 
       {activeTab !== 'history' && (
         <SearchFilterBar
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          totalCount={activeTab === 'delivered' ? sortedDelivered.length : sortedActive.length}
-          filteredCount={activeTab === 'delivered' ? sortedDelivered.length : sortedActive.length}
+          totalCount={activeTab === 'delivered' ? sortedDelivered.length : currentActiveList.length}
+          filteredCount={activeTab === 'delivered' ? sortedDelivered.length : currentActiveList.length}
           isWarehouse={false}
         />
       )}
 
-      {/* Active status filter chip */}
+      {/* Active status filter chip (Pending / Booked / In Transit) */}
       {activeTab === 'active' && activeStatusFilter && (
         <div className="no-print" style={{
           display: 'flex', alignItems: 'center', gap: '8px',
@@ -283,8 +346,32 @@ export default function Home() {
         </div>
       )}
 
+      {/* Cancelled filter chip */}
+      {activeTab === 'active' && activeFilter === 'cancelled' && (
+        <div className="no-print" style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '6px 24px',
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Showing:</span>
+          <span style={{
+            padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+            background: '#FF1744', color: '#fff',
+          }}>
+            Cancelled
+          </span>
+          <button
+            onClick={() => setActiveFilter(null)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', padding: '2px 6px' }}
+          >
+            × Show all
+          </button>
+        </div>
+      )}
+
       {activeTab === 'active' && (
-        sortedActive.length === 0 ? (
+        currentActiveList.length === 0 ? (
           <EmptyState isWarehouse={false} />
         ) : (
           <>
@@ -307,7 +394,7 @@ export default function Home() {
             />
             <Pagination
               currentPage={activePage}
-              totalItems={sortedActive.length}
+              totalItems={currentActiveList.length}
               rowsPerPage={activeRowsPerPage}
               onPageChange={setActivePage}
               onRowsPerPageChange={p => { setActiveRowsPerPage(p); setActivePage(1); }}
@@ -378,7 +465,7 @@ export default function Home() {
       )}
 
       <PrintView
-        shipments={activeTab === 'delivered' ? sortedDelivered : sortedActive}
+        shipments={activeTab === 'delivered' ? sortedDelivered : currentActiveList}
         searchQuery={searchQuery}
         totalCount={allShipments.length}
       />

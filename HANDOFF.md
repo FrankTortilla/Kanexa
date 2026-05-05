@@ -1,268 +1,100 @@
-# Green Steel Shipment Tracker — Handoff Document
+# Handoff — Green Steel Shipment Tracker
+_Last updated: 2026-05-04 15:30_
 
-**Last updated:** 2026-05-01  
-**Project root (worktree):** `/Users/stephengutierrez/Desktop/Green Steel Shipment Tracker/.claude/worktrees/modest-haslett-bb913e/`  
-**App directory:** `shipment-tracker/`
+## 🔄 Current Task
+Session just wrapped up. Last action was creating `.claude/commands/` directory and updating this handoff. No in-flight code changes.
 
----
+## ✅ What Was Just Completed
+**Session 3 (2026-05-04)** wrapped up a batch of UI/UX polish across both the Shipment Tracker and the new Production Planner app:
 
-## Project Name & Purpose
+1. **Cancelled status** — Added `Cancelled` as a full first-class status in `constants.js` (`STATUS`, `STATUSES`, `STATUS_LIST`, `STATUS_COLORS`, `BADGE_COLORS`) with color `#FF1744` (`accent-danger`). `ShipmentTable.jsx` inline status dropdown now renders it.
+2. **History tab: spend/weight summary cards** — `ShipmentHistory.jsx` now shows Total Weight and Total Price summary cards that react to active filters and accordion expansion state. Cards are ordered weight-left / price-right. `DashboardSummary.jsx` metric card order was also swapped to match.
+3. **History tab: accordion-reactive summary cards** — Summary cards update as the user opens/collapses week-group accordions (not just filter changes).
+4. **SureBuilT logo in Header** — Replaced the old `[GS]` SVG icon + text block with `green_steel_LOGO_copy.png` at 44px height. Header is now two-row: logo + action buttons (row 1), Active/Delivered/History tabs (row 2). Mobile breakpoint at 640px collapses buttons to icon-only. Tab row is horizontally scrollable.
+5. **Production Planner bootstrapped** — New Next.js app at `production-planner/` spun up: Vercel link, env vars, feature flag scaffolding. Styled to match Waypoint/Shipment Tracker design system (SureBuilT logo, dark theme, Oswald font, filled/outlined status pills).
+6. **Date picker calendar icon fix** (Production Planner) — Added `-webkit-calendar-picker-indicator` invert filter to `production-planner/src/app/globals.css` so the calendar icon is visible on dark backgrounds.
 
-**Green Steel Shipment Tracker** — an internal operations tool for Green Steel Manufacturing. It lets office staff create, track, and manage steel shipments from Pending through Delivered, and lets warehouse staff view and update shipments. Features include real-time updates (Supabase Realtime), POD (Proof of Delivery) document uploads, activity logs, weekly history grouping, and CSV export.
+## 🔜 Next Steps (in order)
+1. **Production Planner feature build-out** — the app is bootstrapped but currently only has scaffolding. `OrderForm.jsx`, `OrderTable.jsx`, `DashboardSummary.jsx`, `ActivityLog.jsx`, `ArchivedOrders.jsx`, and `StatusBadge.jsx` exist but need real business logic and Supabase integration.
+2. **Supabase schema for Production Planner** — design and apply migrations for the production orders table (analogous to `shipments` in the tracker).
+3. **History tab search** — `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `page.js`). Either show the bar on History or move search logic inside `ShipmentHistory.jsx`.
+4. **`newShipmentAlert` not wired up** — `useShipments.js` returns `newShipmentAlert: { id, customer_name }` (clears after 4s) but `page.js` never renders it. A toast/banner for incoming real-time shipments would be quick to add.
+5. **Mobile responsiveness** — `ShipmentTable.jsx` uses a fixed-column HTML table with no responsive breakpoints. Card-based layout for small screens would be a significant rewrite.
+6. **Push Shipment Tracker to GitHub** — standalone repo at `shipment-tracker/` was initialized and committed (initial commit `9684fe1`) but never pushed. See previous handoff for `gh repo create` command.
 
----
+## 🧠 Key Decisions Made
+- **`Cancelled` uses `accent-danger` (`#FF1744`)** — matches conventional red-for-cancel UI language; glow is `rgba(255, 23, 68, 0.15)` to stay subtle.
+- **Two-row header layout** — separates primary actions (add, export, print) from navigation tabs; improves scannability and mobile collapse behavior.
+- **Production Planner as a separate Next.js app** (`production-planner/`) rather than a route inside `shipment-tracker/` — keeps the two domains fully independent with their own Vercel deployments and Supabase schemas. This was scaffolded but left for the next session to build out.
+- **Summary cards react to accordion state** — decided to count only shipments in *expanded* week groups, so the summary reflects what the user is currently looking at rather than all filtered results.
 
-## Tech Stack
+## 🐛 Known Bugs / Blockers
+- No confirmed bugs in Shipment Tracker as of last deploy.
+- Production Planner is scaffold-only — not functional yet.
+- `newShipmentAlert` is computed but never displayed (low priority).
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js (App Router, `'use client'` everywhere) |
-| Runtime | Node.js / React 18 |
-| Bundler | Turbopack (configured in `next.config.mjs`) |
-| Database | Supabase (Postgres) |
-| Realtime | Supabase Realtime (postgres_changes subscription) |
-| Storage | Supabase Storage — bucket `pod-documents` |
-| Auth | **None** — auth was added and then fully removed |
-| Styling | Inline styles + CSS custom properties in `globals.css` |
-| Deployment | Vercel — Project ID `prj_jBm73Pi0U4JyaBU2rGmLTQCRsgHv` |
-| Package manager | npm |
-
----
-
-## Environment Variables
-
-Required in `.env.local` (never committed):
-
+## 🗂 Architecture Notes
+### Multi-app monorepo structure
 ```
-NEXT_PUBLIC_SUPABASE_URL=<your-supabase-project-url>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
+Green Steel Shipment Tracker/          ← git worktree root
+├── shipment-tracker/                  ← standalone Next.js app (Vercel: prj_jBm73Pi0U4JyaBU2rGmLTQCRsgHv)
+│   ├── src/app/page.js                ← office view (Active / Delivered / History tabs)
+│   ├── src/app/warehouse/page.js      ← warehouse read-only view
+│   ├── src/components/                ← 16 components (see below)
+│   ├── src/hooks/useShipments.js      ← all Supabase CRUD + realtime
+│   └── src/lib/constants.js           ← STATUS, STATUSES, STATUS_COLORS, BADGE_COLORS
+├── production-planner/                ← NEW standalone Next.js app (bootstrapped this session)
+│   ├── src/app/page.js
+│   ├── src/components/                ← 8 components (scaffold)
+│   └── src/app/globals.css
+└── .claude/commands/                  ← NEW — created this session (empty, ready for custom slash commands)
 ```
 
-These must also be set in Vercel project settings (Settings → Environment Variables).
-
----
-
-## Key File Paths
-
-### App / Pages
+### Shipment Tracker components
 | File | Purpose |
 |---|---|
-| `shipment-tracker/src/app/page.js` | Main office view — Active, Delivered, History tabs |
-| `shipment-tracker/src/app/warehouse/page.js` | Warehouse-only view (read + status update, no add/edit/delete) |
-| `shipment-tracker/src/app/globals.css` | All CSS custom properties (colors, typography, spacing) |
-| `shipment-tracker/src/app/layout.js` | Root layout, font loading |
+| `Header.jsx` | Two-row nav: SureBuilT logo + actions (row 1), tabs (row 2) |
+| `DashboardSummary.jsx` | Stat tiles — Total, Pending, Booked, In Transit, Delivered, Cancelled |
+| `ShipmentTable.jsx` | Main table — sortable, inline status dropdown (portal), POD cell, row expand |
+| `ShipmentHistory.jsx` | History tab — Mon–Fri week grouping, collapsible, date range, spend/weight summary cards |
+| `ShipmentForm.jsx` | Add/Edit modal — all fields, materials list, duplicate PO check |
+| `SearchFilterBar.jsx` | Search input + result count |
+| `Pagination.jsx` | Page nav + rows-per-page selector |
+| `ActivityLog.jsx` | Per-shipment event log (inside expanded row) |
+| `PODCell.jsx` | Upload / view Proof of Delivery |
+| `UrgencyBadge.jsx` | Color-coded urgency by ship date proximity |
+| `StatusBadge.jsx` | Pill badge using `STATUS_COLORS` from constants |
+| `StatusStepper.jsx` | Visual status progress bar |
+| `LiveIndicator.jsx` | Realtime connection dot |
+| `EmptyState.jsx` | Zero-results placeholder |
+| `PrintView.jsx` | Print-only layout |
+| `ExportCSV.jsx` | `exportToCSV(shipments)` utility |
 
-### Components
-| File | Purpose |
+### CSS design tokens (globals.css)
+| Variable | Value |
 |---|---|
-| `src/components/Header.jsx` | Top nav bar — tabs (Active/Delivered/History), Export CSV, Print, + Add Shipment |
-| `src/components/DashboardSummary.jsx` | Stat tiles row — Total, Pending, Booked, In Transit, Delivered |
-| `src/components/ShipmentTable.jsx` | Main data table — sortable columns, inline status dropdown (portal), POD cell, row expand |
-| `src/components/ShipmentHistory.jsx` | History tab — Mon–Fri week grouping, collapsible sections, date range filter, week selector, sort by ship/delivery date |
-| `src/components/ShipmentForm.jsx` | Add/Edit shipment modal — all fields, materials list, duplicate PO check |
-| `src/components/SearchFilterBar.jsx` | Search input + result count |
-| `src/components/Pagination.jsx` | Page navigation + rows-per-page selector |
-| `src/components/ActivityLog.jsx` | Per-shipment event log (rendered inside expanded row) |
-| `src/components/PODCell.jsx` | Upload / view Proof of Delivery files |
-| `src/components/UrgencyBadge.jsx` | Color-coded urgency indicator based on ship date proximity |
-| `src/components/EmptyState.jsx` | Zero-results placeholder |
-| `src/components/PrintView.jsx` | Print-only layout (hidden on screen, shown on `window.print()`) |
-| `src/components/ExportCSV.jsx` | CSV export utility — `exportToCSV(shipments)` |
+| `--accent-green` | `#96ba94` (sage) |
+| `--accent-pending` | `#FF8C00` |
+| `--accent-booked` | `#3b82f6` |
+| `--accent-in-transit` | `#a524e8` (purple) |
+| `--accent-delivered` | `#22c55e` |
+| `--accent-danger` | `#FF1744` (Cancelled) |
+| `--bg-primary` | `#1a1a1a` |
+| `--bg-hover` | `#2e2e2e` |
 
-### Hooks & Lib
-| File | Purpose |
-|---|---|
-| `src/hooks/useShipments.js` | All Supabase CRUD, realtime subscription, archive/unarchive, permanent delete, POD path update |
-| `src/lib/supabase.js` | Supabase client singleton (`createClient`) |
-| `src/lib/constants.js` | `DEFAULT_ROWS_PER_PAGE`, `BADGE_COLORS` map |
-
-### Config
-| File | Purpose |
-|---|---|
-| `next.config.mjs` | Turbopack `root` set to `__dirname` (required for git worktree builds) |
-| `.vercel/project.json` | Vercel project linkage — `projectId: prj_jBm73Pi0U4JyaBU2rGmLTQCRsgHv` |
-| `public/logo-icon.png` | App logo shown in Header (GSI bracket mark) |
-
----
-
-## Database Tables (Supabase)
-
+### Supabase tables
 | Table | Key Columns |
 |---|---|
 | `shipments` | `id`, `customer_name`, `po_number`, `status`, `ship_date`, `delivery_date`, `carrier_name`, `tracking_number`, `city`, `state`, `material`, `trailer_type`, `loading_building`, `special_instructions`, `pod_file_path`, `deleted_at`, `archived_at` |
 | `shipment_materials` | `id`, `shipment_id`, `material_name`, `quantity` |
 | `shipment_notes` | `id`, `shipment_id`, `note`, `created_at`, `author` |
 
-**Soft-delete pattern:** `deleted_at` column (set to timestamp, never hard-deleted from active flow).  
-**Archive pattern:** `archived_at` column — archived rows are excluded from Active/Delivered views, visible only in History.  
-**Permanent delete** (History tab only): deletes Storage file → notes → materials → shipment row in order.
+Soft-delete: `deleted_at`. Archive: `archived_at`. Permanent delete (History only): Storage → notes → materials → row.
 
----
-
-## What Was Built & Changed This Session
-
-### 1. Status Dropdown Scrollbar Fix (`ShipmentTable.jsx`)
-- Problem: dropdown was clipped by `overflow: auto` on the table container.
-- Fix: rewrote `StatusDropdown` to use `createPortal(dropdownContent, document.body)` with `position: fixed` coordinates captured via `getBoundingClientRect()`. Scroll listener closes the dropdown to prevent stale positions.
-
-### 2. History Tab Full Rebuild (`ShipmentHistory.jsx`)
-- Replaced the old flat list with Mon–Fri work-week grouping.
-- `getWeekKey(dateStr)` → returns the Monday of that date as ISO string.
-- `formatWeekLabel(mondayStr)` → e.g. "Apr 28 – May 2" or "Dec 30, 2025 – Jan 3, 2026".
-- Week selector dropdown filters to one specific week.
-- Date range filter (From / To) narrows the dated shipments pool.
-- Undated shipments (null ship_date) always appear in their own "Undated / TBD" group.
-- Sort by Ship Date or Delivery Date (ascending/descending) via clickable column headers.
-- CSV export respects all active filters.
-- **All weeks start collapsed** — no auto-expand on load.
-- Week group header bars styled as cards: `rgba(255,255,255,0.04)` background, `0.5px solid rgba(255,255,255,0.08)` border, `8px` radius.
-
-### 3. Color Scheme Updates (`globals.css`)
-| Variable | Old Value | New Value |
-|---|---|---|
-| `--accent-green` | `#00E676` | `#96ba94` (sage green) |
-| `--accent-green-hover` | `#00E676` | `#96ba94` |
-| `--accent-in-transit` | `#38BDF8` (blue) | `#a524e8` (purple) |
-| `--accent-delivered` | `#4a7c3f` | `#22c55e` (bright green) |
-| `--accent-delivered-glow` | — | `rgba(34, 197, 94, 0.25)` |
-| `--accent-in-transit-glow` | — | `rgba(165, 36, 232, 0.25)` |
-| `--bg-hover` | `#1E2A38` | `#222222` |
-
-### 4. Logo Swap (`public/logo-icon.png`)
-- Replaced old SVG/PNG with `GS_Shipment_LOGO.png` (GSI bracket mark).
-- `Header.jsx` `src` updated from `/logo-icon.svg` → `/logo-icon.png`.
-
-### 5. Delivered Stat Tile Color (`warehouse/page.js`)
-- `SummaryCard` for Delivered hardcoded color changed from `#4a7c3f` → `#22c55e` to match the Delivered badge.
-
-### 6. Materials Race Condition Fix (`useShipments.js → updateShipment`)
-- Problem: Supabase Realtime fired a fetch between the materials `DELETE` and `INSERT`, returning an empty array and wiping materials in local state.
-- Fix: after the materials `INSERT` completes, call `setShipments` a second time with the authoritative `savedMaterials` array. Local state always wins the race.
-
-### 7. Auth Added Then Removed
-- Supabase email/password auth was added to `page.js` and `Header.jsx`, deployed once, then fully removed at user request.
-- `page.js` is now clean — no `useEffect`, no session state, no auth imports.
-- `Header.jsx` is clean — no logout button.
-
-### 8. Turbopack Worktree Fix (`next.config.mjs`)
-- Added `turbopack: { root: __dirname }` to resolve Turbopack's inability to find `next/package.json` from inside the git worktree path.
-
----
-
-## Current State of the App
-
-### Working
-- Active tab: create, edit, delete, archive shipments; inline status change; row expand with activity log; POD upload/view; search; sort; pagination.
-- Delivered tab: same as Active + "Archive All Delivered" batch action.
-- History tab: week grouping, collapsible sections, date range filter, week selector, sort by ship/delivery date, CSV export, unarchive, permanent delete. All weeks start collapsed.
-- Dashboard stat tiles: click to filter by status.
-- Real-time sync across browser tabs via Supabase Realtime.
-- Print view and CSV export.
-- Warehouse view at `/warehouse` — read-only with status updates.
-
-### Not Working / Known Limitations
-- No authentication — the app is publicly accessible to anyone with the URL. **This is intentional per user request** (auth was removed). If access control is needed, it must be re-added.
-- No role-based permissions beyond the separate `/warehouse` route.
-- POD storage bucket (`pod-documents`) must exist in Supabase Storage and be configured with appropriate policies.
-
-### Known Bugs
-- None confirmed as of last deploy. The materials race condition, status dropdown clip, and history collapse bugs are all resolved.
-
----
-
-## Deployment
-
-**Vercel project:** `prj_jBm73Pi0U4JyaBU2rGmLTQCRsgHv`  
-**Deploy command (from worktree app dir):**
-```bash
-cd /Users/stephengutierrez/Desktop/Green\ Steel\ Shipment\ Tracker/.claude/worktrees/modest-haslett-bb913e/shipment-tracker
-vercel --prod
-```
-
-The `.vercel/project.json` file in the app directory links to the correct Vercel project.
-
----
-
-## How to Run Locally
-
-```bash
-cd /Users/stephengutierrez/Desktop/Green\ Steel\ Shipment\ Tracker/.claude/worktrees/modest-haslett-bb913e/shipment-tracker
-npm install          # only needed once
-npm run dev          # starts on http://localhost:3000
-```
-
-Create `.env.local` in the `shipment-tracker/` directory with the two Supabase env vars listed above.
-
----
-
-## Exact Next Steps
-
-### Immediate (unfinished from this session)
-
-1. **Push to GitHub** — the standalone repo in `shipment-tracker/` has been initialized and committed but not yet pushed. Run one of:
-
-   **Option A — GitHub CLI (one command):**
-   ```bash
-   cd "/Users/stephengutierrez/Desktop/Green Steel Shipment Tracker/.claude/worktrees/modest-haslett-bb913e/shipment-tracker"
-   gh repo create green-steel-shipment-tracker --private --source=. --remote=origin --push
-   ```
-
-   **Option B — Manual:**
-   ```bash
-   cd "/Users/stephengutierrez/Desktop/Green Steel Shipment Tracker/.claude/worktrees/modest-haslett-bb913e/shipment-tracker"
-   git remote add origin git@github.com:YOUR_USERNAME/green-steel-shipment-tracker.git
-   git branch -M main
-   git push -u origin main
-   ```
-   Create the repo first at github.com/new (Private, no README).
-
-   After pushing, update this file with the GitHub repo URL.
-
-### Feature / Improvement Backlog
-
-2. **Re-add authentication** — if access control becomes needed again, use Supabase Auth with `@supabase/ssr` and Next.js middleware (`middleware.js`) rather than client-side guards. The previous implementation used `supabase.auth.signInWithPassword()` directly in `src/app/page.js` — that approach was removed. A middleware-based approach would be cleaner and more secure.
-
-3. **History tab search** — `searchQuery` is passed as a prop to `ShipmentHistory.jsx` but the `<SearchFilterBar>` is hidden when `activeTab === 'history'` (see `src/app/page.js` line 233: `activeTab !== 'history'`). Either show the bar on the History tab or move search logic inside `ShipmentHistory.jsx` itself.
-
-4. **`newShipmentAlert` not wired up** — `useShipments.js` returns `newShipmentAlert: { id, customer_name }` (set on Realtime INSERT, clears after 4s) but `src/app/page.js` never destructures or renders it. A toast or banner notification for incoming shipments would be straightforward to add.
-
-5. **Warehouse view improvements** — `src/app/warehouse/page.js` is a thin read-only view. Could add: search bar, date filtering, POD file viewing (currently only upload is available from office view), or activity log expansion.
-
-6. **Mobile responsiveness** — `ShipmentTable.jsx` uses a fixed-column HTML table with no responsive breakpoints. A card-based layout for small screens would require a significant rewrite of `ShipmentTable.jsx` and `ShipmentHistory.jsx`.
-
----
-
-## Git Context
-
-### Claude Worktree (internal)
-- **Worktree branch:** `modest-haslett-bb913e` (inside `.claude/worktrees/`)
-- **Main repo:** `/Users/stephengutierrez/Desktop/Green Steel Shipment Tracker/`
-- Recent worktree commits (most recent first):
-  - `72ff7b67` — card styling on week group header bars
-  - `578291b3` — all History weeks start collapsed
-  - Auth add/remove commits
-  - Color scheme + logo commits
-  - History tab rebuild
-  - Status dropdown portal fix
-
-### Standalone Git Repo (GitHub)
-- **Location:** `shipment-tracker/` directory has its own independent `.git/`
-- **Initial commit:** `9684fe1` — "Initial commit — Green Steel Shipment Tracker" (48 files)
-- **Branch:** `main`
-- **Remote:** not yet pushed — see "Exact Next Steps" for push commands
-- **`.gitignore`** already existed (Next.js generated) — covers `.env*`, `node_modules/`, `.next/`, `.vercel/`, `*.tsbuildinfo`
-
----
-
-## Session 2 Changes (2026-05-01)
-
-### 1. HANDOFF.md Created
-- File written to worktree root: `HANDOFF.md` (this file)
-- Covers full project context, all file paths, session changes, known bugs, env vars, and next steps
-
-### 2. Git Repository Initialized (`shipment-tracker/`)
-- Ran `git init` inside `shipment-tracker/` to create a standalone repo independent of the Claude worktree
-- Verified `.gitignore` (Next.js-generated) already correctly excludes `.env*`, `node_modules/`, `.next/`, `.vercel/`
-- Staged all 48 project files and created initial commit `9684fe1`
-- Repo is on branch `main`, no remote set yet
-- **Not yet pushed to GitHub** — push commands provided to user (see below)
+## 📋 Changelog
+- [2026-05-01 ~14:00] Session 2: HANDOFF.md created; standalone git repo initialized in shipment-tracker/ (initial commit 9684fe1); not yet pushed to GitHub
+- [2026-05-03 22:00] Session 3a: SureBuilT logo swapped into Header (two-row layout, mobile icon-only); Production Planner bootstrapped and styled to match Waypoint design system; date picker calendar icon fixed in production-planner globals.css
+- [2026-05-04 11:52] Session 3b: History tab spend/weight summary cards restored, reactive to filters; metric card order swapped (weight left, price right)
+- [2026-05-04 12:16] Session 3c: History tab summary cards now react to accordion expansion state (count only expanded week groups)
+- [2026-05-04 15:08] Session 3d: Cancelled status added as first-class status (#FF1744 / accent-danger) in constants.js and ShipmentTable.jsx dropdown
+- [2026-05-04 15:30] Session 3 handoff: HANDOFF.md rewritten to reflect full current state; .claude/commands/ directory created
