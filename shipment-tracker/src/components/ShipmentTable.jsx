@@ -334,8 +334,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
       ref={dropdownRef}
       style={{
         position: 'fixed',
-        top: portalStyle.top,
-        left: portalStyle.left,
+        ...portalStyle,
         zIndex: 9999,
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',

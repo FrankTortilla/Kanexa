@@ -183,7 +183,7 @@ export default function Home() {
   const filterChipColor = activeStatusFilter ? (BADGE_COLORS[activeStatusFilter] || { bg: '#6b7280', text: '#fff' }) : null;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen" style={{ paddingBottom: '240px' }}>
       {/* Toast notification */}
       {toast && (
         <div style={{
