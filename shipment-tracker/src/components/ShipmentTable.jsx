@@ -28,7 +28,7 @@ const BASE_COLUMNS = [
   { key: 'trailer_type', label: 'Trailer Type' },
   { key: 'weight', label: 'Weight' },
   { key: 'total_mileage', label: 'Total Mileage' },
-  { key: 'special_instructions', label: 'Special Instructions', truncate: true },
+  { key: 'special_instructions', label: 'Notes', truncate: true },
   { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price' }, // hidden in warehouse view
   { key: 'pod', label: 'POD', minWidth: '80px' },
