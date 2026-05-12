@@ -148,10 +148,10 @@ export default function Home() {
       {toast && (
         <div className="animate-fade-in" style={{
           position: 'fixed', top: '24px', right: '24px', zIndex: 999,
-          background: 'var(--accent-green)', color: '#fff',
+          background: '#68b857', color: '#fff',
           padding: '12px 20px', borderRadius: '10px',
           fontSize: '14px', fontWeight: 600,
-          boxShadow: '0 4px 24px rgba(74,124,63,0.4)',
+          boxShadow: '0 4px 24px rgba(104,184,87,0.4)',
         }}>
           {toast}
         </div>

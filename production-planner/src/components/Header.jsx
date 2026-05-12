@@ -12,38 +12,39 @@ export default function Header({
 }) {
   return (
     <header style={{
-      background: '#111111',
-      borderBottom: '1px solid var(--border)',
+      background: '#222222',
+      borderBottom: '1px solid #333333',
       padding: '0 24px',
       position: 'sticky',
       top: 0,
       zIndex: 100,
     }}>
-      {/* Top row */}
+      {/* Top row — 125px tall */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 0',
+        minHeight: '125px',
         gap: '16px',
       }}>
         {/* Logo */}
         <img
-          src="/green_steel_LOGO_copy.png"
-          alt="SureBuilT"
-          style={{ height: '44px', width: 'auto' }}
+          src="/GS-Grey-Logo.png"
+          alt="Green Steel"
+          style={{ height: '70px', width: 'auto' }}
+          onError={e => { e.currentTarget.src = '/green_steel_LOGO_copy.png'; }}
         />
 
-        {/* Actions */}
+        {/* Actions + POWERED BY */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={onToggleArchived}
             style={{
               padding: '8px 16px',
               borderRadius: '7px',
-              border: `1px solid ${showArchived ? 'var(--accent-green)' : 'var(--border)'}`,
-              background: showArchived ? 'rgba(150,186,148,0.15)' : 'transparent',
-              color: showArchived ? 'var(--accent-green)' : 'var(--text-secondary)',
+              border: `1px solid ${showArchived ? 'var(--accent-green)' : '#333333'}`,
+              background: showArchived ? 'rgba(104,184,87,0.15)' : 'transparent',
+              color: showArchived ? 'var(--accent-green)' : '#888888',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -62,9 +63,9 @@ export default function Header({
             style={{
               padding: '8px 16px',
               borderRadius: '7px',
-              border: '1px solid var(--border)',
+              border: '1px solid #333333',
               background: 'transparent',
-              color: 'var(--text-secondary)',
+              color: '#888888',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -83,7 +84,7 @@ export default function Header({
               padding: '8px 18px',
               borderRadius: '7px',
               border: 'none',
-              background: 'var(--accent-green)',
+              background: '#68b857',
               color: '#fff',
               fontSize: '13px',
               fontWeight: 700,
@@ -98,6 +99,31 @@ export default function Header({
             <span className="btn-icon">+</span>
             <span className="btn-label"> Add Order</span>
           </button>
+
+          {/* POWERED BY CASPR */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: 0.75,
+            marginLeft: '12px',
+          }}>
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 600,
+              letterSpacing: '1.5px',
+              color: '#888888',
+              textTransform: 'uppercase',
+              marginBottom: '3px',
+            }}>
+              POWERED BY
+            </span>
+            <img
+              src="/caspr-logo.svg"
+              alt="Caspr"
+              style={{ height: '38px', width: 'auto' }}
+            />
+          </div>
         </div>
       </div>
 
@@ -105,7 +131,7 @@ export default function Header({
       <div style={{
         display: 'flex',
         gap: '0',
-        borderTop: '1px solid var(--border)',
+        borderTop: '1px solid #333333',
         overflowX: 'auto',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
@@ -121,8 +147,8 @@ export default function Header({
                 padding: '10px 20px',
                 background: 'none',
                 border: 'none',
-                borderBottom: isActive ? '2px solid var(--accent-green)' : '2px solid transparent',
-                color: isActive ? 'var(--accent-green)' : 'var(--text-secondary)',
+                borderBottom: isActive ? '2px solid #ffffff' : '2px solid transparent',
+                color: isActive ? '#ffffff' : '#888888',
                 fontSize: '13px',
                 fontWeight: isActive ? 700 : 500,
                 cursor: 'pointer',
@@ -137,8 +163,8 @@ export default function Header({
             >
               {type}
               <span style={{
-                background: isActive ? 'var(--accent-green)' : '#333',
-                color: isActive ? '#fff' : 'var(--text-secondary)',
+                background: isActive ? '#ffffff' : '#333333',
+                color: isActive ? '#191919' : '#888888',
                 borderRadius: '10px',
                 padding: '1px 7px',
                 fontSize: '11px',

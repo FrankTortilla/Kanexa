@@ -16,21 +16,21 @@ export default function DashboardSummary({ orders }) {
       display: 'flex',
       gap: '16px',
       padding: '16px 24px',
-      background: '#363636',
-      borderBottom: '1px solid var(--border)',
+      background: 'var(--bg-primary)',
+      borderBottom: '1px solid #333333',
     }}>
       {tiles.map(({ label, value, unit }) => (
         <div
           key={label}
           style={{
-            background: '#1a1a1a',
-            border: '1px solid var(--border)',
+            background: '#2a2a2a',
+            border: '1px solid #333333',
             borderRadius: '8px',
-            padding: '12px 16px',
+            padding: '16px 20px',
             minWidth: '160px',
           }}
         >
-          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', color: '#888888', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
             {label}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
@@ -38,12 +38,12 @@ export default function DashboardSummary({ orders }) {
               fontFamily: 'var(--font-heading), Oswald, sans-serif',
               fontSize: '28px',
               fontWeight: 700,
-              color: 'var(--accent-green)',
+              color: '#ffffff',
               lineHeight: 1,
             }}>
               {value}
             </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            <span style={{ fontSize: '12px', color: '#888888', fontWeight: 600 }}>
               {unit}
             </span>
           </div>

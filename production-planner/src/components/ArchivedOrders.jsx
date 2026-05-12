@@ -15,11 +15,11 @@ const TH = ({ children, style }) => (
     textAlign: 'left',
     fontSize: '11px',
     fontWeight: 700,
-    color: '#94A3B8',
+    color: '#888888',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     whiteSpace: 'nowrap',
-    borderBottom: '1px solid var(--border)',
+    borderBottom: '1px solid #333333',
     ...style,
   }}>
     {children}
@@ -30,8 +30,8 @@ const TD = ({ children, style }) => (
   <td style={{
     padding: '10px 12px',
     fontSize: '13px',
-    color: 'var(--text-secondary)',
-    borderBottom: '1px solid #222',
+    color: '#888888',
+    borderBottom: '1px solid #333333',
     verticalAlign: 'middle',
     whiteSpace: 'nowrap',
     ...style,
@@ -65,8 +65,8 @@ export default function ArchivedOrders({ fetchAllOrders, onUnarchive }) {
       {/* Sub-tabs */}
       <div style={{
         display: 'flex', gap: '0', padding: '0 24px',
-        borderBottom: '1px solid var(--border)',
-        background: '#111',
+        borderBottom: '1px solid #333333',
+        background: 'transparent',
       }}>
         {ORDER_TYPE_TABS.map(t => (
           <button
@@ -76,8 +76,8 @@ export default function ArchivedOrders({ fetchAllOrders, onUnarchive }) {
               padding: '10px 16px',
               background: 'none',
               border: 'none',
-              borderBottom: tab === t ? '2px solid var(--accent-green)' : '2px solid transparent',
-              color: tab === t ? 'var(--accent-green)' : 'var(--text-secondary)',
+              borderBottom: tab === t ? '2px solid #ffffff' : '2px solid transparent',
+              color: tab === t ? '#ffffff' : '#888888',
               fontSize: '13px',
               fontWeight: tab === t ? 700 : 500,
               cursor: 'pointer',
@@ -103,7 +103,7 @@ export default function ArchivedOrders({ fetchAllOrders, onUnarchive }) {
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#363636' }}>
+            <thead style={{ background: 'transparent' }}>
               <tr>
                 <TH>Type</TH>
                 <TH>Start Date</TH>

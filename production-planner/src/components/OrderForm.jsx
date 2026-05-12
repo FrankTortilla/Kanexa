@@ -7,10 +7,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 const inputStyle = {
   width: '100%',
   padding: '10px 12px',
-  background: 'var(--bg-primary)',
-  border: '1px solid var(--border)',
-  borderRadius: '6px',
-  color: 'var(--text-primary)',
+  background: '#2a2a2a',
+  border: '1px solid #333333',
+  borderRadius: '8px',
+  color: '#ffffff',
   fontSize: '15px',
   fontFamily: 'inherit',
   outline: 'none',
@@ -183,8 +183,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0,
           width: '480px', maxWidth: '96vw',
-          background: '#1a1a1a',
-          borderLeft: '1px solid var(--border)',
+          background: '#222222',
+          borderLeft: '1px solid #333333',
           zIndex: 201,
           display: 'flex',
           flexDirection: 'column',
@@ -376,11 +376,11 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         {/* Footer */}
         <div style={{
           padding: '16px 24px',
-          borderTop: '1px solid var(--border)',
+          borderTop: '1px solid #333333',
           display: 'flex',
           gap: '10px',
           justifyContent: 'flex-end',
-          background: '#1a1a1a',
+          background: '#222222',
           flexShrink: 0,
         }}>
           <button

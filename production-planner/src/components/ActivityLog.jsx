@@ -20,7 +20,7 @@ export default function ActivityLog({ orderId }) {
   }, [orderId]);
 
   return (
-    <div style={{ padding: '16px 24px', borderTop: '1px solid #222' }}>
+    <div style={{ padding: '16px 24px', borderTop: '1px solid #333333' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '10px' }}>
         Activity Log
       </div>

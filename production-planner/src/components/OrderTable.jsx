@@ -8,11 +8,11 @@ const TH = ({ children, style }) => (
     textAlign: 'left',
     fontSize: '11px',
     fontWeight: 700,
-    color: '#94A3B8',
+    color: '#888888',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     whiteSpace: 'nowrap',
-    borderBottom: '1px solid var(--border)',
+    borderBottom: '1px solid #333333',
     ...style,
   }}>
     {children}
@@ -23,8 +23,8 @@ const TD = ({ children, style }) => (
   <td style={{
     padding: '10px 12px',
     fontSize: '13px',
-    color: 'var(--text-primary)',
-    borderBottom: '1px solid #222',
+    color: '#ffffff',
+    borderBottom: '1px solid #333333',
     verticalAlign: 'middle',
     whiteSpace: 'nowrap',
     ...style,
@@ -49,7 +49,7 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
         borderCollapse: 'collapse',
         tableLayout: 'auto',
       }}>
-        <thead style={{ background: '#363636', position: 'sticky', top: '97px', zIndex: 10 }}>
+        <thead style={{ background: 'var(--bg-primary)', position: 'sticky', top: '160px', zIndex: 10 }}>
           <tr>
             <TH>Start Date</TH>
             <TH>Due Date</TH>
@@ -143,7 +143,7 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
                 </tr>
                 {isExpanded && (
                   <tr>
-                    <td colSpan={14} style={{ padding: 0, background: '#111', borderBottom: '1px solid var(--border)' }}>
+                    <td colSpan={14} style={{ padding: 0, background: '#222222', borderBottom: '1px solid #333333' }}>
                       {renderActivityLog(order.id)}
                     </td>
                   </tr>
