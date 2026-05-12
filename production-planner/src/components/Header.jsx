@@ -23,20 +23,18 @@ export default function Header({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
         minHeight: '125px',
-        gap: '16px',
       }}>
         {/* Logo */}
         <img
           src="/GS-Grey-Logo.png"
           alt="Green Steel"
-          style={{ height: '70px', width: 'auto' }}
+          style={{ height: '70px', width: 'auto', flexShrink: 0 }}
           onError={e => { e.currentTarget.src = '/green_steel_LOGO_copy.png'; }}
         />
 
-        {/* Actions + POWERED BY */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Actions — pushed right via auto margin */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={onToggleArchived}
             style={{
@@ -99,31 +97,32 @@ export default function Header({
             <span className="btn-icon">+</span>
             <span className="btn-label"> Add Order</span>
           </button>
+        </div>
 
-          {/* POWERED BY CASPR */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            opacity: 0.75,
-            marginLeft: '12px',
+        {/* POWERED BY — far right, separated from buttons */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          opacity: 0.75,
+          marginLeft: '28px',
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontSize: '9px',
+            fontWeight: 600,
+            letterSpacing: '1.5px',
+            color: '#888888',
+            textTransform: 'uppercase',
+            marginBottom: '4px',
           }}>
-            <span style={{
-              fontSize: '9px',
-              fontWeight: 600,
-              letterSpacing: '1.5px',
-              color: '#888888',
-              textTransform: 'uppercase',
-              marginBottom: '3px',
-            }}>
-              POWERED BY
-            </span>
-            <img
-              src="/caspr-logo.svg"
-              alt="Caspr"
-              style={{ height: '38px', width: 'auto' }}
-            />
-          </div>
+            POWERED BY
+          </span>
+          <img
+            src="/caspr-logo.svg"
+            alt="Caspr"
+            style={{ height: '38px', width: 'auto' }}
+          />
         </div>
       </div>
 
