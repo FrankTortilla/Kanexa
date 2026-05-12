@@ -1,4 +1,5 @@
 'use client';
+import { Fragment } from 'react';
 import StatusBadge from './StatusBadge';
 
 const TH = ({ children, style }) => (
@@ -76,9 +77,8 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
               : order.coating;
 
             return (
-              <>
+              <Fragment key={order.id}>
                 <tr
-                  key={order.id}
                   className={`order-row${isCpuAsap ? ' cpu-asap-row' : ''}${isFlashed ? ' animate-row-flash' : ''}`}
                   style={{
                     background: isCpuAsap ? 'rgba(255, 140, 0, 0.06)' : 'transparent',
@@ -142,13 +142,13 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
                   </TD>
                 </tr>
                 {isExpanded && (
-                  <tr key={`${order.id}-log`}>
+                  <tr>
                     <td colSpan={14} style={{ padding: 0, background: '#111', borderBottom: '1px solid var(--border)' }}>
                       {renderActivityLog(order.id)}
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             );
           })}
         </tbody>

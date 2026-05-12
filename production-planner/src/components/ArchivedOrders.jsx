@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { ORDER_TYPES } from '../lib/constants';
 import StatusBadge from './StatusBadge';
 
 function formatDate(d) {
@@ -51,7 +52,7 @@ export default function ArchivedOrders({ fetchAllOrders, onUnarchive }) {
     });
   }, [fetchAllOrders]);
 
-  const ORDER_TYPE_TABS = ['All', 'Baskets', 'Loose Dowels', 'EpoxyFab'];
+  const ORDER_TYPE_TABS = ['All', ...ORDER_TYPES];
   const visible = tab === 'All' ? allOrders : allOrders.filter(o => o.order_type === tab);
 
   const handleUnarchive = async (order) => {
