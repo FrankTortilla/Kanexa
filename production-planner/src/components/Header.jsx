@@ -27,10 +27,10 @@ export default function Header({
         gap: '12px',
       }}>
         <img
-          src="/green_steel_LOGO_copy.png"
+          src="/GS-Grey-Logo.png"
           alt="Green Steel"
           style={{ height: '44px', width: 'auto', flexShrink: 0 }}
-          onError={e => { e.currentTarget.src = '/GS-Grey-Logo.png'; }}
+          onError={e => { e.currentTarget.src = '/green_steel_LOGO_copy.png'; }}
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
