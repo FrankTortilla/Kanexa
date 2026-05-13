@@ -99,8 +99,8 @@ export default function Header({
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.75 }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.75, marginLeft: '16px' }}>
+          <span style={{ fontSize: '9px', color: '#888888', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
           <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto' }} />
         </div>
       </div>
