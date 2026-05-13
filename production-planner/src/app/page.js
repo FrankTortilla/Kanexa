@@ -91,7 +91,7 @@ export default function Home() {
   // Visible orders for active tab (non-archived, matching tab type)
   // CPU ASAP rows pinned to top, then sorted by due_date ascending
   const visibleOrders = useMemo(() => {
-    const filtered = orders.filter(o => o.order_type === activeTab && !o.archived);
+    const filtered = orders.filter(o => o.order_type === activeTab && !o.archived && o.status !== 'Cancelled');
     const cpuAsap = filtered.filter(o => o.cpu_asap).sort((a, b) => a.due_date < b.due_date ? -1 : 1);
     const rest = filtered.filter(o => !o.cpu_asap).sort((a, b) => a.due_date < b.due_date ? -1 : 1);
     return [...cpuAsap, ...rest];
@@ -112,6 +112,16 @@ export default function Home() {
       showToast('Order added');
     }
   };
+
+  const handleStatusChange = useCallback(async (id, newStatus) => {
+    const order = orders.find(o => o.id === id);
+    const updates = {
+      status: newStatus,
+      ...(newStatus === 'Cancelled' ? { archived: true } : {}),
+    };
+    await updateOrder(id, updates, order);
+    showToast(newStatus === 'Cancelled' ? 'Order cancelled & archived' : `Status → ${newStatus}`);
+  }, [orders, updateOrder]);
 
   const handleArchive = useCallback(async (order) => {
     await archiveOrder(order.id, order.customer);
@@ -184,6 +194,7 @@ export default function Home() {
               flashedId={flashedId}
               onEdit={handleEdit}
               onArchive={handleArchive}
+              onStatusChange={handleStatusChange}
               expandedId={expandedId}
               onToggleExpand={handleToggleExpand}
               renderActivityLog={renderActivityLog}
