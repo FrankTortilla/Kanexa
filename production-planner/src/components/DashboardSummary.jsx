@@ -1,54 +1,77 @@
 'use client';
 
+const STATUS_TILES = [
+  { key: 'In Production', label: 'IN PRODUCTION', color: '#38BDF8' },
+  { key: 'Ready to Ship', label: 'READY TO SHIP', color: '#00E676' },
+  { key: 'Delayed',       label: 'DELAYED',        color: '#FF8C00' },
+  { key: 'On Hold',       label: 'ON HOLD',         color: '#FFD700' },
+];
+
 export default function DashboardSummary({ orders }) {
-  // Excludes cancelled and archived
   const active = orders.filter(o => o.status !== 'Cancelled' && !o.archived);
   const totalQty = active.reduce((sum, o) => sum + (o.quantity || 0), 0);
-  const totalLF = active.reduce((sum, o) => sum + (o.total_lf || 0), 0);
+  const totalLF  = active.reduce((sum, o) => sum + (o.total_lf  || 0), 0);
 
-  const tiles = [
-    { label: 'Total Qty', value: totalQty.toLocaleString(), unit: 'ea' },
-    { label: 'Total LF', value: totalLF.toLocaleString(), unit: 'lf' },
-  ];
+  const statusCounts = STATUS_TILES.map(t => ({
+    ...t,
+    count: active.filter(o => o.status === t.key).length,
+  }));
 
   return (
     <div style={{
       display: 'flex',
-      gap: '16px',
+      flexWrap: 'wrap',
+      gap: '12px',
       padding: '16px 24px',
       background: 'var(--bg-primary)',
       borderBottom: '1px solid #333333',
     }}>
-      {tiles.map(({ label, value, unit }) => (
-        <div
-          key={label}
-          style={{
-            background: '#2a2a2a',
-            border: '1px solid #333333',
-            borderRadius: '8px',
-            padding: '16px 20px',
-            minWidth: '160px',
-          }}
-        >
-          <div style={{ fontSize: '11px', color: '#888888', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-            {label}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
-            <span style={{
-              fontFamily: 'var(--font-heading), Oswald, sans-serif',
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#ffffff',
-              lineHeight: 1,
-            }}>
-              {value}
-            </span>
-            <span style={{ fontSize: '12px', color: '#888888', fontWeight: 600 }}>
-              {unit}
-            </span>
-          </div>
-        </div>
+      {statusCounts.map(({ key, label, color, count }) => (
+        <Tile key={key} label={label} value={count} valueColor={color} />
       ))}
+
+      <Tile label="TOTAL ACTIVE" value={active.length} valueColor="#ffffff" />
+
+      <div style={{ width: '1px', background: '#333333', margin: '4px 4px', alignSelf: 'stretch' }} />
+
+      <Tile label="TOTAL QTY" value={totalQty.toLocaleString()} valueColor="#ffffff" unit="ea" />
+      <Tile label="TOTAL LF"  value={totalLF.toLocaleString()}  valueColor="#ffffff" unit="lf" />
+    </div>
+  );
+}
+
+function Tile({ label, value, valueColor, unit }) {
+  return (
+    <div style={{
+      background: '#2a2a2a',
+      border: '1px solid #333333',
+      borderRadius: '8px',
+      padding: '14px 20px',
+      minWidth: '120px',
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-heading), Oswald, sans-serif',
+        fontSize: '32px',
+        fontWeight: 700,
+        color: valueColor,
+        lineHeight: 1,
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: '5px',
+      }}>
+        {value}
+        {unit && <span style={{ fontSize: '13px', color: '#888888', fontWeight: 600 }}>{unit}</span>}
+      </div>
+      <div style={{
+        fontSize: '10px',
+        color: '#888888',
+        fontWeight: 700,
+        letterSpacing: '0.6px',
+        textTransform: 'uppercase',
+        marginTop: '5px',
+      }}>
+        {label}
+      </div>
     </div>
   );
 }

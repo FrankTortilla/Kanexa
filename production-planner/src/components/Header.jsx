@@ -19,17 +19,17 @@ export default function Header({
       top: 0,
       zIndex: 100,
     }}>
-      {/* Top row — 125px tall */}
+      {/* Top row */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        minHeight: '125px',
+        minHeight: '72px',
       }}>
         {/* Logo */}
         <img
           src="/GS-Grey-Logo.png"
           alt="Green Steel"
-          style={{ height: '70px', width: 'auto', flexShrink: 0 }}
+          style={{ height: '48px', width: 'auto', flexShrink: 0 }}
           onError={e => { e.currentTarget.src = '/green_steel_LOGO_copy.png'; }}
         />
 
@@ -100,7 +100,6 @@ export default function Header({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.75, marginLeft: '16px' }}>
-          <span style={{ fontSize: '9px', color: '#888888', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
           <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto' }} />
         </div>
       </div>
