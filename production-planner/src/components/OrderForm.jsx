@@ -136,6 +136,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
     setSaving(true);
+    setErrors({});
     try {
       const payload = {
         order_type: form.order_type,
@@ -159,7 +160,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
       await onSave(payload, isEdit ? editingOrder.id : null, editingOrder);
       onClose();
     } catch (err) {
-      setErrors({ _form: err.message });
+      console.error('Order save failed:', err);
+      setErrors({ _form: err.message || 'Failed to save order. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -211,12 +213,6 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
         {/* Scrollable body */}
         <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          {errors._form && (
-            <div style={{ background: 'rgba(255,23,68,0.1)', border: '1px solid var(--accent-danger)', borderRadius: '7px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#FF6B6B' }}>
-              {errors._form}
-            </div>
-          )}
-
           {/* Order Type */}
           <Field label="Order Type" required>
             <select value={form.order_type} onChange={e => set('order_type', e.target.value)} style={inputStyle}>
@@ -377,38 +373,50 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         <div style={{
           padding: '16px 24px',
           borderTop: '1px solid #333333',
-          display: 'flex',
-          gap: '10px',
-          justifyContent: 'flex-end',
           background: '#222222',
           flexShrink: 0,
         }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '10px 20px', borderRadius: '7px',
-              border: '1px solid var(--border)', background: 'transparent',
-              color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={{
-              padding: '12px 24px', borderRadius: '6px',
-              border: 'none', background: saving ? '#333' : 'var(--accent-green)',
-              color: '#fff', fontSize: '15px', fontWeight: 700,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              fontFamily: 'var(--font-heading), Oswald, sans-serif',
-              textTransform: 'uppercase', letterSpacing: '0.5px',
-            }}
-          >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Order'}
-          </button>
+          {errors._form && (
+            <div style={{
+              background: 'rgba(255,23,68,0.1)',
+              border: '1px solid var(--accent-danger)',
+              borderRadius: '7px',
+              padding: '10px 14px',
+              marginBottom: '12px',
+              fontSize: '13px',
+              color: '#FF6B6B',
+            }}>
+              {errors._form}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '10px 20px', borderRadius: '7px',
+                border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              style={{
+                padding: '12px 24px', borderRadius: '6px',
+                border: 'none', background: saving ? '#333' : 'var(--accent-green)',
+                color: '#fff', fontSize: '15px', fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--font-heading), Oswald, sans-serif',
+                textTransform: 'uppercase', letterSpacing: '0.5px',
+              }}
+            >
+              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Order'}
+            </button>
+          </div>
         </div>
       </div>
     </>

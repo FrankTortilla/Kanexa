@@ -106,6 +106,18 @@ export function useOrders() {
       .single();
     if (err) throw err;
     await logActivity(data.id, `Order created for ${data.customer} — ${data.order_type}`);
+    // Immediately update local state — realtime will dedupe via the id check
+    if (!data.archived) {
+      setOrders(prev => {
+        if (prev.some(o => o.id === data.id)) return prev;
+        return [...prev, data].sort((a, b) => {
+          if (a.cpu_asap && !b.cpu_asap) return -1;
+          if (!a.cpu_asap && b.cpu_asap) return 1;
+          return a.due_date < b.due_date ? -1 : 1;
+        });
+      });
+      flash(data.id);
+    }
     return data;
   }, [logActivity]);
 
