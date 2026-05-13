@@ -59,16 +59,7 @@ export default function Header({
           </button>
 
           {/* Powered by Caspr */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            opacity: 0.75,
-            marginLeft: '8px',
-          }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
-            <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto' }} />
-          </div>
+          <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto', opacity: 0.75, marginLeft: '8px' }} />
         </div>
       </div>
 
