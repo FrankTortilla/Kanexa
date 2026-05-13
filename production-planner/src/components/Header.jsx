@@ -11,105 +11,71 @@ export default function Header({
   onToggleArchived,
 }) {
   return (
-    <header style={{
-      background: '#222222',
-      borderBottom: '1px solid #333333',
-      padding: '0 24px',
+    <header className="no-print" style={{
+      background: 'var(--bg-surface)',
+      borderBottom: '1px solid var(--border)',
       position: 'sticky',
       top: 0,
       zIndex: 100,
     }}>
-      {/* Top row — 125px tall */}
+      {/* Row 1: Logo + Actions */}
       <div style={{
+        padding: '10px 24px',
         display: 'flex',
         alignItems: 'center',
-        minHeight: '125px',
+        justifyContent: 'space-between',
+        gap: '12px',
       }}>
-        {/* Logo */}
         <img
-          src="/GS-Grey-Logo.png"
+          src="/green_steel_LOGO_copy.png"
           alt="Green Steel"
-          style={{ height: '70px', width: 'auto', flexShrink: 0 }}
-          onError={e => { e.currentTarget.src = '/green_steel_LOGO_copy.png'; }}
+          style={{ height: '44px', width: 'auto', flexShrink: 0 }}
+          onError={e => { e.currentTarget.src = '/GS-Grey-Logo.png'; }}
         />
 
-        {/* Actions — pushed right via auto margin */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={onToggleArchived}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '7px',
-              border: `1px solid ${showArchived ? 'var(--accent-green)' : '#333333'}`,
-              background: showArchived ? 'rgba(104,184,87,0.15)' : 'transparent',
-              color: showArchived ? 'var(--accent-green)' : '#888888',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'all 0.15s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button onClick={onToggleArchived} style={{
+            ...btnStyle,
+            border: `1px solid ${showArchived ? 'var(--accent-green)' : 'var(--border)'}`,
+            color: showArchived ? 'var(--accent-green)' : 'var(--text-secondary)',
+            background: showArchived ? 'rgba(150,186,148,0.12)' : 'transparent',
+          }}>
             <span className="btn-icon">{showArchived ? '←' : '🗄'}</span>
             <span className="btn-label">{showArchived ? ' Active' : ' Archived'}</span>
           </button>
-          <button
-            onClick={onExport}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '7px',
-              border: '1px solid #333333',
-              background: 'transparent',
-              color: '#888888',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
+          <button onClick={onExport} style={btnStyle}>
             <span className="btn-icon">↓</span>
             <span className="btn-label"> CSV</span>
           </button>
-          <button
-            onClick={onAddOrder}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '7px',
-              border: 'none',
-              background: '#68b857',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              letterSpacing: '0.3px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            <span className="btn-icon">+</span>
+          <button onClick={onAddOrder} style={{
+            ...btnStyle,
+            background: 'var(--accent-green)',
+            border: '1px solid var(--accent-green)',
+            color: '#fff',
+            fontWeight: 700,
+          }}>
+            <span className="btn-icon" style={{ fontWeight: 700 }}>+</span>
             <span className="btn-label"> Add Order</span>
           </button>
-        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.75, marginLeft: '16px' }}>
-          <span style={{ fontSize: '9px', color: '#888888', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
-          <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto' }} />
+          {/* Powered by Caspr */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: 0.75,
+            marginLeft: '8px',
+          }}>
+            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>POWERED BY</span>
+            <img src="/caspr-logo.svg" alt="Caspr" style={{ height: '38px', width: 'auto' }} />
+          </div>
         </div>
       </div>
 
-      {/* Tab row */}
+      {/* Row 2: Tabs */}
       <div style={{
         display: 'flex',
-        gap: '0',
-        borderTop: '1px solid #333333',
+        borderTop: '1px solid var(--border)',
         overflowX: 'auto',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
@@ -121,12 +87,13 @@ export default function Header({
             <button
               key={type}
               onClick={() => onTabChange(type)}
+              className="tab-btn"
               style={{
                 padding: '10px 20px',
                 background: 'none',
                 border: 'none',
-                borderBottom: isActive ? '2px solid #ffffff' : '2px solid transparent',
-                color: isActive ? '#ffffff' : '#888888',
+                borderBottom: isActive ? '2px solid var(--accent-green)' : '2px solid transparent',
+                color: isActive ? 'var(--accent-green)' : 'var(--text-secondary)',
                 fontSize: '13px',
                 fontWeight: isActive ? 700 : 500,
                 cursor: 'pointer',
@@ -141,8 +108,8 @@ export default function Header({
             >
               {type}
               <span style={{
-                background: isActive ? '#ffffff' : '#333333',
-                color: isActive ? '#191919' : '#888888',
+                background: isActive ? 'var(--accent-green)' : 'var(--border)',
+                color: isActive ? '#1a1a1a' : 'var(--text-secondary)',
                 borderRadius: '10px',
                 padding: '1px 7px',
                 fontSize: '11px',
@@ -159,3 +126,18 @@ export default function Header({
     </header>
   );
 }
+
+const btnStyle = {
+  padding: '7px 14px',
+  fontSize: '13px',
+  fontWeight: 600,
+  borderRadius: '6px',
+  border: '1px solid var(--border)',
+  background: 'transparent',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '5px',
+  fontFamily: 'inherit',
+};

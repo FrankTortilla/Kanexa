@@ -4,15 +4,19 @@ import StatusBadge from './StatusBadge';
 
 const TH = ({ children, style }) => (
   <th style={{
-    padding: '10px 12px',
+    padding: '9px 10px',
     textAlign: 'left',
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#888888',
+    fontSize: '12px',
+    fontWeight: 600,
+    fontFamily: 'var(--font-heading), Oswald, sans-serif',
+    color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     whiteSpace: 'nowrap',
-    borderBottom: '1px solid #333333',
+    background: '#363636',
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
     ...style,
   }}>
     {children}
@@ -21,10 +25,10 @@ const TH = ({ children, style }) => (
 
 const TD = ({ children, style }) => (
   <td style={{
-    padding: '10px 12px',
-    fontSize: '13px',
-    color: '#ffffff',
-    borderBottom: '1px solid #333333',
+    padding: '9px 10px',
+    fontSize: '12px',
+    color: 'var(--text-primary)',
+    borderBottom: '1px solid var(--border)',
     verticalAlign: 'middle',
     whiteSpace: 'nowrap',
     ...style,
@@ -43,14 +47,16 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
   if (!orders || orders.length === 0) return null;
 
   return (
-    <div style={{ overflowX: 'auto', flex: 1 }}>
+    <div className="animate-fade-in" style={{ overflowX: 'auto', flex: 1 }}>
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
         tableLayout: 'auto',
+        fontSize: '12px',
       }}>
-        <thead style={{ background: 'var(--bg-primary)', position: 'sticky', top: '160px', zIndex: 10 }}>
-          <tr>
+        <thead>
+          <tr style={{ borderBottom: '2px solid var(--border)' }}>
+            <TH />
             <TH>Start Date</TH>
             <TH>Due Date</TH>
             <TH>Customer</TH>
@@ -83,8 +89,26 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
                   style={{
                     background: isCpuAsap ? 'rgba(255, 140, 0, 0.06)' : 'transparent',
                     cursor: 'default',
+                    transition: 'background 0.15s',
                   }}
                 >
+                  {/* Expand button */}
+                  <td style={{ padding: '9px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }}>
+                    <button
+                      onClick={() => onToggleExpand(order.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        transform: isExpanded ? 'rotate(90deg)' : 'none',
+                        transition: 'transform 0.2s',
+                      }}
+                    >
+                      ▶
+                    </button>
+                  </td>
                   <TD style={isCpuAsap ? { borderLeft: '3px solid #FF8C00' } : {}}>{formatDate(order.start_date)}</TD>
                   <TD>{formatDate(order.due_date)}</TD>
                   <TD style={{ fontWeight: 600 }}>{order.customer}</TD>
@@ -112,38 +136,23 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
                         ASAP
                       </span>
                     ) : (
-                      <span style={{ color: '#444', fontSize: '12px' }}>—</span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                     )}
                   </TD>
-                  <TD style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                      <button
-                        onClick={() => onToggleExpand(order.id)}
-                        title="Activity log"
-                        style={actionBtn('#333', '#94A3B8')}
-                      >
-                        {isExpanded ? '▲' : '▼'}
-                      </button>
-                      <button
-                        onClick={() => onEdit(order)}
-                        title="Edit"
-                        style={actionBtn('var(--accent-green)', '#fff')}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onArchive(order)}
-                        title="Archive"
-                        style={actionBtn('#333', '#94A3B8')}
-                      >
-                        🗄
-                      </button>
-                    </div>
+                  <TD style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                      <button onClick={() => onEdit(order)} style={actionBtn}>Edit</button>
+                      <button onClick={() => onArchive(order)} style={{ ...actionBtn, color: 'var(--text-secondary)' }}>Archive</button>
+                    </span>
                   </TD>
                 </tr>
                 {isExpanded && (
                   <tr>
-                    <td colSpan={14} style={{ padding: 0, background: '#222222', borderBottom: '1px solid #333333' }}>
+                    <td colSpan={15} style={{
+                      padding: '0 24px 16px 56px',
+                      background: 'var(--bg-surface)',
+                      borderBottom: '1px solid var(--border)',
+                    }}>
                       {renderActivityLog(order.id)}
                     </td>
                   </tr>
@@ -157,16 +166,13 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
   );
 }
 
-function actionBtn(bg, color) {
-  return {
-    padding: '5px 10px',
-    background: bg,
-    color,
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '12px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  };
-}
+const actionBtn = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--accent-green)',
+  cursor: 'pointer',
+  fontSize: '12px',
+  fontWeight: 600,
+  padding: '4px 6px',
+  fontFamily: 'inherit',
+};

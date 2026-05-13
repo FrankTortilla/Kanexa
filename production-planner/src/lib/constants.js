@@ -19,10 +19,10 @@ export const COATING_TYPES = [
 
 // Badge colors for each order status
 export const STATUS_BADGE_COLORS = {
-  'In Production': { bg: '#38BDF8', text: '#0a0a0a' },
-  'Ready to Ship': { bg: '#00E676', text: '#0a0a0a' },
-  'Delayed':       { bg: '#FF8C00', text: '#0a0a0a' },
-  'On Hold':       { bg: '#FFD700', text: '#0a0a0a' },
+  'In Production': { bg: '#2563eb', text: '#ffffff' },
+  'Ready to Ship': { bg: '#16a34a', text: '#ffffff' },
+  'Delayed':       { bg: '#FF8C00', text: '#ffffff' },
+  'On Hold':       { bg: '#ca8a04', text: '#ffffff' },
   'Cancelled':     { bg: '#FF1744', text: '#ffffff' },
 };
 
