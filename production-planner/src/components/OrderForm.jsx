@@ -17,6 +17,17 @@ const inputStyle = {
   boxSizing: 'border-box',
 };
 
+const selectStyle = {
+  ...inputStyle,
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+  cursor: 'pointer',
+};
+
 const labelStyle = {
   display: 'block',
   fontSize: '13px',
@@ -219,7 +230,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
           {/* Order Type */}
           <Field label="Order Type" required>
-            <select value={form.order_type} onChange={e => set('order_type', e.target.value)} style={inputStyle}>
+            <select value={form.order_type} onChange={e => set('order_type', e.target.value)} style={selectStyle}>
               {ORDER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             {errors.order_type && <ErrMsg>{errors.order_type}</ErrMsg>}
@@ -269,7 +280,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
           {/* Coating */}
           <Field label="Coating" required>
-            <select value={form.coating} onChange={e => set('coating', e.target.value)} style={inputStyle}>
+            <select value={form.coating} onChange={e => set('coating', e.target.value)} style={selectStyle}>
               {COATING_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             {errors.coating && <ErrMsg>{errors.coating}</ErrMsg>}

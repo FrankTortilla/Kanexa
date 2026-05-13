@@ -49,7 +49,7 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, expan
         borderCollapse: 'collapse',
         tableLayout: 'auto',
       }}>
-        <thead style={{ background: 'var(--bg-primary)', position: 'sticky', top: '160px', zIndex: 10 }}>
+        <thead style={{ background: 'var(--bg-primary)', position: 'sticky', top: '0', zIndex: 10 }}>
           <tr>
             <TH>Start Date</TH>
             <TH>Due Date</TH>
