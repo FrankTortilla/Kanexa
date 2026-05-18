@@ -27,14 +27,13 @@ export const COATING_TYPES_BY_ORDER_TYPE = {
   'EpoxyFab':     ['Plain', 'Epoxy'],
 };
 
-// Badge colors for each order status.
-// textShadow is optional — used to add a glow effect on badge text.
+// Badge colors for each order status — exact values from Waypoint/shipment-tracker BADGE_COLORS.
 export const STATUS_BADGE_COLORS = {
-  'In Production': { bg: '#38BDF8', text: '#ffffff', textShadow: '0 0 8px rgba(255,255,255,0.55)' },
-  'Ready to Ship': { bg: '#22c55e', text: '#ffffff' },
-  'Delayed':       { bg: '#EAB308', text: '#000000' },
-  'On Hold':       { bg: '#FF8C00', text: '#ffffff' },
-  'Cancelled':     { bg: '#FF1744', text: '#ffffff' },
+  'In Production': { bg: '#3b82f6', text: '#ffffff' }, // Waypoint Booked
+  'Ready to Ship': { bg: '#22c55e', text: '#ffffff' }, // Waypoint Delivered
+  'Delayed':       { bg: '#e6b800', text: '#ffffff' }, // Waypoint accent-warning
+  'On Hold':       { bg: '#FF8C00', text: '#ffffff' }, // Waypoint Pending
+  'Cancelled':     { bg: '#FF1744', text: '#ffffff' }, // Waypoint Cancelled
 };
 
 export const CPU_ASAP_COLOR = '#FF8C00'; // amber highlight for pinned rows
