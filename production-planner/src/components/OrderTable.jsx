@@ -1,24 +1,15 @@
 'use client';
-import { Fragment, useState, useEffect, useRef } from 'react';
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ORDER_STATUSES, STATUS_BADGE_COLORS } from '../lib/constants';
+import StatusBadge from './StatusBadge';
 
 const TH = ({ children, style }) => (
   <th style={{
-    padding: '9px 10px',
-    textAlign: 'left',
-    fontSize: '12px',
-    fontWeight: 600,
-    fontFamily: 'var(--font-heading), Oswald, sans-serif',
-    color: '#94A3B8',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    whiteSpace: 'nowrap',
-    background: '#363636',
-    position: 'sticky',
-    top: 0,
-    zIndex: 1,
-    ...style,
+    padding: '9px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600,
+    fontFamily: 'var(--font-heading), Oswald, sans-serif', color: '#94A3B8',
+    textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap',
+    background: '#363636', position: 'sticky', top: 0, zIndex: 1, ...style,
   }}>
     {children}
   </th>
@@ -26,13 +17,9 @@ const TH = ({ children, style }) => (
 
 const TD = ({ children, style }) => (
   <td style={{
-    padding: '9px 10px',
-    fontSize: '12px',
-    color: 'var(--text-primary)',
-    borderBottom: '1px solid var(--border)',
-    verticalAlign: 'middle',
-    whiteSpace: 'nowrap',
-    ...style,
+    padding: '9px 10px', fontSize: '12px', color: 'var(--text-primary)',
+    borderBottom: '1px solid var(--border)', verticalAlign: 'middle',
+    whiteSpace: 'nowrap', ...style,
   }}>
     {children}
   </td>
@@ -65,9 +52,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
-      if (!btnRef.current?.contains(e.target) && !dropRef.current?.contains(e.target)) {
-        setIsOpen(false);
-      }
+      if (!btnRef.current?.contains(e.target) && !dropRef.current?.contains(e.target)) setIsOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -83,34 +68,23 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
   const colors = STATUS_BADGE_COLORS[localStatus] || { bg: '#6b7280', text: '#ffffff' };
 
   const dropdown = (
-    <div
-      ref={dropRef}
-      style={{
-        position: 'fixed',
-        top: pos.top,
-        left: pos.left,
-        zIndex: 9999,
-        background: '#1a1a1a',
-        border: '1px solid var(--border)',
-        borderRadius: '10px',
-        padding: '6px',
-        boxShadow: '0 6px 24px rgba(0,0,0,0.5)',
-        minWidth: '148px',
-      }}
-    >
+    <div ref={dropRef} style={{
+      position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999,
+      background: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '10px',
+      padding: '6px', boxShadow: '0 6px 24px rgba(0,0,0,0.5)', minWidth: '148px',
+    }}>
       {ORDER_STATUSES.map(s => {
         const sc = STATUS_BADGE_COLORS[s] || { bg: '#6b7280', text: '#ffffff' };
         const isCurrent = s === localStatus;
         return (
-          <button
-            key={s}
+          <button key={s}
             onClick={async () => {
               setIsOpen(false);
               if (s !== localStatus) {
                 const prev = localStatus;
                 setLocalStatus(s);
                 try { await onStatusChange(s); }
-                catch (err) { console.error('Status update failed:', err?.message); setLocalStatus(prev); }
+                catch { setLocalStatus(prev); }
               }
             }}
             style={{
@@ -119,9 +93,9 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
               background: isCurrent ? sc.bg : 'transparent',
               border: 'none', borderRadius: '7px',
               color: isCurrent ? sc.text : 'var(--text-primary)',
+              textShadow: isCurrent ? (sc.textShadow || 'none') : 'none',
               fontSize: '12px', fontWeight: isCurrent ? 700 : 500,
-              cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap',
-              fontFamily: 'inherit',
+              cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap', fontFamily: 'inherit',
             }}
             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-hover)'; }}
             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
@@ -136,19 +110,14 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
 
   return (
     <div style={{ display: 'inline-block' }}>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        style={{
-          background: colors.bg, color: colors.text,
-          border: 'none', borderRadius: '20px',
-          padding: '4px 10px', fontSize: '12px', fontWeight: 600,
-          cursor: 'pointer', minWidth: '110px', textAlign: 'center',
-          whiteSpace: 'nowrap', display: 'inline-flex',
-          alignItems: 'center', justifyContent: 'center', gap: '5px',
-          fontFamily: 'inherit',
-        }}
-      >
+      <button ref={btnRef} onClick={handleToggle} style={{
+        background: colors.bg, color: colors.text, textShadow: colors.textShadow || 'none',
+        border: 'none', borderRadius: '20px',
+        padding: '4px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+        minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+        fontFamily: 'inherit',
+      }}>
         {localStatus}
         <span style={{ fontSize: '9px', opacity: 0.8 }}>▾</span>
       </button>
@@ -157,10 +126,130 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
   );
 }
 
-// Extracted row component so each row has independent hover + confirm state
-function OrderRow({ order, flashedId, onEdit, onArchive, onStatusChange, expandedId, onToggleExpand, renderActivityLog }) {
+// Portal-based actions dropdown (Feature 5)
+// openDropdownId / setOpenDropdownId lifted to table level so only one is open at a time
+function ActionsDropdown({ order, isHistory, onEdit, onArchive, onRestore, onDelete, openDropdownId, setOpenDropdownId }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pos, setPos] = useState({});
+  const btnRef = useRef(null);
+  const dropRef = useRef(null);
+  const isOpen = openDropdownId === order.id;
+
+  const setOpen = (val) => setOpenDropdownId(val ? order.id : null);
+
+  const handleToggle = () => {
+    if (!isOpen && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - r.bottom;
+      const dropH = isHistory ? 90 : 130;
+      const top = spaceBelow < dropH + 8 ? r.top - dropH - 4 : r.bottom + 4;
+      setPos({ top, left: r.right - 140 });
+    }
+    setOpen(!isOpen);
+    setConfirmDelete(false);
+  };
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => {
+      if (!btnRef.current?.contains(e.target) && !dropRef.current?.contains(e.target)) {
+        setOpen(false);
+        setConfirmDelete(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  // Close on scroll
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = () => { setOpen(false); setConfirmDelete(false); };
+    window.addEventListener('scroll', handler, true);
+    return () => window.removeEventListener('scroll', handler, true);
+  }, [isOpen]);
+
+  const menuItems = isHistory
+    ? [
+        { label: 'Restore', dotColor: '#2563eb', action: () => { setOpen(false); onRestore(order); } },
+        { label: 'Delete',  dotColor: '#ef4444', action: () => setConfirmDelete(true), danger: true },
+      ]
+    : [
+        { label: 'Edit',    dotColor: '#2563eb', action: () => { setOpen(false); onEdit(order); } },
+        { label: 'Archive', dotColor: '#9ca3af', action: () => { setOpen(false); onArchive(order); } },
+        { label: 'Delete',  dotColor: '#ef4444', action: () => setConfirmDelete(true), danger: true },
+      ];
+
+  const dropdown = (
+    <div ref={dropRef} style={{
+      position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999,
+      background: '#1e1e1e', border: '1px solid var(--border)', borderRadius: '10px',
+      padding: '6px', boxShadow: '0 6px 24px rgba(0,0,0,0.55)', minWidth: '140px',
+    }}>
+      {confirmDelete ? (
+        <div style={{ padding: '10px 12px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '10px', lineHeight: 1.4 }}>
+            Permanently delete this order? This cannot be undone.
+          </div>
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setConfirmDelete(false); }}
+              style={{ ...dropBtn, color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+              Cancel
+            </button>
+            <button onClick={() => { setOpen(false); setConfirmDelete(false); onDelete(order); }}
+              style={{ ...dropBtn, background: '#ef4444', color: '#fff', border: 'none' }}>
+              Delete
+            </button>
+          </div>
+        </div>
+      ) : (
+        menuItems.map(item => (
+          <button key={item.label} onClick={item.action} style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            width: '100%', padding: '7px 10px', marginBottom: '2px',
+            background: 'transparent', border: 'none', borderRadius: '7px',
+            color: item.danger ? '#ef4444' : 'var(--text-primary)',
+            fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+            textAlign: 'left', fontFamily: 'inherit',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.dotColor, flexShrink: 0 }} />
+            {item.label}
+          </button>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'inline-block' }}>
+      <button ref={btnRef} onClick={handleToggle} style={{
+        background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px',
+        color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px 10px',
+        fontSize: '14px', fontFamily: 'inherit', lineHeight: 1,
+        transition: 'border-color 0.15s, color 0.15s',
+      }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+      >
+        ···
+      </button>
+      {isOpen && createPortal(dropdown, document.body)}
+    </div>
+  );
+}
+
+const dropBtn = {
+  padding: '5px 12px', borderRadius: '6px', fontSize: '12px',
+  fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+  background: 'transparent',
+};
+
+function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory, openDropdownId, setOpenDropdownId }) {
   const [hovered, setHovered] = useState(false);
-  const [confirmingArchive, setConfirmingArchive] = useState(false);
 
   const isCpuAsap = !!order.cpu_asap;
   const isFlashed = flashedId === order.id;
@@ -178,18 +267,16 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onStatusChange, expande
         style={{
           background: hovered ? '#222222' : isCpuAsap ? 'rgba(255,140,0,0.06)' : 'transparent',
           transition: 'background 0.15s',
+          opacity: isHistory ? 0.82 : 1,
         }}
       >
         <td style={{ padding: '9px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }}>
-          <button
-            onClick={() => onToggleExpand(order.id)}
-            style={{
-              background: 'none', border: 'none', color: 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: '12px',
-              transform: isExpanded ? 'rotate(90deg)' : 'none',
-              transition: 'transform 0.2s',
-            }}
-          >▶</button>
+          <button onClick={() => onToggleExpand(order.id)} style={{
+            background: 'none', border: 'none', color: 'var(--text-secondary)',
+            cursor: 'pointer', fontSize: '12px',
+            transform: isExpanded ? 'rotate(90deg)' : 'none',
+            transition: 'transform 0.2s',
+          }}>▶</button>
         </td>
         <TD style={isCpuAsap ? { borderLeft: '3px solid #FF8C00' } : {}}>{formatDate(order.start_date)}</TD>
         <TD>{formatDate(order.due_date)}</TD>
@@ -203,36 +290,33 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onStatusChange, expande
         <TD style={{ textAlign: 'right' }}>{order.num_dowels?.toLocaleString() ?? '—'}</TD>
         <TD style={{ textAlign: 'right' }}>{order.total_lf?.toLocaleString() ?? '—'}</TD>
         <TD>
-          <StatusDropdown
-            currentStatus={order.status}
-            onStatusChange={(newStatus) => onStatusChange(order.id, newStatus)}
-          />
+          {isHistory
+            ? <StatusBadge status={order.status} />
+            : <StatusDropdown currentStatus={order.status} onStatusChange={(s) => onStatusChange(order.id, s)} />
+          }
         </TD>
         <TD style={{ textAlign: 'center' }}>
           {isCpuAsap ? (
             <span style={{
               display: 'inline-block', padding: '3px 8px',
               background: '#FF8C00', color: '#000',
-              borderRadius: '6px', fontSize: '10px',
-              fontWeight: 800, letterSpacing: '0.5px',
+              borderRadius: '6px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.5px',
             }}>ASAP</span>
           ) : (
             <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
           )}
         </TD>
-        <TD style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-          {confirmingArchive ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Archive?</span>
-              <button onClick={() => setConfirmingArchive(false)} style={{ ...actionBtn, fontSize: '11px', color: 'var(--text-secondary)' }}>No</button>
-              <button onClick={() => { setConfirmingArchive(false); onArchive(order); }} style={{ ...actionBtn, fontSize: '11px', color: '#22c55e', fontWeight: 700 }}>Yes</button>
-            </span>
-          ) : (
-            <span style={{ display: 'inline-flex', gap: '2px' }}>
-              <button onClick={() => onEdit(order)} style={actionBtn}>Edit</button>
-              <button onClick={() => setConfirmingArchive(true)} style={{ ...actionBtn, color: 'var(--text-secondary)' }}>Archive</button>
-            </span>
-          )}
+        <TD style={{ textAlign: 'center' }}>
+          <ActionsDropdown
+            order={order}
+            isHistory={isHistory}
+            onEdit={onEdit}
+            onArchive={onArchive}
+            onRestore={onRestore}
+            onDelete={onDelete}
+            openDropdownId={openDropdownId}
+            setOpenDropdownId={setOpenDropdownId}
+          />
         </TD>
       </tr>
       {isExpanded && (
@@ -250,7 +334,17 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onStatusChange, expande
   );
 }
 
-export default function OrderTable({ orders, flashedId, onEdit, onArchive, onStatusChange, expandedId, onToggleExpand, renderActivityLog }) {
+export default function OrderTable({ orders, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory }) {
+  // Single open dropdown state lifted here so only one opens at a time
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+
+  // Close open dropdown when orders change (e.g. row removed from view)
+  useEffect(() => {
+    if (openDropdownId && !orders.some(o => o.id === openDropdownId)) {
+      setOpenDropdownId(null);
+    }
+  }, [orders, openDropdownId]);
+
   if (!orders || orders.length === 0) return null;
 
   return (
@@ -283,10 +377,15 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, onSta
               flashedId={flashedId}
               onEdit={onEdit}
               onArchive={onArchive}
+              onRestore={onRestore}
+              onDelete={onDelete}
               onStatusChange={onStatusChange}
               expandedId={expandedId}
               onToggleExpand={onToggleExpand}
               renderActivityLog={renderActivityLog}
+              isHistory={isHistory}
+              openDropdownId={openDropdownId}
+              setOpenDropdownId={setOpenDropdownId}
             />
           ))}
         </tbody>
@@ -294,11 +393,3 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, onSta
     </div>
   );
 }
-
-const actionBtn = {
-  background: 'none', border: 'none',
-  color: 'var(--accent-green)',
-  cursor: 'pointer', fontSize: '12px',
-  fontWeight: 600, padding: '4px 6px',
-  fontFamily: 'inherit',
-};

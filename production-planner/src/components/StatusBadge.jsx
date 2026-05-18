@@ -12,6 +12,7 @@ export default function StatusBadge({ status }) {
       fontWeight: 600,
       background: colors.bg,
       color: colors.text,
+      textShadow: colors.textShadow || 'none',
       whiteSpace: 'nowrap',
       minWidth: '110px',
       textAlign: 'center',

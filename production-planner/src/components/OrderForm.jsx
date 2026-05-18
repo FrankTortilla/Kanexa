@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ORDER_TYPES, ORDER_STATUSES, COATING_TYPES } from '../lib/constants';
+import { ORDER_TYPES, ORDER_STATUSES, COATING_TYPES_BY_ORDER_TYPE } from '../lib/constants';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -36,27 +36,63 @@ function Field({ label, required, children }) {
   );
 }
 
+function Toggle({ value, onChange, activeColor = '#FF8C00', activeLabel, inactiveLabel }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+      <div
+        onClick={() => onChange(!value)}
+        style={{
+          width: '42px', height: '24px', borderRadius: '12px',
+          background: value ? activeColor : '#333',
+          position: 'relative', transition: 'background 0.2s', flexShrink: 0, cursor: 'pointer',
+        }}
+      >
+        <div style={{
+          position: 'absolute', top: '3px',
+          left: value ? '21px' : '3px',
+          width: '18px', height: '18px',
+          borderRadius: '50%', background: '#fff',
+          transition: 'left 0.2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        }} />
+      </div>
+      <span style={{ fontSize: '13px', color: value ? activeColor : 'var(--text-secondary)', fontWeight: value ? 700 : 400 }}>
+        {value ? activeLabel : inactiveLabel}
+      </span>
+    </label>
+  );
+}
+
+const emptyForm = () => ({
+  order_type: 'Baskets',
+  start_date: today(),
+  due_date: '',
+  customer: '',
+  po_number: '',
+  quantity: '',
+  pvg: '',
+  dowel_size: '',
+  oc: '',
+  coating: 'Plain',
+  coating_other: '',
+  num_dowels: '',
+  total_lf: '',
+  status: 'In Production',
+  cpu_asap: false,
+  // EpoxyFab-specific
+  bar_size: '',
+  bar_length: '',
+  weight: '',
+  fabrication: '',
+  toiling_only: false,
+  // Baskets-specific
+  description: '',
+});
+
 export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
   const isEdit = !!editingOrder;
 
-  const [form, setForm] = useState({
-    order_type: 'Baskets',
-    start_date: today(),
-    due_date: '',
-    customer: '',
-    po_number: '',
-    quantity: '',
-    pvg: '',
-    dowel_size: '',
-    oc: '',
-    coating: 'Plain',
-    coating_other: '',
-    num_dowels: '',
-    total_lf: '',
-    status: 'In Production',
-    cpu_asap: false,
-  });
-
+  const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [cancelWarning, setCancelWarning] = useState(false);
@@ -75,43 +111,79 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
           dowel_size: editingOrder.dowel_size || '',
           oc: editingOrder.oc || '',
           coating: editingOrder.coating || 'Plain',
-          // Explicitly re-populate coating_other to avoid blank field on edit
           coating_other: editingOrder.coating_other || '',
           num_dowels: editingOrder.num_dowels ?? '',
           total_lf: editingOrder.total_lf ?? '',
           status: editingOrder.status || 'In Production',
           cpu_asap: editingOrder.cpu_asap || false,
+          bar_size: editingOrder.bar_size || '',
+          bar_length: editingOrder.bar_length || '',
+          weight: editingOrder.weight ?? '',
+          fabrication: editingOrder.fabrication || '',
+          toiling_only: editingOrder.toiling_only || false,
+          description: editingOrder.description || '',
         });
+        setCancelWarning(editingOrder.status === 'Cancelled');
       } else {
-        setForm({
-          order_type: 'Baskets',
-          start_date: today(),
-          due_date: '',
-          customer: '',
-          po_number: '',
-          quantity: '',
-          pvg: '',
-          dowel_size: '',
-          oc: '',
-          coating: 'Plain',
-          coating_other: '',
-          num_dowels: '',
-          total_lf: '',
-          status: 'In Production',
-          cpu_asap: false,
-        });
+        setForm(emptyForm());
+        setCancelWarning(false);
       }
       setErrors({});
-      setCancelWarning(false);
     }
   }, [isOpen, editingOrder]);
 
   const set = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }));
-    if (field === 'status' && value === 'Cancelled') setCancelWarning(true);
-    else if (field === 'status') setCancelWarning(false);
+    if (field === 'status') setCancelWarning(value === 'Cancelled');
   };
+
+  // Changing order type resets all hidden/type-specific fields so no ghost data is saved.
+  const handleOrderTypeChange = (newType) => {
+    setForm(prev => {
+      const next = { ...prev, order_type: newType };
+
+      // Fields hidden for Loose Dowels and EpoxyFab
+      if (newType === 'Loose Dowels' || newType === 'EpoxyFab') {
+        next.pvg = '';
+        next.oc = '';
+        next.num_dowels = '';
+        next.total_lf = '';
+      }
+
+      // EpoxyFab-only fields — clear when leaving EpoxyFab
+      if (newType !== 'EpoxyFab') {
+        next.bar_size = '';
+        next.bar_length = '';
+        next.weight = '';
+        next.fabrication = '';
+        next.toiling_only = false;
+      }
+
+      // Baskets-only fields — clear when leaving Baskets
+      if (newType !== 'Baskets') {
+        next.description = '';
+      }
+
+      // Reset coating to Plain if the current value isn't valid for the new type
+      const validCoatings = COATING_TYPES_BY_ORDER_TYPE[newType];
+      if (!validCoatings.includes(prev.coating)) {
+        next.coating = 'Plain';
+        next.coating_other = '';
+      }
+
+      return next;
+    });
+    setErrors({});
+  };
+
+  const isLooseDowels = form.order_type === 'Loose Dowels';
+  const isEpoxyFab    = form.order_type === 'EpoxyFab';
+  const isBaskets     = form.order_type === 'Baskets';
+  // Pvg, O.C., # Dowels, # Total LF are hidden for both Loose Dowels and EpoxyFab
+  const hideBasketFields = isLooseDowels || isEpoxyFab;
+
+  const availableCoatings = COATING_TYPES_BY_ORDER_TYPE[form.order_type] ?? COATING_TYPES_BY_ORDER_TYPE['Baskets'];
 
   const validate = () => {
     const e = {};
@@ -122,7 +194,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
       e.due_date = 'Due Date must be on or after Start Date';
     }
     if (!form.customer.trim()) e.customer = 'Required';
-    if (!form.quantity && form.quantity !== 0) e.quantity = 'Required';
+    if (form.quantity === '' || form.quantity === null) e.quantity = 'Required';
     if (isNaN(Number(form.quantity)) || Number(form.quantity) < 0) e.quantity = 'Must be a positive number';
     if (!form.coating) e.coating = 'Required';
     if (form.coating === 'Other' && !form.coating_other.trim()) e.coating_other = 'Please describe the coating';
@@ -145,15 +217,25 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         customer: form.customer.trim(),
         po_number: form.po_number.trim() || null,
         quantity: Number(form.quantity),
-        pvg: form.pvg.trim() || null,
+        // Null out hidden fields for Loose Dowels and EpoxyFab
+        pvg:        hideBasketFields ? null : (form.pvg.trim() || null),
+        oc:         hideBasketFields ? null : (form.oc.trim() || null),
+        num_dowels: hideBasketFields ? null : (form.num_dowels !== '' ? Number(form.num_dowels) : null),
+        total_lf:   hideBasketFields ? null : (form.total_lf !== '' ? Number(form.total_lf) : null),
+        // Dowel Size visible for all types
         dowel_size: form.dowel_size.trim() || null,
-        oc: form.oc.trim() || null,
         coating: form.coating,
         coating_other: form.coating === 'Other' ? form.coating_other.trim() : null,
-        num_dowels: form.num_dowels !== '' ? Number(form.num_dowels) : null,
-        total_lf: form.total_lf !== '' ? Number(form.total_lf) : null,
         status: form.status,
         cpu_asap: form.cpu_asap,
+        // EpoxyFab-specific — null for all other types
+        bar_size:     isEpoxyFab ? (form.bar_size.trim() || null)                        : null,
+        bar_length:   isEpoxyFab ? (form.bar_length.trim() || null)                      : null,
+        weight:       isEpoxyFab ? (form.weight !== '' ? Number(form.weight) : null)      : null,
+        fabrication:  isEpoxyFab ? (form.fabrication.trim() || null)                     : null,
+        toiling_only: isEpoxyFab ? form.toiling_only                                     : false,
+        // Baskets-specific — null for all other types
+        description: isBaskets ? (form.description.trim() || null) : null,
         // Auto-archive if Cancelled
         ...(form.status === 'Cancelled' ? { archived: true } : {}),
       };
@@ -174,9 +256,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200,
-        }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200 }}
       />
 
       {/* Panel */}
@@ -213,9 +293,10 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
         {/* Scrollable body */}
         <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+
           {/* Order Type */}
           <Field label="Order Type" required>
-            <select value={form.order_type} onChange={e => set('order_type', e.target.value)} style={inputStyle}>
+            <select value={form.order_type} onChange={e => handleOrderTypeChange(e.target.value)} style={inputStyle}>
               {ORDER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             {errors.order_type && <ErrMsg>{errors.order_type}</ErrMsg>}
@@ -250,23 +331,36 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
             {errors.quantity && <ErrMsg>{errors.quantity}</ErrMsg>}
           </Field>
 
-          {/* Pvg / Dowel Size / O.C. */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-            <Field label='Pvg"'>
-              <input type="text" value={form.pvg} onChange={e => set('pvg', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
+          {/* Weight — EpoxyFab only, directly below Qty */}
+          {isEpoxyFab && (
+            <Field label="Weight (lbs)">
+              <input type="number" min="0" step="any" value={form.weight} onChange={e => set('weight', e.target.value)} placeholder="0" style={inputStyle} />
             </Field>
+          )}
+
+          {/* Pvg / Dowel Size / O.C. — 3-col for Baskets; Dowel Size alone for Loose Dowels & EpoxyFab */}
+          {!hideBasketFields ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <Field label='Pvg"'>
+                <input type="text" value={form.pvg} onChange={e => set('pvg', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
+              </Field>
+              <Field label="Dowel Size">
+                <input type="text" value={form.dowel_size} onChange={e => set('dowel_size', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
+              </Field>
+              <Field label="O.C.">
+                <input type="text" value={form.oc} onChange={e => set('oc', e.target.value)} placeholder='e.g. 12"' style={inputStyle} />
+              </Field>
+            </div>
+          ) : (
             <Field label="Dowel Size">
               <input type="text" value={form.dowel_size} onChange={e => set('dowel_size', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
             </Field>
-            <Field label="O.C.">
-              <input type="text" value={form.oc} onChange={e => set('oc', e.target.value)} placeholder='e.g. 12"' style={inputStyle} />
-            </Field>
-          </div>
+          )}
 
-          {/* Coating */}
+          {/* Coating — options filtered by order type */}
           <Field label="Coating" required>
             <select value={form.coating} onChange={e => set('coating', e.target.value)} style={inputStyle}>
-              {COATING_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+              {availableCoatings.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             {errors.coating && <ErrMsg>{errors.coating}</ErrMsg>}
           </Field>
@@ -283,15 +377,49 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
             </Field>
           )}
 
-          {/* # Dowels / Total LF */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Field label="# of Dowels">
-              <input type="number" min="0" value={form.num_dowels} onChange={e => set('num_dowels', e.target.value)} placeholder="0" style={inputStyle} />
+          {/* Description — Baskets only */}
+          {isBaskets && (
+            <Field label="Description">
+              <input type="text" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional" style={inputStyle} />
             </Field>
-            <Field label="# Total LF">
-              <input type="number" min="0" value={form.total_lf} onChange={e => set('total_lf', e.target.value)} placeholder="0" style={inputStyle} />
+          )}
+
+          {/* # Dowels / Total LF — Baskets only */}
+          {!hideBasketFields && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <Field label="# of Dowels">
+                <input type="number" min="0" value={form.num_dowels} onChange={e => set('num_dowels', e.target.value)} placeholder="0" style={inputStyle} />
+              </Field>
+              <Field label="# Total LF">
+                <input type="number" min="0" value={form.total_lf} onChange={e => set('total_lf', e.target.value)} placeholder="0" style={inputStyle} />
+              </Field>
+            </div>
+          )}
+
+          {/* Bar Size / Bar Length — EpoxyFab only */}
+          {isEpoxyFab && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <Field label="Bar Size">
+                <input type="text" value={form.bar_size} onChange={e => set('bar_size', e.target.value)} placeholder='e.g. #5' style={inputStyle} />
+              </Field>
+              <Field label="Bar Length">
+                <input type="text" value={form.bar_length} onChange={e => set('bar_length', e.target.value)} placeholder='e.g. 20 ft' style={inputStyle} />
+              </Field>
+            </div>
+          )}
+
+          {/* Fabrication — EpoxyFab only */}
+          {isEpoxyFab && (
+            <Field label="Fabrication">
+              <textarea
+                value={form.fabrication}
+                onChange={e => set('fabrication', e.target.value)}
+                placeholder="Fabrication details"
+                rows={3}
+                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
+              />
             </Field>
-          </div>
+          )}
 
           {/* Status */}
           <Field label="Status" required>
@@ -341,31 +469,28 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
           {/* CPU ASAP */}
           <Field label="CPU ASAP">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <div
-                onClick={() => set('cpu_asap', !form.cpu_asap)}
-                style={{
-                  width: '42px', height: '24px', borderRadius: '12px',
-                  background: form.cpu_asap ? '#FF8C00' : '#333',
-                  position: 'relative', transition: 'background 0.2s', flexShrink: 0, cursor: 'pointer',
-                }}
-              >
-                <div style={{
-                  position: 'absolute', top: '3px',
-                  left: form.cpu_asap ? '21px' : '3px',
-                  width: '18px', height: '18px',
-                  borderRadius: '50%', background: '#fff',
-                  transition: 'left 0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                }} />
-              </div>
-              <span style={{ fontSize: '13px', color: form.cpu_asap ? '#FF8C00' : 'var(--text-secondary)', fontWeight: form.cpu_asap ? 700 : 400 }}>
-                {form.cpu_asap ? 'ASAP — Pinned to top' : 'Off'}
-              </span>
-            </label>
+            <Toggle
+              value={form.cpu_asap}
+              onChange={v => set('cpu_asap', v)}
+              activeColor="#FF8C00"
+              activeLabel="ASAP — Pinned to top"
+              inactiveLabel="Off"
+            />
           </Field>
 
-          {/* Bottom padding */}
+          {/* Toiling Only — EpoxyFab only, same toggle style as CPU ASAP */}
+          {isEpoxyFab && (
+            <Field label="Toiling Only">
+              <Toggle
+                value={form.toiling_only}
+                onChange={v => set('toiling_only', v)}
+                activeColor="var(--accent-green)"
+                activeLabel="Toiling Only — On"
+                inactiveLabel="Off"
+              />
+            </Field>
+          )}
+
           <div style={{ height: '80px' }} />
         </form>
 

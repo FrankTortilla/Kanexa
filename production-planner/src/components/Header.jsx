@@ -7,8 +7,6 @@ export default function Header({
   tabCounts,
   onAddOrder,
   onExport,
-  showArchived,
-  onToggleArchived,
 }) {
   return (
     <header className="no-print" style={{
@@ -34,15 +32,6 @@ export default function Header({
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={onToggleArchived} style={{
-            ...btnStyle,
-            border: `1px solid ${showArchived ? 'var(--accent-green)' : 'var(--border)'}`,
-            color: showArchived ? 'var(--accent-green)' : 'var(--text-secondary)',
-            background: showArchived ? 'rgba(150,186,148,0.12)' : 'transparent',
-          }}>
-            <span className="btn-icon">{showArchived ? '←' : '🗄'}</span>
-            <span className="btn-label">{showArchived ? ' Active' : ' Archived'}</span>
-          </button>
           <button onClick={onExport} style={btnStyle}>
             <span className="btn-icon">↓</span>
             <span className="btn-label"> CSV</span>

@@ -13,14 +13,20 @@ export function useOrders() {
     setTimeout(() => setFlashedId(null), 1000);
   };
 
-  // Fetch active (non-archived) orders
+  const sortOrders = (list) =>
+    [...list].sort((a, b) => {
+      if (a.cpu_asap && !b.cpu_asap) return -1;
+      if (!a.cpu_asap && b.cpu_asap) return 1;
+      return (a.due_date ?? '') < (b.due_date ?? '') ? -1 : 1;
+    });
+
+  // Fetch ALL orders (active + archived) so History tab works client-side
   const fetchOrders = useCallback(async () => {
     if (!supabase) { setLoading(false); return; }
     try {
       const { data, error: err } = await supabase
         .from('production_orders')
         .select('*')
-        .eq('archived', false)
         .order('due_date', { ascending: true });
       if (err) throw err;
       setOrders(data || []);
@@ -29,17 +35,6 @@ export function useOrders() {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Fetch all orders including archived (for archive view)
-  const fetchAllOrders = useCallback(async () => {
-    if (!supabase) return [];
-    const { data, error: err } = await supabase
-      .from('production_orders')
-      .select('*')
-      .order('due_date', { ascending: true });
-    if (err) throw err;
-    return data || [];
   }, []);
 
   // Realtime subscription
@@ -54,32 +49,15 @@ export function useOrders() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const row = payload.new;
-            if (!row.archived) {
-              setOrders(prev => {
-                if (prev.some(o => o.id === row.id)) return prev;
-                return [...prev, row].sort((a, b) => {
-                  if (a.cpu_asap && !b.cpu_asap) return -1;
-                  if (!a.cpu_asap && b.cpu_asap) return 1;
-                  return a.due_date < b.due_date ? -1 : 1;
-                });
-              });
-              flash(row.id);
-            }
+            setOrders(prev => {
+              if (prev.some(o => o.id === row.id)) return prev;
+              return sortOrders([...prev, row]);
+            });
+            flash(row.id);
           } else if (payload.eventType === 'UPDATE') {
             const row = payload.new;
-            if (row.archived) {
-              setOrders(prev => prev.filter(o => o.id !== row.id));
-            } else {
-              setOrders(prev =>
-                prev.map(o => o.id === row.id ? row : o)
-                  .sort((a, b) => {
-                    if (a.cpu_asap && !b.cpu_asap) return -1;
-                    if (!a.cpu_asap && b.cpu_asap) return 1;
-                    return a.due_date < b.due_date ? -1 : 1;
-                  })
-              );
-              flash(row.id);
-            }
+            setOrders(prev => sortOrders(prev.map(o => o.id === row.id ? row : o)));
+            flash(row.id);
           } else if (payload.eventType === 'DELETE') {
             setOrders(prev => prev.filter(o => o.id !== payload.old.id));
           }
@@ -90,13 +68,11 @@ export function useOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchOrders]);
 
-  // Log an activity entry for an order
   const logActivity = useCallback(async (orderId, action) => {
     if (!supabase) return;
     await supabase.from('production_order_activity').insert([{ order_id: orderId, action }]);
   }, []);
 
-  // Create order
   const createOrder = useCallback(async (payload) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error: err } = await supabase
@@ -105,23 +81,15 @@ export function useOrders() {
       .select()
       .single();
     if (err) throw err;
+    setOrders(prev => {
+      if (prev.some(o => o.id === data.id)) return prev;
+      return sortOrders([...prev, data]);
+    });
+    flash(data.id);
     await logActivity(data.id, `Order created for ${data.customer} — ${data.order_type}`);
-    // Immediately update local state — realtime will dedupe via the id check
-    if (!data.archived) {
-      setOrders(prev => {
-        if (prev.some(o => o.id === data.id)) return prev;
-        return [...prev, data].sort((a, b) => {
-          if (a.cpu_asap && !b.cpu_asap) return -1;
-          if (!a.cpu_asap && b.cpu_asap) return 1;
-          return a.due_date < b.due_date ? -1 : 1;
-        });
-      });
-      flash(data.id);
-    }
     return data;
   }, [logActivity]);
 
-  // Update order — detects changed fields and logs them
   const updateOrder = useCallback(async (id, updates, prevOrder) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error: err } = await supabase
@@ -132,43 +100,25 @@ export function useOrders() {
       .single();
     if (err) throw err;
 
-    // Immediately reflect in local state
-    setOrders(prev =>
-      prev.map(o => o.id === id ? { ...o, ...updates } : o)
-        .sort((a, b) => {
-          if (a.cpu_asap && !b.cpu_asap) return -1;
-          if (!a.cpu_asap && b.cpu_asap) return 1;
-          return a.due_date < b.due_date ? -1 : 1;
-        })
-    );
+    setOrders(prev => sortOrders(prev.map(o => o.id === id ? { ...o, ...updates } : o)));
 
-    // Log changes
     if (prevOrder) {
       const fieldLabels = {
-        order_type: 'Order Type',
-        start_date: 'Start Date',
-        due_date: 'Due Date',
-        customer: 'Customer',
-        po_number: 'PO#',
-        quantity: 'Qty',
-        pvg: 'Pvg"',
-        dowel_size: 'Dowel Size',
-        oc: 'O.C.',
-        coating: 'Coating',
-        coating_other: 'Coating (Other)',
-        num_dowels: '# of Dowels',
-        total_lf: '# Total LF',
-        status: 'Status',
-        cpu_asap: 'CPU ASAP',
+        order_type:    'Order Type',    start_date:    'Start Date',  due_date:  'Due Date',
+        customer:      'Customer',      po_number:     'PO#',         quantity:  'Qty',
+        pvg:           'Pvg"',          dowel_size:    'Dowel Size',  oc:        'O.C.',
+        coating:       'Coating',       coating_other: 'Coating (Other)',
+        num_dowels:    '# of Dowels',   total_lf:      '# Total LF',
+        status:        'Status',        cpu_asap:      'CPU ASAP',
+        bar_size:      'Bar Size',      bar_length:    'Bar Length',
+        weight:        'Weight',        fabrication:   'Fabrication',
+        toiling_only:  'Toiling Only',  description:   'Description',
       };
+      const booleanFields = new Set(['cpu_asap', 'toiling_only']);
       for (const [field, label] of Object.entries(fieldLabels)) {
         if (field in updates && updates[field] !== prevOrder[field]) {
-          const oldVal = field === 'cpu_asap'
-            ? (prevOrder[field] ? 'Yes' : 'No')
-            : (prevOrder[field] ?? '—');
-          const newVal = field === 'cpu_asap'
-            ? (updates[field] ? 'Yes' : 'No')
-            : (updates[field] ?? '—');
+          const oldVal = booleanFields.has(field) ? (prevOrder[field] ? 'Yes' : 'No') : (prevOrder[field] ?? '—');
+          const newVal = booleanFields.has(field) ? (updates[field] ? 'Yes' : 'No') : (updates[field] ?? '—');
           await logActivity(id, `${label} changed: ${oldVal} → ${newVal}`);
         }
       }
@@ -177,7 +127,6 @@ export function useOrders() {
     return data;
   }, [logActivity]);
 
-  // Archive order (sets archived = true)
   const archiveOrder = useCallback(async (id, customer) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { error: err } = await supabase
@@ -185,11 +134,10 @@ export function useOrders() {
       .update({ archived: true })
       .eq('id', id);
     if (err) throw err;
-    setOrders(prev => prev.filter(o => o.id !== id));
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, archived: true } : o));
     await logActivity(id, `Order archived${customer ? ` (${customer})` : ''}`);
   }, [logActivity]);
 
-  // Unarchive order (sets archived = false)
   const unarchiveOrder = useCallback(async (id) => {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error: err } = await supabase
@@ -199,16 +147,18 @@ export function useOrders() {
       .select()
       .single();
     if (err) throw err;
-    setOrders(prev => [...prev, data].sort((a, b) => {
-      if (a.cpu_asap && !b.cpu_asap) return -1;
-      if (!a.cpu_asap && b.cpu_asap) return 1;
-      return a.due_date < b.due_date ? -1 : 1;
-    }));
+    setOrders(prev => sortOrders(prev.map(o => o.id === id ? data : o)));
     await logActivity(id, 'Order unarchived (restored to active)');
   }, [logActivity]);
 
-  const handleSort = useCallback((key) => {
-    // Sorting is done client-side in page.js; this is a no-op hook stub kept for API symmetry
+  const deleteOrder = useCallback(async (id) => {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error: err } = await supabase
+      .from('production_orders')
+      .delete()
+      .eq('id', id);
+    if (err) throw err;
+    setOrders(prev => prev.filter(o => o.id !== id));
   }, []);
 
   return {
@@ -220,7 +170,7 @@ export function useOrders() {
     updateOrder,
     archiveOrder,
     unarchiveOrder,
-    fetchAllOrders,
+    deleteOrder,
     logActivity,
   };
 }

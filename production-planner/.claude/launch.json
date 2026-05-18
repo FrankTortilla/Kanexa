@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "production-planner",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/stephengutierrez/production-planner/.claude/worktrees/jolly-stonebraker-43a5bd/production-planner && npm run dev -- --port 3001"],
       "port": 3001,
       "autoPort": false
     }
