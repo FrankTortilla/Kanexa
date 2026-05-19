@@ -367,6 +367,18 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
             </>
           )}
 
+          {/* Tolling Only — EpoxyFab only, checkbox directly below Coating */}
+          {isEpoxyFab && (
+            <Field label="Tolling Only">
+              <input
+                type="checkbox"
+                checked={form.tolling_only}
+                onChange={e => set('tolling_only', e.target.checked)}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--accent-green)', cursor: 'pointer' }}
+              />
+            </Field>
+          )}
+
           {/* Description — Baskets only (Accessories uses description for Notes above) */}
           {isBaskets && (
             <Field label="Description">
@@ -468,18 +480,6 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
             />
           </Field>
 
-          {/* Tolling Only — EpoxyFab only, same toggle style as CPU ASAP */}
-          {isEpoxyFab && (
-            <Field label="Tolling Only">
-              <Toggle
-                value={form.tolling_only}
-                onChange={v => set('tolling_only', v)}
-                activeColor="var(--accent-green)"
-                activeLabel="Tolling Only — On"
-                inactiveLabel="Off"
-              />
-            </Field>
-          )}
 
           <div style={{ height: '80px' }} />
         </form>

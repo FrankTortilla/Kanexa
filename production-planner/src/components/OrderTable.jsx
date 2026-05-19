@@ -265,6 +265,7 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
   const [hovered, setHovered] = useState(false);
 
   const isCpuAsap = !!order.cpu_asap;
+  const isTolling = orderType === 'EpoxyFab' && !!order.tolling_only;
   const isFlashed = flashedId === order.id;
   const isExpanded = expandedId === order.id;
   const coatingLabel = order.coating === 'Other' && order.coating_other
@@ -285,8 +286,8 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
           opacity: isHistory ? 0.82 : 1,
         }}
       >
-        {/* Expand toggle — all tabs */}
-        <td style={{ padding: '9px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }}>
+        {/* Expand toggle — all tabs; amber left stripe for EpoxyFab tolling rows */}
+        <td style={{ padding: '9px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle', ...(isTolling ? { borderLeft: '4px solid #F59E0B' } : {}) }}>
           <button onClick={() => onToggleExpand(order.id)} style={{
             background: 'none', border: 'none', color: 'var(--text-secondary)',
             cursor: 'pointer', fontSize: '12px',
