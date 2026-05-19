@@ -44,7 +44,12 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
   const handleToggle = () => {
     if (!isOpen && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, left: r.left });
+      const dropH = 220; // approximate height of 5-item status dropdown
+      const opensUpward = r.bottom + dropH + 8 > window.innerHeight;
+      setPos(opensUpward
+        ? { bottom: window.innerHeight - r.top + 4, left: r.left }
+        : { top: r.bottom + 4, left: r.left }
+      );
     }
     setIsOpen(p => !p);
   };
@@ -69,7 +74,10 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
 
   const dropdown = (
     <div ref={dropRef} style={{
-      position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999,
+      position: 'fixed',
+      ...(pos.bottom != null ? { bottom: pos.bottom } : { top: pos.top }),
+      left: pos.left,
+      zIndex: 9999,
       background: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '10px',
       padding: '6px', boxShadow: '0 6px 24px rgba(0,0,0,0.5)', minWidth: '148px',
     }}>
