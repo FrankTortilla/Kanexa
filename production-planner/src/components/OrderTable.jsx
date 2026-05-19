@@ -253,10 +253,10 @@ const dropBtn = {
 };
 
 // Column counts per tab (expand + data cols + actions)
-// Baskets: 1+13+1=15  |  Loose Dowels: 1+9+1=11  |  EpoxyFab: 1+12+1=14  |  Accessories: 1+9+1=11
+// Baskets: 1+13+1=15  |  Loose Dowels: 1+9+1=11  |  EpoxyFab: 1+1+12+1=15  |  Accessories: 1+9+1=11
 function colCount(orderType) {
   if (orderType === 'Baskets')      return 15;
-  if (orderType === 'EpoxyFab')     return 14;
+  if (orderType === 'EpoxyFab')     return 15;
   if (orderType === 'Accessories')  return 11;
   return 11; // Loose Dowels
 }
@@ -296,6 +296,18 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
           }}>▶</button>
         </td>
 
+        {/* T indicator column — EpoxyFab only */}
+        {orderType === 'EpoxyFab' && (
+          <td style={{ width: '48px', padding: '9px 4px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }}>
+            {isTolling && (
+              <span style={{
+                display: 'inline-block', background: '#F59E0B', color: '#1C1917',
+                fontWeight: 700, fontSize: '10px', padding: '2px 6px', borderRadius: '9999px',
+              }}>T</span>
+            )}
+          </td>
+        )}
+
         {/* Common leading columns — all tabs */}
         <TD style={startDateStyle}>{formatDate(order.start_date)}</TD>
         <TD>{formatDate(order.due_date)}</TD>
@@ -326,19 +338,8 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
             <TD>{coatingLabel || '—'}</TD>
             <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_size || '—'}</TD>
             <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_length || '—'}</TD>
-            <TD style={{ color: 'var(--text-secondary)', maxWidth: '180px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
-                  {order.fabrication || '—'}
-                </span>
-                {order.tolling_only && (
-                  <span style={{
-                    background: 'var(--accent-green)', color: '#1a1a1a',
-                    borderRadius: '4px', padding: '2px 5px',
-                    fontSize: '9px', fontWeight: 800, letterSpacing: '0.3px', whiteSpace: 'nowrap', flexShrink: 0,
-                  }}>TOLLING</span>
-                )}
-              </div>
+            <TD style={{ color: 'var(--text-secondary)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {order.fabrication || '—'}
             </TD>
           </>
         )}
@@ -415,6 +416,7 @@ export default function OrderTable({ orders, orderType, flashedId, onEdit, onArc
         <thead>
           <tr style={{ borderBottom: '2px solid var(--border)' }}>
             <TH />
+            {orderType === 'EpoxyFab' && <TH style={{ width: '48px', padding: '9px 4px' }} />}
             <TH>Start Date</TH>
             <TH>Due Date</TH>
             <TH>Customer</TH>
