@@ -4,7 +4,7 @@
     {
       "name": "production-planner",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd /Users/stephengutierrez/production-planner/.claude/worktrees/jolly-stonebraker-43a5bd/production-planner && npm run dev -- --port 3001"],
+      "runtimeArgs": ["-c", "cd /Users/stephengutierrez/production-planner/.claude/worktrees/zealous-haibt-6d3e60/production-planner && npm run dev -- --port 3001"],
       "port": 3001,
       "autoPort": false
     }

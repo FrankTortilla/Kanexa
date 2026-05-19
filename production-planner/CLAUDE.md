@@ -39,6 +39,12 @@ Supabase project URL: _[add your project URL here]_
 | cpu_asap | BOOLEAN | pins order to top with amber highlight |
 | archived | BOOLEAN | soft-archive flag |
 | created_at | TIMESTAMPTZ | |
+| bar_size | TEXT | optional (EpoxyFab / Baskets) |
+| bar_length | TEXT | optional (EpoxyFab / Baskets) |
+| weight | NUMERIC | optional (EpoxyFab / Baskets) |
+| tolling_only | BOOLEAN | EpoxyFab tolling flag |
+| fabrication | TEXT | optional (EpoxyFab) |
+| description | TEXT | optional free-text |
 
 ### `production_order_activity`
 
@@ -68,11 +74,11 @@ Phase 2 will add a warehouse route.
 ## Color Scheme
 
 - Background: `#1a1a1a`
-- Primary green: `#4a7c3f`
+- Primary green: `#96ba94` (sage green)
 - CPU ASAP amber: `#FF8C00`
 - Status badges:
-  - In Production: `#38BDF8` (blue)
-  - Ready to Ship: `#00E676` (green)
-  - Delayed: `#FF8C00` (orange)
-  - On Hold: `#FFD700` (yellow)
+  - In Production: `#3b82f6` (blue)
+  - Ready to Ship: `#22c55e` (green)
+  - Delayed: `#e6b800` (yellow)
+  - On Hold: `#FF8C00` (orange)
   - Cancelled: `#FF1744` (red)
