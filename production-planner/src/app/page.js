@@ -128,7 +128,7 @@ export default function Home() {
     const order = orders.find(o => o.id === id);
     const updates = {
       status: newStatus,
-      ...(newStatus === 'Cancelled' ? { archived: true } : {}),
+      ...(newStatus === 'Cancelled' ? { archived: true, pre_archive_status: order.status } : {}),
     };
     try {
       await updateOrder(id, updates, order);
@@ -143,7 +143,7 @@ export default function Home() {
 
   const handleArchive = useCallback(async (order) => {
     try {
-      await archiveOrder(order.id, order.customer);
+      await archiveOrder(order.id, order.customer, order.status);
       if (expandedId === order.id) setExpandedId(null);
       showToast('Order archived');
     } catch (err) {
@@ -153,9 +153,10 @@ export default function Home() {
   }, [archiveOrder, expandedId]);
 
   const handleRestore = useCallback(async (order) => {
+    const restoreStatus = order.pre_archive_status || 'In Production';
     try {
-      await unarchiveOrder(order.id);
-      showToast('Order restored to active');
+      await unarchiveOrder(order.id, restoreStatus);
+      showToast(`Order restored to active (${restoreStatus})`);
     } catch (err) {
       setDeleteError(`Restore failed: ${err.message}`);
       setTimeout(() => setDeleteError(null), 5000);

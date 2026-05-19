@@ -127,28 +127,30 @@ export function useOrders() {
     return data;
   }, [logActivity]);
 
-  const archiveOrder = useCallback(async (id, customer) => {
+  const archiveOrder = useCallback(async (id, customer, currentStatus) => {
     if (!supabase) throw new Error('Supabase not configured');
+    const updates = { archived: true, ...(currentStatus ? { pre_archive_status: currentStatus } : {}) };
     const { error: err } = await supabase
       .from('production_orders')
-      .update({ archived: true })
+      .update(updates)
       .eq('id', id);
     if (err) throw err;
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, archived: true } : o));
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
     await logActivity(id, `Order archived${customer ? ` (${customer})` : ''}`);
   }, [logActivity]);
 
-  const unarchiveOrder = useCallback(async (id) => {
+  const unarchiveOrder = useCallback(async (id, restoreStatus = 'In Production') => {
     if (!supabase) throw new Error('Supabase not configured');
+    const updates = { archived: false, status: restoreStatus, pre_archive_status: null };
     const { data, error: err } = await supabase
       .from('production_orders')
-      .update({ archived: false })
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
     if (err) throw err;
     setOrders(prev => sortOrders(prev.map(o => o.id === id ? data : o)));
-    await logActivity(id, 'Order unarchived (restored to active)');
+    await logActivity(id, `Order restored to active (${restoreStatus})`);
   }, [logActivity]);
 
   const deleteOrder = useCallback(async (id) => {
