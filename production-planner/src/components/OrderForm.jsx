@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ORDER_TYPES, ORDER_STATUSES, COATING_TYPES_BY_ORDER_TYPE } from '../lib/constants';
+import { ORDER_STATUSES, COATING_TYPES_BY_ORDER_TYPE } from '../lib/constants';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -89,7 +89,14 @@ const emptyForm = () => ({
   description: '',
 });
 
-export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
+const ADD_TITLE = {
+  'Baskets':      'Add Basket Order',
+  'Loose Dowels': 'Add Loose Dowels Order',
+  'EpoxyFab':     'Add EpoxyFab Order',
+  'Accessories':  'Add Accessories Order',
+};
+
+export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activeTab }) {
   const isEdit = !!editingOrder;
 
   const [form, setForm] = useState(emptyForm());
@@ -101,7 +108,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
     if (isOpen) {
       if (editingOrder) {
         setForm({
-          order_type: editingOrder.order_type || 'Baskets',
+          order_type: editingOrder.order_type,
           start_date: editingOrder.start_date || today(),
           due_date: editingOrder.due_date || '',
           customer: editingOrder.customer || '',
@@ -125,7 +132,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         });
         setCancelWarning(editingOrder.status === 'Cancelled');
       } else {
-        setForm(emptyForm());
+        setForm({ ...emptyForm(), order_type: activeTab || 'Baskets' });
         setCancelWarning(false);
       }
       setErrors({});
@@ -136,50 +143,6 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
     setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }));
     if (field === 'status') setCancelWarning(value === 'Cancelled');
-  };
-
-  // Changing order type resets all hidden/type-specific fields so no ghost data is saved.
-  const handleOrderTypeChange = (newType) => {
-    setForm(prev => {
-      const next = { ...prev, order_type: newType };
-
-      // Fields hidden for Loose Dowels and EpoxyFab
-      if (newType === 'Loose Dowels' || newType === 'EpoxyFab') {
-        next.pvg = '';
-        next.oc = '';
-        next.num_dowels = '';
-        next.total_lf = '';
-      }
-
-      // EpoxyFab-only fields — clear when leaving EpoxyFab
-      if (newType !== 'EpoxyFab') {
-        next.bar_size = '';
-        next.bar_length = '';
-        next.weight = '';
-        next.fabrication = '';
-        next.tolling_only = false;
-      }
-
-      // Dowel Size is hidden for EpoxyFab — clear to avoid ghost data
-      if (newType === 'EpoxyFab') {
-        next.dowel_size = '';
-      }
-
-      // Baskets-only fields — clear when leaving Baskets
-      if (newType !== 'Baskets') {
-        next.description = '';
-      }
-
-      // Reset coating to Plain if the current value isn't valid for the new type
-      const validCoatings = COATING_TYPES_BY_ORDER_TYPE[newType];
-      if (!validCoatings.includes(prev.coating)) {
-        next.coating = 'Plain';
-        next.coating_other = '';
-      }
-
-      return next;
-    });
-    setErrors({});
   };
 
   const isLooseDowels = form.order_type === 'Loose Dowels';
@@ -286,7 +249,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
           flexShrink: 0,
         }}>
           <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-heading), Oswald, sans-serif' }}>
-            {isEdit ? 'Edit Order' : 'Add Production Order'}
+            {isEdit ? 'Edit Order' : (ADD_TITLE[activeTab] || 'Add Production Order')}
           </h2>
           <button
             onClick={onClose}
@@ -298,14 +261,6 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
 
         {/* Scrollable body */}
         <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-
-          {/* Order Type */}
-          <Field label="Order Type" required>
-            <select value={form.order_type} onChange={e => handleOrderTypeChange(e.target.value)} style={inputStyle}>
-              {ORDER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {errors.order_type && <ErrMsg>{errors.order_type}</ErrMsg>}
-          </Field>
 
           {/* Dates */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

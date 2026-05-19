@@ -290,6 +290,7 @@ export default function Home() {
         onClose={() => { setFormOpen(false); setEditingOrder(null); }}
         onSave={handleSave}
         editingOrder={editingOrder}
+        activeTab={activeTab}
       />
     </div>
   );
