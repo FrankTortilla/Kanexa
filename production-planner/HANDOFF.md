@@ -246,16 +246,21 @@ Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delay
   - `.env.local` is absent in this checkout.
   - `vercel env pull --environment=production` returned an empty file when retried.
   - Supabase MCP tools were not available in this session.
-- Local verification status:
+- Local/remote verification status:
   - `npm run lint` still fails before source linting with ESLint config error: `TypeError: Converting circular structure to JSON`.
   - `npm run build` was attempted after stabilization but failed because local DNS could not resolve `fonts.googleapis.com`; `curl` also returned `Could not resolve host` and `scutil --dns` reported no DNS configuration.
-  - Because schema and build could not be verified locally, the stabilized `main` was not redeployed.
+  - Vercel remote production build passed and was deployed.
+- Deployment:
+  - Production alias: https://production-planner-one.vercel.app
+  - Deployment URL: https://production-planner-8h9ofbbx8-steve-6797s-projects.vercel.app
+  - Deployment id: `dpl_B7ZzXBGzbnHg93eqNWNrGzsKVe6V`
+  - Vercel CLI again reported post-deploy cache write `EPERM` warnings under `~/Library/Caches/com.vercel.cli/package-updates/` after the deployment was already `READY` and aliased.
 
 ### Working
 - Core stabilization code is applied on `main`.
 - Dynamic EpoxyFab fields use `tolling_only` consistently in current source.
 - Active/History, notes, action dropdown, tab-specific columns, and status-card filtering are present in source.
-- Existing production remains available at https://production-planner-one.vercel.app, but it has not yet been redeployed from the stabilized `main` in this session.
+- Existing production alias https://production-planner-one.vercel.app now points at the stabilized deployment listed above.
 
 ### Edge Cases Verified
 - Zero-order tab: stat cards show 0, table shows empty state message
@@ -317,9 +322,9 @@ Vercel project is linked via `.vercel/project.json`. Env vars are set in the Ver
 
 1. Verify or run the Supabase migration for `bar_size`, `bar_length`, `weight`, `tolling_only`, `fabrication`, and `description`.
 
-2. Re-run `npm run build` once DNS is working, or verify with a Vercel preview/production build.
+2. Re-run `npm run build` once local DNS is working; remote Vercel build already passed for the stabilized deployment.
 
-3. Deploy stabilized `main` to Vercel after schema and build are verified.
+3. Fix or update the ESLint config so `npm run lint` can execute against source files again.
 
 4. **Phase 2 — Warehouse route**: `/warehouse` — read-only view, In Production + Ready to Ship only, no Edit/Archive/Delete. Large-format display similar to the shipment tracker warehouse view.
 
