@@ -1,6 +1,6 @@
 # Production Planner — Claude Code Handoff
 
-**Last updated:** 2026-05-19 (FIX 1: activeTab modal wiring; FIX 2: Accessories tab; FIX 3: IN PRODUCTION glowing white label; FIX 4: Cancelled stat card restored)
+**Last updated:** 2026-05-19 (FIX 1: activeTab modal wiring; FIX 2: Accessories tab; FIX 3: IN PRODUCTION glowing white label; FIX 4: Cancelled stat card restored; FIX 5: Tolling Only → checkbox below Coating; FIX 6: amber left stripe on tolling rows)
 **Repo:** https://github.com/FrankTortilla/Kanexa.git  
 **Branch:** main  
 **Project path in repo:** `production-planner/`  
@@ -202,7 +202,7 @@ All tabs:
 
 **Loose Dowels**: Start Date, Due Date, Customer, PO#, Qty, Pvg", Dowel Size, O.C., Coating (+Other), # Dowels, Total LF, Status, CPU ASAP
 
-**EpoxyFab**: Start Date, Due Date, Customer, PO#, Qty, Bar Size, Bar Length, Weight, Coating (+Other), Fabrication, Tolling Only, Status, CPU ASAP
+**EpoxyFab**: Start Date, Due Date, Customer, PO#, Qty, Weight, Coating (+Other), **Tolling Only (checkbox — directly below Coating)**, Bar Size, Bar Length, Fabrication, Status, CPU ASAP
 
 **Accessories**: Start Date, Due Date, Customer, PO#, Qty, LF (Linear Feet), Notes (textarea, 4 rows), Status, CPU ASAP
 - No Coating, no Dowel/Pvg/OC/Bar/Weight fields
@@ -276,6 +276,7 @@ Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delay
 - `e6145ed2e` — Update handoff after production planner stabilization
 - `1250acb28` — Record stabilized production deployment
 - `8199a702f` — fix: restore Cancelled stat card and IN PRODUCTION glowing white label
+- `98775ad5e` — feat: Tolling Only checkbox below Coating + amber stripe on tolling rows
 
 **Supabase migration applied 2026-05-19:**
 ```sql
@@ -284,7 +285,7 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 
 **Deployment:**
 - Production alias: https://production-planner-one.vercel.app
-- Latest deployment ID: `dpl_GvNzSfycznvABZjmshiyhhpMqfsD`
+- Latest deployment ID: `dpl_9UmatMzfDBZMBydBswfmYYmoEysC`
 
 **Previous stabilization series (applied before this session):**
 - `2ac7414a5` — baseline cleanup: removed stale EpoxyFab Dowel Size handling, fixed Tolling Only field name, scoped stat calculations
@@ -298,7 +299,8 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 - Tab-aware modal: title changes per tab, `order_type` set automatically, no Order Type dropdown
 - Tab-specific form fields and table columns fully isolated
 - Accessories: LF field (uses `total_lf`), Notes textarea (uses `description`), form note display in expanded row
-- EpoxyFab: TOLLING badge shown when `tolling_only = true`
+- EpoxyFab: TOLLING badge shown when `tolling_only = true`; rows with `tolling_only = true` also get a 4px amber (`#F59E0B`) left stripe on the expand-toggle cell
+- EpoxyFab form: Tolling Only is a checkbox (not a toggle) positioned directly below the Coating dropdown
 - **Cancelled stat card**: cherry red, auto-switches to History, filters to Cancelled-only
 - **IN PRODUCTION label**: glowing white (number stays blue); comment in source prevents future revert
 - Total LF stat card hidden for Accessories when all LF values are null/zero
