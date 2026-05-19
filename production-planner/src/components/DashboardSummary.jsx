@@ -10,17 +10,22 @@ export default function DashboardSummary({ orders, activeTab, statusFilter, onSt
   const delayed      = tabOrders.filter(o => o.status === 'Delayed').length;
   const onHold       = tabOrders.filter(o => o.status === 'On Hold').length;
   const totalActive  = tabOrders.length;
+  // Count all Cancelled orders for this tab (they're always archived via auto-archive)
+  const cancelled    = orders.filter(o => o.order_type === activeTab && o.status === 'Cancelled').length;
 
   // Metric tiles scoped to active tab
   const totalQty = tabOrders.reduce((sum, o) => sum + (o.quantity || 0), 0);
   const totalLF  = tabOrders.reduce((sum, o) => sum + (o.total_lf || 0), 0);
 
   const statusCards = [
-    { key: 'In Production', label: 'In Production', value: inProduction, color: '#3b82f6', glow: 'rgba(59,130,246,0.25)', labelColor: '#3b82f6' },
+    { key: 'In Production', label: 'In Production', value: inProduction, color: '#3b82f6', glow: 'rgba(59,130,246,0.25)',
+      // INTENTIONAL: IN PRODUCTION label is glowing white — do not revert to blue
+      labelColor: '#ffffff', labelGlow: '0 0 8px rgba(255,255,255,0.7)' },
     { key: 'Ready to Ship', label: 'Ready to Ship', value: readyToShip,  color: '#22c55e', glow: 'rgba(22,197,94,0.25)'  },
     { key: 'Delayed',       label: 'Delayed',       value: delayed,      color: '#e6b800', glow: 'rgba(230,184,0,0.15)'  },
     { key: 'On Hold',       label: 'On Hold',       value: onHold,       color: '#FF8C00', glow: 'rgba(255,140,0,0.25)'  },
     { key: 'total',         label: 'Total Active',  value: totalActive,  color: 'var(--text-primary)', glow: 'transparent' },
+    { key: 'Cancelled',     label: 'Cancelled',     value: cancelled,    color: '#FF1744', glow: 'rgba(255,23,68,0.25)'  },
   ];
 
   // Total LF: always shown for Baskets; shown for Accessories only when ≥1 order has a non-zero LF

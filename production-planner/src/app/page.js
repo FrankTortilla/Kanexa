@@ -91,14 +91,19 @@ export default function Home() {
       .sort((a, b) => (a.due_date ?? '') < (b.due_date ?? '') ? -1 : 1);
   }, [orders, activeTab]);
 
-  // Apply status filter (Feature 1) — 'total' or null means show all
+  // Apply status filter — 'total' or null means show all; 'Cancelled' shows History filtered to Cancelled
   const visibleOrders = useMemo(() => {
-    if (viewMode === 'history') return historyOrders;
+    if (viewMode === 'history') {
+      if (statusFilter === 'Cancelled') return historyOrders.filter(o => o.status === 'Cancelled');
+      return historyOrders;
+    }
     if (!statusFilter || statusFilter === 'total') return activeOrders;
     return activeOrders.filter(o => o.status === statusFilter);
   }, [activeOrders, historyOrders, statusFilter, viewMode]);
 
   const handleStatusFilter = useCallback((key) => {
+    // Cancelled orders live in History — auto-switch so the filter has something to show
+    if (key === 'Cancelled') setViewMode('history');
     setStatusFilter(key);
     setExpandedId(null);
   }, []);
