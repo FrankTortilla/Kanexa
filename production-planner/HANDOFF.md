@@ -1,6 +1,6 @@
 # Production Planner — Claude Code Handoff
 
-**Last updated:** 2026-05-19 (FIX 1: activeTab modal wiring; FIX 2: Accessories tab; FIX 3: IN PRODUCTION glowing white label; FIX 4: Cancelled stat card restored; FIX 5: Tolling Only → checkbox below Coating; FIX 6: amber left stripe on tolling rows)
+**Last updated:** 2026-05-19 (FIX 1–6 + FIX 7: TOLLING badge → amber T indicator column in EpoxyFab table)
 **Repo:** https://github.com/FrankTortilla/Kanexa.git  
 **Branch:** main  
 **Project path in repo:** `production-planner/`  
@@ -277,6 +277,7 @@ Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delay
 - `1250acb28` — Record stabilized production deployment
 - `8199a702f` — fix: restore Cancelled stat card and IN PRODUCTION glowing white label
 - `98775ad5e` — feat: Tolling Only checkbox below Coating + amber stripe on tolling rows
+- `6660ef85a` — feat: replace TOLLING badge with amber T indicator column in EpoxyFab table
 
 **Supabase migration applied 2026-05-19:**
 ```sql
@@ -285,7 +286,7 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 
 **Deployment:**
 - Production alias: https://production-planner-one.vercel.app
-- Latest deployment ID: `dpl_9UmatMzfDBZMBydBswfmYYmoEysC`
+- Latest deployment ID: `dpl_5MQYL8chWJX8cjkWvmrcThvXbqms`
 
 **Previous stabilization series (applied before this session):**
 - `2ac7414a5` — baseline cleanup: removed stale EpoxyFab Dowel Size handling, fixed Tolling Only field name, scoped stat calculations
@@ -299,7 +300,8 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 - Tab-aware modal: title changes per tab, `order_type` set automatically, no Order Type dropdown
 - Tab-specific form fields and table columns fully isolated
 - Accessories: LF field (uses `total_lf`), Notes textarea (uses `description`), form note display in expanded row
-- EpoxyFab: TOLLING badge shown when `tolling_only = true`; rows with `tolling_only = true` also get a 4px amber (`#F59E0B`) left stripe on the expand-toggle cell
+- EpoxyFab: narrow first column (48px, no header) shows bold amber pill "T" (`#F59E0B` bg, `#1C1917` text) on tolling rows; empty for non-tolling rows. Green TOLLING badge removed entirely.
+- EpoxyFab tolling rows: 4px amber (`#F59E0B`) left stripe on the expand-toggle cell (unchanged)
 - EpoxyFab form: Tolling Only is a checkbox (not a toggle) positioned directly below the Coating dropdown
 - **Cancelled stat card**: cherry red, auto-switches to History, filters to Cancelled-only
 - **IN PRODUCTION label**: glowing white (number stays blue); comment in source prevents future revert
