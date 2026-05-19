@@ -1,6 +1,6 @@
 # Production Planner — Claude Code Handoff
 
-**Last updated:** 2026-05-18  
+**Last updated:** 2026-05-19 (main reset to b588e12e6 + stabilized fix series)
 **Repo:** https://github.com/FrankTortilla/Kanexa.git  
 **Branch:** main  
 **Project path in repo:** `production-planner/`  
@@ -78,7 +78,13 @@ CREATE TABLE production_orders (
   status order_status NOT NULL DEFAULT 'In Production',
   cpu_asap BOOLEAN NOT NULL DEFAULT false,
   archived BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  bar_size TEXT,
+  bar_length TEXT,
+  weight NUMERIC,
+  tolling_only BOOLEAN NOT NULL DEFAULT false,
+  fabrication TEXT,
+  description TEXT
 );
 
 CREATE TABLE production_order_activity (
@@ -218,17 +224,38 @@ Exports currently visible orders (respects Active/History view and active filter
 | Border | `#333333` |
 | Row hover | `#2e2e2e` |
 
-Status badge colors: In Production `#38BDF8` · Ready to Ship `#22c55e` · Delayed `#ef4444` · On Hold `#FF8C00` · Cancelled `#FF1744`
+Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delayed `#e6b800` · On Hold `#FF8C00` · Cancelled `#FF1744`
 
 ---
 
 ## Current State
 
+### 2026-05-19 Stabilization Update
+- Preserved the previously dirty/deployed state on branch `codex-safety-before-production-planner-stabilize`, commit `5b688b79c`.
+- Reset local `main` to `origin/main` / `b588e12e6`.
+- Cherry-picked the coherent stabilization series onto `main`:
+  - `2ac7414a5` — baseline cleanup: removed stale EpoxyFab Dowel Size handling, fixed the Tolling Only field name, scoped stat calculations.
+  - `4bd6ce4c0` — tab-specific table columns and EpoxyFab field visibility.
+  - `05081f4e4` — scrollbar colors match Waypoint.
+  - `91cd32f9c` — sticky header and single-page scroll.
+  - `6880d9664` — status dropdown flips upward near viewport bottom.
+- The old misspelled Tolling Only field name no longer appears in `HANDOFF.md` or `src`.
+- Current code expects Supabase column `tolling_only`.
+- Current code uses `total_lf`; there is no `lf` field in the app code.
+- Live Supabase schema has not been verified in this session:
+  - `.env.local` is absent in this checkout.
+  - `vercel env pull --environment=production` returned an empty file when retried.
+  - Supabase MCP tools were not available in this session.
+- Local verification status:
+  - `npm run lint` still fails before source linting with ESLint config error: `TypeError: Converting circular structure to JSON`.
+  - `npm run build` was attempted after stabilization but failed because local DNS could not resolve `fonts.googleapis.com`; `curl` also returned `Could not resolve host` and `scutil --dns` reported no DNS configuration.
+  - Because schema and build could not be verified locally, the stabilized `main` was not redeployed.
+
 ### Working
-- Full build — zero errors, zero warnings
-- All 5 Phase 1 features fully implemented and verified
-- Deployed to production: https://production-planner-one.vercel.app
-- Supabase connected and RLS configured on all three tables
+- Core stabilization code is applied on `main`.
+- Dynamic EpoxyFab fields use `tolling_only` consistently in current source.
+- Active/History, notes, action dropdown, tab-specific columns, and status-card filtering are present in source.
+- Existing production remains available at https://production-planner-one.vercel.app, but it has not yet been redeployed from the stabilized `main` in this session.
 
 ### Edge Cases Verified
 - Zero-order tab: stat cards show 0, table shows empty state message
@@ -250,6 +277,9 @@ Status badge colors: In Production `#38BDF8` · Ready to Ship `#22c55e` · Delay
 - Dropdown scroll close: scroll event listener in ActionsDropdown
 
 ### Known Gaps / Not Built
+- **Supabase schema verification** — still needs a live check that `bar_size`, `bar_length`, `weight`, `tolling_only`, `fabrication`, and `description` exist on `production_orders`.
+- **Local build verification** — blocked by local DNS failure fetching Google Fonts.
+- **Lint tooling** — blocked by existing ESLint config crash before app code is linted.
 - **Pagination** — table renders all orders for a tab/view. Fine for current volume.
 - **Search/filter bar** — not in original spec. Could be added.
 - **Warehouse route** — Phase 2. Not started. Would be `/warehouse`, read-only, In Production + Ready to Ship only.
@@ -285,10 +315,16 @@ Vercel project is linked via `.vercel/project.json`. Env vars are set in the Ver
 
 ## Next Steps
 
-1. **Phase 2 — Warehouse route**: `/warehouse` — read-only view, In Production + Ready to Ship only, no Edit/Archive/Delete. Large-format display similar to the shipment tracker warehouse view.
+1. Verify or run the Supabase migration for `bar_size`, `bar_length`, `weight`, `tolling_only`, `fabrication`, and `description`.
 
-2. **Notes author** — either add a simple "Your name" prompt that persists in localStorage, or integrate with Supabase Auth if auth is ever re-added.
+2. Re-run `npm run build` once DNS is working, or verify with a Vercel preview/production build.
 
-3. **Search bar** — add a text search input above the table filtering by customer, PO#, or coating. Pattern exists in the shipment tracker (`SearchFilterBar.jsx`).
+3. Deploy stabilized `main` to Vercel after schema and build are verified.
 
-4. **Pagination** — add if order counts grow large. `Pagination.jsx` component already exists in the shipment tracker.
+4. **Phase 2 — Warehouse route**: `/warehouse` — read-only view, In Production + Ready to Ship only, no Edit/Archive/Delete. Large-format display similar to the shipment tracker warehouse view.
+
+5. **Notes author** — either add a simple "Your name" prompt that persists in localStorage, or integrate with Supabase Auth if auth is ever re-added.
+
+6. **Search bar** — add a text search input above the table filtering by customer, PO#, or coating. Pattern exists in the shipment tracker (`SearchFilterBar.jsx`).
+
+7. **Pagination** — add if order counts grow large. `Pagination.jsx` component already exists in the shipment tracker.
