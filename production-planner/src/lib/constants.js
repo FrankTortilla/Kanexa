@@ -1,4 +1,4 @@
-export const ORDER_TYPES = ['Baskets', 'Loose Dowels', 'EpoxyFab'];
+export const ORDER_TYPES = ['Baskets', 'Loose Dowels', 'EpoxyFab', 'Accessories'];
 
 export const ORDER_STATUSES = [
   'In Production',
@@ -25,6 +25,7 @@ export const COATING_TYPES_BY_ORDER_TYPE = {
   'Baskets':      ['Plain', 'Epoxy', 'Epoxy/Tectyl', 'Epoxy/Patch', 'Painted', 'Tectyl', 'Other'],
   'Loose Dowels': ['Plain', 'Epoxy/Tectyl', 'Epoxy/Patch', 'Painted', 'Other'],
   'EpoxyFab':     ['Plain', 'Epoxy'],
+  'Accessories':  [],
 };
 
 // Badge colors for each order status — exact values from Waypoint/shipment-tracker BADGE_COLORS.

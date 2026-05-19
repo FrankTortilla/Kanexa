@@ -170,8 +170,8 @@ export default function Home() {
 
   const handleExport = () => exportToCSV(viewMode === 'active' ? visibleOrders : historyOrders);
 
-  const renderActivityLog = useCallback((orderId) => (
-    <ActivityLog orderId={orderId} />
+  const renderActivityLog = useCallback((orderId, formNote) => (
+    <ActivityLog orderId={orderId} formNote={formNote || null} />
   ), []);
 
   if (loading) {

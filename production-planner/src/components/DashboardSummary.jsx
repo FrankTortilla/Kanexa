@@ -23,8 +23,9 @@ export default function DashboardSummary({ orders, activeTab, statusFilter, onSt
     { key: 'total',         label: 'Total Active',  value: totalActive,  color: 'var(--text-primary)', glow: 'transparent' },
   ];
 
-  // Total LF is only meaningful for Baskets (Loose Dowels and EpoxyFab don't use LF)
-  const showTotalLF = activeTab === 'Baskets';
+  // Total LF: always shown for Baskets; shown for Accessories only when ≥1 order has a non-zero LF
+  const showTotalLF = activeTab === 'Baskets' ||
+    (activeTab === 'Accessories' && tabOrders.some(o => o.total_lf != null && o.total_lf !== 0));
 
   const metricCards = [
     { key: 'total-qty', label: 'Total QTY', value: numberFormatter.format(totalQty) + ' ea', color: '#B8C7D9' },

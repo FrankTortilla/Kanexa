@@ -145,11 +145,12 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
     if (field === 'status') setCancelWarning(value === 'Cancelled');
   };
 
-  const isLooseDowels = form.order_type === 'Loose Dowels';
-  const isEpoxyFab    = form.order_type === 'EpoxyFab';
-  const isBaskets     = form.order_type === 'Baskets';
-  // Pvg, O.C., # Dowels, # Total LF are hidden for both Loose Dowels and EpoxyFab
-  const hideBasketFields = isLooseDowels || isEpoxyFab;
+  const isLooseDowels  = form.order_type === 'Loose Dowels';
+  const isEpoxyFab     = form.order_type === 'EpoxyFab';
+  const isBaskets      = form.order_type === 'Baskets';
+  const isAccessories  = form.order_type === 'Accessories';
+  // Pvg, O.C., # Dowels, # Total LF are hidden for Loose Dowels, EpoxyFab, and Accessories
+  const hideBasketFields = isLooseDowels || isEpoxyFab || isAccessories;
 
   const availableCoatings = COATING_TYPES_BY_ORDER_TYPE[form.order_type] ?? COATING_TYPES_BY_ORDER_TYPE['Baskets'];
 
@@ -164,8 +165,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
     if (!form.customer.trim()) e.customer = 'Required';
     if (form.quantity === '' || form.quantity === null) e.quantity = 'Required';
     if (isNaN(Number(form.quantity)) || Number(form.quantity) < 0) e.quantity = 'Must be a positive number';
-    if (!form.coating) e.coating = 'Required';
-    if (form.coating === 'Other' && !form.coating_other.trim()) e.coating_other = 'Please describe the coating';
+    if (!isAccessories && !form.coating) e.coating = 'Required';
+    if (!isAccessories && form.coating === 'Other' && !form.coating_other.trim()) e.coating_other = 'Please describe the coating';
     if (!form.status) e.status = 'Required';
     return e;
   };
@@ -185,15 +186,17 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
         customer: form.customer.trim(),
         po_number: form.po_number.trim() || null,
         quantity: Number(form.quantity),
-        // Null out hidden fields for Loose Dowels and EpoxyFab
-        pvg:        hideBasketFields ? null : (form.pvg.trim() || null),
-        oc:         hideBasketFields ? null : (form.oc.trim() || null),
-        num_dowels: hideBasketFields ? null : (form.num_dowels !== '' ? Number(form.num_dowels) : null),
-        total_lf:   hideBasketFields ? null : (form.total_lf !== '' ? Number(form.total_lf) : null),
-        // Dowel Size — Baskets and Loose Dowels only, null for EpoxyFab
-        dowel_size: isEpoxyFab ? null : (form.dowel_size.trim() || null),
-        coating: form.coating,
-        coating_other: form.coating === 'Other' ? form.coating_other.trim() : null,
+        // Pvg, O.C., # Dowels hidden for everything except Baskets
+        pvg:        isBaskets ? (form.pvg.trim() || null) : null,
+        oc:         isBaskets ? (form.oc.trim() || null) : null,
+        num_dowels: isBaskets ? (form.num_dowels !== '' ? Number(form.num_dowels) : null) : null,
+        // total_lf: Baskets = "# Total LF", Accessories = "LF (Linear Feet)", others = null
+        total_lf: (isBaskets || isAccessories) ? (form.total_lf !== '' ? Number(form.total_lf) : null) : null,
+        // Dowel Size — Baskets and Loose Dowels only
+        dowel_size: (isEpoxyFab || isAccessories) ? null : (form.dowel_size.trim() || null),
+        // Coating — not used by Accessories
+        coating: isAccessories ? null : form.coating,
+        coating_other: isAccessories ? null : (form.coating === 'Other' ? form.coating_other.trim() : null),
         status: form.status,
         cpu_asap: form.cpu_asap,
         // EpoxyFab-specific — null for all other types
@@ -202,8 +205,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
         weight:       isEpoxyFab ? (form.weight !== '' ? Number(form.weight) : null)      : null,
         fabrication:  isEpoxyFab ? (form.fabrication.trim() || null)                     : null,
         tolling_only: isEpoxyFab ? form.tolling_only                                     : false,
-        // Baskets-specific — null for all other types
-        description: isBaskets ? (form.description.trim() || null) : null,
+        // Baskets = Description, Accessories = Notes — both use description column
+        description: (isBaskets || isAccessories) ? (form.description.trim() || null) : null,
         // Auto-archive if Cancelled
         ...(form.status === 'Cancelled' ? { archived: true } : {}),
       };
@@ -320,27 +323,51 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder, activ
             </Field>
           )}
 
-          {/* Coating — options filtered by order type */}
-          <Field label="Coating" required>
-            <select value={form.coating} onChange={e => set('coating', e.target.value)} style={inputStyle}>
-              {availableCoatings.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            {errors.coating && <ErrMsg>{errors.coating}</ErrMsg>}
-          </Field>
-          {form.coating === 'Other' && (
-            <Field label="Coating Description" required>
-              <input
-                type="text"
-                value={form.coating_other}
-                onChange={e => set('coating_other', e.target.value)}
-                placeholder="Describe the coating"
-                style={inputStyle}
-              />
-              {errors.coating_other && <ErrMsg>{errors.coating_other}</ErrMsg>}
+          {/* LF — Accessories only */}
+          {isAccessories && (
+            <Field label="LF (Linear Feet)">
+              <input type="number" min="0" step="any" value={form.total_lf} onChange={e => set('total_lf', e.target.value)} placeholder="0" style={inputStyle} />
             </Field>
           )}
 
-          {/* Description — Baskets only */}
+          {/* Notes — Accessories only */}
+          {isAccessories && (
+            <Field label="Notes">
+              <textarea
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                placeholder="Optional notes"
+                rows={4}
+                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
+              />
+            </Field>
+          )}
+
+          {/* Coating — hidden for Accessories */}
+          {!isAccessories && (
+            <>
+              <Field label="Coating" required>
+                <select value={form.coating} onChange={e => set('coating', e.target.value)} style={inputStyle}>
+                  {availableCoatings.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                {errors.coating && <ErrMsg>{errors.coating}</ErrMsg>}
+              </Field>
+              {form.coating === 'Other' && (
+                <Field label="Coating Description" required>
+                  <input
+                    type="text"
+                    value={form.coating_other}
+                    onChange={e => set('coating_other', e.target.value)}
+                    placeholder="Describe the coating"
+                    style={inputStyle}
+                  />
+                  {errors.coating_other && <ErrMsg>{errors.coating_other}</ErrMsg>}
+                </Field>
+              )}
+            </>
+          )}
+
+          {/* Description — Baskets only (Accessories uses description for Notes above) */}
           {isBaskets && (
             <Field label="Description">
               <input type="text" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional" style={inputStyle} />

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function ActivityLog({ orderId }) {
+export default function ActivityLog({ orderId, formNote }) {
   const [entries, setEntries] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loadingLog, setLoadingLog] = useState(true);
@@ -86,11 +86,20 @@ export default function ActivityLog({ orderId }) {
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '10px' }}>
         Notes
       </div>
+      {formNote && (
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', borderBottom: '1px solid #2a2a2a', paddingBottom: '8px', marginBottom: '8px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#888', flexShrink: 0, marginTop: '4px' }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px' }}>Form note</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-primary)', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formNote}</div>
+          </div>
+        </div>
+      )}
       {loadingNotes ? (
         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 12px' }}>Loading…</p>
-      ) : notes.length === 0 ? (
+      ) : notes.length === 0 && !formNote ? (
         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 12px' }}>No notes yet.</p>
-      ) : (
+      ) : notes.length === 0 ? null : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', marginBottom: '12px' }}>
           {notes.map(n => (
             <div key={n.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', borderBottom: '1px solid #2a2a2a', paddingBottom: '8px' }}>

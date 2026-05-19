@@ -253,10 +253,11 @@ const dropBtn = {
 };
 
 // Column counts per tab (expand + data cols + actions)
-// Baskets: 1+13+1 = 15  |  Loose Dowels: 1+9+1 = 11  |  EpoxyFab: 1+12+1 = 14
+// Baskets: 1+13+1=15  |  Loose Dowels: 1+9+1=11  |  EpoxyFab: 1+12+1=14  |  Accessories: 1+9+1=11
 function colCount(orderType) {
   if (orderType === 'Baskets')      return 15;
   if (orderType === 'EpoxyFab')     return 14;
+  if (orderType === 'Accessories')  return 11;
   return 11; // Loose Dowels
 }
 
@@ -324,8 +325,27 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
             <TD>{coatingLabel || '—'}</TD>
             <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_size || '—'}</TD>
             <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_length || '—'}</TD>
-            <TD style={{ color: 'var(--text-secondary)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {order.fabrication || '—'}
+            <TD style={{ color: 'var(--text-secondary)', maxWidth: '180px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+                  {order.fabrication || '—'}
+                </span>
+                {order.tolling_only && (
+                  <span style={{
+                    background: 'var(--accent-green)', color: '#1a1a1a',
+                    borderRadius: '4px', padding: '2px 5px',
+                    fontSize: '9px', fontWeight: 800, letterSpacing: '0.3px', whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>TOLLING</span>
+                )}
+              </div>
+            </TD>
+          </>
+        )}
+        {orderType === 'Accessories' && (
+          <>
+            <TD style={{ textAlign: 'right' }}>{order.total_lf != null ? order.total_lf.toLocaleString() : '—'}</TD>
+            <TD style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-secondary)' }}>
+              {order.description || '—'}
             </TD>
           </>
         )}
@@ -369,7 +389,7 @@ function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, o
             background: 'var(--bg-surface)',
             borderBottom: '1px solid var(--border)',
           }}>
-            {renderActivityLog(order.id)}
+            {renderActivityLog(order.id, orderType === 'Accessories' ? order.description : null)}
           </td>
         </tr>
       )}
@@ -423,6 +443,12 @@ export default function OrderTable({ orders, orderType, flashedId, onEdit, onArc
                 <TH>Bar Size</TH>
                 <TH>Bar Length</TH>
                 <TH>Fabrication</TH>
+              </>
+            )}
+            {orderType === 'Accessories' && (
+              <>
+                <TH style={{ textAlign: 'right' }}>LF</TH>
+                <TH>Notes</TH>
               </>
             )}
 
