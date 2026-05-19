@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
+import { Fragment, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ORDER_STATUSES, STATUS_BADGE_COLORS } from '../lib/constants';
 import StatusBadge from './StatusBadge';
@@ -126,8 +126,6 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
   );
 }
 
-// Portal-based actions dropdown (Feature 5)
-// openDropdownId / setOpenDropdownId lifted to table level so only one is open at a time
 function ActionsDropdown({ order, isHistory, onEdit, onArchive, onRestore, onDelete, openDropdownId, setOpenDropdownId }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pos, setPos] = useState({});
@@ -149,7 +147,6 @@ function ActionsDropdown({ order, isHistory, onEdit, onArchive, onRestore, onDel
     setConfirmDelete(false);
   };
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
@@ -162,7 +159,6 @@ function ActionsDropdown({ order, isHistory, onEdit, onArchive, onRestore, onDel
     return () => document.removeEventListener('mousedown', handler);
   }, [isOpen]);
 
-  // Close on scroll
   useEffect(() => {
     if (!isOpen) return;
     const handler = () => { setOpen(false); setConfirmDelete(false); };
@@ -193,7 +189,7 @@ function ActionsDropdown({ order, isHistory, onEdit, onArchive, onRestore, onDel
             Permanently delete this order? This cannot be undone.
           </div>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-            <button onClick={() => { setConfirmDelete(false); }}
+            <button onClick={() => setConfirmDelete(false)}
               style={{ ...dropBtn, color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
               Cancel
             </button>
@@ -248,7 +244,15 @@ const dropBtn = {
   background: 'transparent',
 };
 
-function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory, openDropdownId, setOpenDropdownId }) {
+// Column counts per tab (expand + data cols + actions)
+// Baskets: 1+13+1 = 15  |  Loose Dowels: 1+9+1 = 11  |  EpoxyFab: 1+12+1 = 14
+function colCount(orderType) {
+  if (orderType === 'Baskets')      return 15;
+  if (orderType === 'EpoxyFab')     return 14;
+  return 11; // Loose Dowels
+}
+
+function OrderRow({ order, orderType, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory, openDropdownId, setOpenDropdownId }) {
   const [hovered, setHovered] = useState(false);
 
   const isCpuAsap = !!order.cpu_asap;
@@ -257,6 +261,8 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, on
   const coatingLabel = order.coating === 'Other' && order.coating_other
     ? `Other: ${order.coating_other}`
     : order.coating;
+
+  const startDateStyle = isCpuAsap ? { borderLeft: '3px solid #FF8C00' } : {};
 
   return (
     <Fragment>
@@ -270,6 +276,7 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, on
           opacity: isHistory ? 0.82 : 1,
         }}
       >
+        {/* Expand toggle — all tabs */}
         <td style={{ padding: '9px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }}>
           <button onClick={() => onToggleExpand(order.id)} style={{
             background: 'none', border: 'none', color: 'var(--text-secondary)',
@@ -278,17 +285,44 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, on
             transition: 'transform 0.2s',
           }}>▶</button>
         </td>
-        <TD style={isCpuAsap ? { borderLeft: '3px solid #FF8C00' } : {}}>{formatDate(order.start_date)}</TD>
+
+        {/* Common leading columns — all tabs */}
+        <TD style={startDateStyle}>{formatDate(order.start_date)}</TD>
         <TD>{formatDate(order.due_date)}</TD>
         <TD style={{ fontWeight: 600 }}>{order.customer}</TD>
         <TD style={{ color: 'var(--text-secondary)' }}>{order.po_number || '—'}</TD>
         <TD style={{ textAlign: 'right', fontWeight: 600 }}>{order.quantity?.toLocaleString() ?? '—'}</TD>
-        <TD style={{ color: 'var(--text-secondary)' }}>{order.pvg || '—'}</TD>
-        <TD style={{ color: 'var(--text-secondary)' }}>{order.dowel_size || '—'}</TD>
-        <TD style={{ color: 'var(--text-secondary)' }}>{order.oc || '—'}</TD>
-        <TD>{coatingLabel || '—'}</TD>
-        <TD style={{ textAlign: 'right' }}>{order.num_dowels?.toLocaleString() ?? '—'}</TD>
-        <TD style={{ textAlign: 'right' }}>{order.total_lf?.toLocaleString() ?? '—'}</TD>
+
+        {/* Tab-specific middle columns */}
+        {orderType === 'Baskets' && (
+          <>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.pvg || '—'}</TD>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.dowel_size || '—'}</TD>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.oc || '—'}</TD>
+            <TD>{coatingLabel || '—'}</TD>
+            <TD style={{ textAlign: 'right' }}>{order.num_dowels?.toLocaleString() ?? '—'}</TD>
+            <TD style={{ textAlign: 'right' }}>{order.total_lf?.toLocaleString() ?? '—'}</TD>
+          </>
+        )}
+        {orderType === 'Loose Dowels' && (
+          <>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.dowel_size || '—'}</TD>
+            <TD>{coatingLabel || '—'}</TD>
+          </>
+        )}
+        {orderType === 'EpoxyFab' && (
+          <>
+            <TD style={{ textAlign: 'right' }}>{order.weight != null ? order.weight.toLocaleString() : '—'}</TD>
+            <TD>{coatingLabel || '—'}</TD>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_size || '—'}</TD>
+            <TD style={{ color: 'var(--text-secondary)' }}>{order.bar_length || '—'}</TD>
+            <TD style={{ color: 'var(--text-secondary)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {order.fabrication || '—'}
+            </TD>
+          </>
+        )}
+
+        {/* Common trailing columns — all tabs */}
         <TD>
           {isHistory
             ? <StatusBadge status={order.status} />
@@ -319,9 +353,10 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, on
           />
         </TD>
       </tr>
+
       {isExpanded && (
         <tr>
-          <td colSpan={15} style={{
+          <td colSpan={colCount(orderType)} style={{
             padding: '0 24px 16px 56px',
             background: 'var(--bg-surface)',
             borderBottom: '1px solid var(--border)',
@@ -334,11 +369,9 @@ function OrderRow({ order, flashedId, onEdit, onArchive, onRestore, onDelete, on
   );
 }
 
-export default function OrderTable({ orders, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory }) {
-  // Single open dropdown state lifted here so only one opens at a time
+export default function OrderTable({ orders, orderType, flashedId, onEdit, onArchive, onRestore, onDelete, onStatusChange, expandedId, onToggleExpand, renderActivityLog, isHistory }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // Close open dropdown when orders change (e.g. row removed from view)
   useEffect(() => {
     if (openDropdownId && !orders.some(o => o.id === openDropdownId)) {
       setOpenDropdownId(null);
@@ -358,12 +391,33 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, onRes
             <TH>Customer</TH>
             <TH>PO#</TH>
             <TH style={{ textAlign: 'right' }}>Qty (ea)</TH>
-            <TH>Pvg&quot;</TH>
-            <TH>Dowel Size</TH>
-            <TH>O.C.</TH>
-            <TH>Coating</TH>
-            <TH style={{ textAlign: 'right' }}># Dowels</TH>
-            <TH style={{ textAlign: 'right' }}>Total LF</TH>
+
+            {orderType === 'Baskets' && (
+              <>
+                <TH>Pvg&quot;</TH>
+                <TH>Dowel Size</TH>
+                <TH>O.C.</TH>
+                <TH>Coating</TH>
+                <TH style={{ textAlign: 'right' }}># Dowels</TH>
+                <TH style={{ textAlign: 'right' }}>Total LF</TH>
+              </>
+            )}
+            {orderType === 'Loose Dowels' && (
+              <>
+                <TH>Dowel Size</TH>
+                <TH>Coating</TH>
+              </>
+            )}
+            {orderType === 'EpoxyFab' && (
+              <>
+                <TH style={{ textAlign: 'right' }}>Weight (lbs)</TH>
+                <TH>Coating</TH>
+                <TH>Bar Size</TH>
+                <TH>Bar Length</TH>
+                <TH>Fabrication</TH>
+              </>
+            )}
+
             <TH>Status</TH>
             <TH style={{ textAlign: 'center' }}>CPU ASAP</TH>
             <TH style={{ textAlign: 'center' }}>Actions</TH>
@@ -374,6 +428,7 @@ export default function OrderTable({ orders, flashedId, onEdit, onArchive, onRes
             <OrderRow
               key={order.id}
               order={order}
+              orderType={orderType}
               flashedId={flashedId}
               onEdit={onEdit}
               onArchive={onArchive}

@@ -268,6 +268,7 @@ export default function Home() {
       ) : (
         <OrderTable
           orders={visibleOrders}
+          orderType={activeTab}
           flashedId={flashedId}
           onEdit={handleEdit}
           onArchive={handleArchive}
