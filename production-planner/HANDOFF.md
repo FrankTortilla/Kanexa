@@ -1,6 +1,6 @@
 # Production Planner — Claude Code Handoff
 
-**Last updated:** 2026-05-19 (FIX 1–6 + FIX 7: TOLLING badge → amber T indicator column in EpoxyFab table)
+**Last updated:** 2026-05-19 (FIX 1–7 + FIX 8: restore-from-history now returns order to its pre-archive status)
 **Repo:** https://github.com/FrankTortilla/Kanexa.git  
 **Branch:** main  
 **Project path in repo:** `production-planner/`  
@@ -242,6 +242,7 @@ Exports currently visible orders (respects Active/History view and active filter
 - **Status filter is per product-tab** — stored as a single `statusFilter` state that resets on `handleTabChange`. Switching Active/History sub-tabs does NOT reset the filter (intentional: filter stays when toggling view).
 - **Single open dropdown** — `openDropdownId` is lifted to `OrderTable` level so only one `···` dropdown can be open at a time. The effect also auto-closes the dropdown if its row is removed from view.
 - **Error surface** — Archive, Restore, Delete, and Status Change failures show a red error banner (top-right, 5s timeout) in addition to reverting any optimistic UI state.
+- **`pre_archive_status` column** — TEXT column already existed in the schema (unused legacy). Now wired: `archiveOrder` writes the current status here before archiving; `handleStatusChange` writes the pre-Cancelled status before setting Cancelled+archived; `unarchiveOrder` reads it on restore, falls back to 'In Production' if null, then clears it. Existing archived rows were backfilled via SQL (`status::text` for non-Cancelled, 'In Production' for Cancelled).
 - **Accessories reuses existing columns** — `total_lf` stores LF (linear feet) and `description` stores the Notes textarea. No schema migration was needed for the Accessories form fields themselves.
 - **Accessories form note display** — `description` is passed as `formNote` prop to `ActivityLog`. It renders as a read-only "Form note" at the top of the Notes panel without a DB query. Post-submission notes still go to `production_order_notes`.
 - **TOLLING badge** — rendered inline inside the EpoxyFab Fabrication cell when `tolling_only = true`. No extra column needed.
@@ -278,6 +279,7 @@ Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delay
 - `8199a702f` — fix: restore Cancelled stat card and IN PRODUCTION glowing white label
 - `98775ad5e` — feat: Tolling Only checkbox below Coating + amber stripe on tolling rows
 - `6660ef85a` — feat: replace TOLLING badge with amber T indicator column in EpoxyFab table
+- `5e9e3c544` — fix: restore-from-history returns order to its pre-archive status
 
 **Supabase migration applied 2026-05-19:**
 ```sql
@@ -286,7 +288,7 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 
 **Deployment:**
 - Production alias: https://production-planner-one.vercel.app
-- Latest deployment ID: `dpl_5MQYL8chWJX8cjkWvmrcThvXbqms`
+- Latest deployment ID: `dpl_CuqHhSco3UvMDCdShZSh9MJ7QGr9`
 
 **Previous stabilization series (applied before this session):**
 - `2ac7414a5` — baseline cleanup: removed stale EpoxyFab Dowel Size handling, fixed Tolling Only field name, scoped stat calculations
@@ -333,8 +335,9 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 - Dropdown scroll close: scroll event listener in ActionsDropdown
 
 ### Known Gaps / Not Built
-- **Supabase schema** — All columns present: `bar_size`, `bar_length`, `weight`, `tolling_only`, `fabrication`, `description`, `total_lf`. No missing columns.
-  - Two legacy columns not used by app code: `pre_archive_status` (TEXT, nullable) and `notes` (TEXT, default `''`). Neither causes a runtime problem.
+- **Supabase schema** — All columns present: `bar_size`, `bar_length`, `weight`, `tolling_only`, `fabrication`, `description`, `total_lf`, `pre_archive_status`. No missing columns.
+  - One legacy column not used by app code: `notes` (TEXT, default `''` — predates `production_order_notes` table). Does not cause a runtime problem.
+  - `pre_archive_status` (TEXT, nullable) is now active — used by the restore-status fix.
 - **Local build verification** — blocked by local DNS failure fetching Google Fonts. Remote Vercel build passes; this is a local environment issue only.
 - **Lint tooling** — `npm run lint` crashes with `TypeError: Converting circular structured to JSON` before it reaches source files. ESLint config bug, not an app code bug.
 - **Root `HANDOFF.md`** — the file at the worktree root (`../HANDOFF.md` relative to this directory) belongs to the **Green Steel Shipment Tracker**, not the Production Planner. Ignore it in this project's context.
