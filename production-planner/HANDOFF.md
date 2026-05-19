@@ -1,6 +1,6 @@
 # Production Planner — Claude Code Handoff
 
-**Last updated:** 2026-05-19 (FIX 1: activeTab modal wiring; FIX 2: Accessories tab built and deployed)
+**Last updated:** 2026-05-19 (FIX 1: activeTab modal wiring; FIX 2: Accessories tab; FIX 3: IN PRODUCTION glowing white label; FIX 4: Cancelled stat card restored)
 **Repo:** https://github.com/FrankTortilla/Kanexa.git  
 **Branch:** main  
 **Project path in repo:** `production-planner/`  
@@ -154,10 +154,12 @@ production-planner/
 - **Order Type dropdown removed**: `order_type` is set automatically from `activeTab` on new orders, locked to the existing value on edits
 
 ### Dashboard Summary (stat cards)
-- **Clickable filter cards** per active tab: In Production / Ready to Ship / Delayed / On Hold / Total Active
+- **Clickable filter cards** per active tab: In Production / Ready to Ship / Delayed / On Hold / Total Active / Cancelled
 - Clicking a card filters the table below to show only matching orders
 - Selected card shows highlighted border + brightness; clicking again deselects
 - Filter resets automatically when switching product tabs
+- **Cancelled card**: cherry red `#FF1744`; counts all Cancelled orders per tab (including archived); clicking auto-switches to History view and filters to Cancelled-only
+- **IN PRODUCTION label**: glowing white — `labelColor: '#ffffff'`, `labelGlow: '0 0 8px rgba(255,255,255,0.7)'`; number above stays blue `#3b82f6`
 - **Total QTY** always shown; **Total LF** shown for Baskets always, and for Accessories only when ≥1 active order has a non-zero LF value
 
 ### Active / History Sub-tabs
@@ -273,6 +275,7 @@ Status badge colors: In Production `#3b82f6` · Ready to Ship `#22c55e` · Delay
 - `61556536c` — Feat: Accessories tab — form, table, stat cards, DB migration
 - `e6145ed2e` — Update handoff after production planner stabilization
 - `1250acb28` — Record stabilized production deployment
+- `8199a702f` — fix: restore Cancelled stat card and IN PRODUCTION glowing white label
 
 **Supabase migration applied 2026-05-19:**
 ```sql
@@ -281,7 +284,7 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 
 **Deployment:**
 - Production alias: https://production-planner-one.vercel.app
-- Latest deployment ID: `dpl_36FbzFsnz9ktzSKRYM1Sv8wxy2aT`
+- Latest deployment ID: `dpl_GvNzSfycznvABZjmshiyhhpMqfsD`
 
 **Previous stabilization series (applied before this session):**
 - `2ac7414a5` — baseline cleanup: removed stale EpoxyFab Dowel Size handling, fixed Tolling Only field name, scoped stat calculations
@@ -296,6 +299,8 @@ ALTER TYPE order_type ADD VALUE 'Accessories';
 - Tab-specific form fields and table columns fully isolated
 - Accessories: LF field (uses `total_lf`), Notes textarea (uses `description`), form note display in expanded row
 - EpoxyFab: TOLLING badge shown when `tolling_only = true`
+- **Cancelled stat card**: cherry red, auto-switches to History, filters to Cancelled-only
+- **IN PRODUCTION label**: glowing white (number stays blue); comment in source prevents future revert
 - Total LF stat card hidden for Accessories when all LF values are null/zero
 - Active/History, notes, action dropdown, status-card filtering, realtime, CSV export
 - Supabase schema verified: all columns present, `order_type` enum includes 'Accessories'
