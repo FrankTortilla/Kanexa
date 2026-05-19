@@ -114,6 +114,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .btn-icon { display: inline; }
 .btn-label { display: inline; }
 
+/* ── Custom scrollbars — exact Waypoint values ───────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3d3d3d #242424;
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: #242424; border-radius: 4px; }
+*::-webkit-scrollbar-thumb { background: #3d3d3d; border-radius: 4px; border: 2px solid #242424; }
+*::-webkit-scrollbar-thumb:hover { background: #525252; }
+*::-webkit-scrollbar-corner { background: #242424; }
+
 /* Tab row scrollbar hidden */
 header div::-webkit-scrollbar { display: none; }
 
