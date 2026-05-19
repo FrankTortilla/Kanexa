@@ -186,7 +186,7 @@ export default function Home() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       {/* Toast */}
       {toast && (
         <div className="animate-fade-in" style={{
@@ -258,29 +258,32 @@ export default function Home() {
         ))}
       </div>
 
-      {visibleOrders.length === 0 ? (
-        <EmptyState
-          tabLabel={activeTab}
-          onAdd={viewMode === 'active' ? handleAddOrder : null}
-          isHistory={viewMode === 'history'}
-          hasFilter={viewMode === 'active' && !!statusFilter && statusFilter !== 'total'}
-        />
-      ) : (
-        <OrderTable
-          orders={visibleOrders}
-          orderType={activeTab}
-          flashedId={flashedId}
-          onEdit={handleEdit}
-          onArchive={handleArchive}
-          onRestore={handleRestore}
-          onDelete={handleDelete}
-          onStatusChange={handleStatusChange}
-          expandedId={expandedId}
-          onToggleExpand={handleToggleExpand}
-          renderActivityLog={renderActivityLog}
-          isHistory={viewMode === 'history'}
-        />
-      )}
+      {/* Single scrollable area — header/dashboard/subtabs stay pinned above */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        {visibleOrders.length === 0 ? (
+          <EmptyState
+            tabLabel={activeTab}
+            onAdd={viewMode === 'active' ? handleAddOrder : null}
+            isHistory={viewMode === 'history'}
+            hasFilter={viewMode === 'active' && !!statusFilter && statusFilter !== 'total'}
+          />
+        ) : (
+          <OrderTable
+            orders={visibleOrders}
+            orderType={activeTab}
+            flashedId={flashedId}
+            onEdit={handleEdit}
+            onArchive={handleArchive}
+            onRestore={handleRestore}
+            onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
+            expandedId={expandedId}
+            onToggleExpand={handleToggleExpand}
+            renderActivityLog={renderActivityLog}
+            isHistory={viewMode === 'history'}
+          />
+        )}
+      </div>
 
       <OrderForm
         isOpen={formOpen}
