@@ -84,7 +84,7 @@ const emptyForm = () => ({
   bar_length: '',
   weight: '',
   fabrication: '',
-  toiling_only: false,
+  tolling_only: false,
   // Baskets-specific
   description: '',
 });
@@ -120,7 +120,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
           bar_length: editingOrder.bar_length || '',
           weight: editingOrder.weight ?? '',
           fabrication: editingOrder.fabrication || '',
-          toiling_only: editingOrder.toiling_only || false,
+          tolling_only: editingOrder.tolling_only || false,
           description: editingOrder.description || '',
         });
         setCancelWarning(editingOrder.status === 'Cancelled');
@@ -157,7 +157,12 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         next.bar_length = '';
         next.weight = '';
         next.fabrication = '';
-        next.toiling_only = false;
+        next.tolling_only = false;
+      }
+
+      // Dowel Size is hidden for EpoxyFab — clear to avoid ghost data
+      if (newType === 'EpoxyFab') {
+        next.dowel_size = '';
       }
 
       // Baskets-only fields — clear when leaving Baskets
@@ -222,8 +227,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         oc:         hideBasketFields ? null : (form.oc.trim() || null),
         num_dowels: hideBasketFields ? null : (form.num_dowels !== '' ? Number(form.num_dowels) : null),
         total_lf:   hideBasketFields ? null : (form.total_lf !== '' ? Number(form.total_lf) : null),
-        // Dowel Size visible for all types
-        dowel_size: form.dowel_size.trim() || null,
+        // Dowel Size — Baskets and Loose Dowels only, null for EpoxyFab
+        dowel_size: isEpoxyFab ? null : (form.dowel_size.trim() || null),
         coating: form.coating,
         coating_other: form.coating === 'Other' ? form.coating_other.trim() : null,
         status: form.status,
@@ -233,7 +238,7 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
         bar_length:   isEpoxyFab ? (form.bar_length.trim() || null)                      : null,
         weight:       isEpoxyFab ? (form.weight !== '' ? Number(form.weight) : null)      : null,
         fabrication:  isEpoxyFab ? (form.fabrication.trim() || null)                     : null,
-        toiling_only: isEpoxyFab ? form.toiling_only                                     : false,
+        tolling_only: isEpoxyFab ? form.tolling_only                                     : false,
         // Baskets-specific — null for all other types
         description: isBaskets ? (form.description.trim() || null) : null,
         // Auto-archive if Cancelled
@@ -338,8 +343,8 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
             </Field>
           )}
 
-          {/* Pvg / Dowel Size / O.C. — 3-col for Baskets; Dowel Size alone for Loose Dowels & EpoxyFab */}
-          {!hideBasketFields ? (
+          {/* Pvg / Dowel Size / O.C. — 3-col for Baskets only */}
+          {isBaskets && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
               <Field label='Pvg"'>
                 <input type="text" value={form.pvg} onChange={e => set('pvg', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
@@ -351,7 +356,10 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
                 <input type="text" value={form.oc} onChange={e => set('oc', e.target.value)} placeholder='e.g. 12"' style={inputStyle} />
               </Field>
             </div>
-          ) : (
+          )}
+
+          {/* Dowel Size alone for Loose Dowels only — EpoxyFab has no Dowel Size */}
+          {isLooseDowels && (
             <Field label="Dowel Size">
               <input type="text" value={form.dowel_size} onChange={e => set('dowel_size', e.target.value)} placeholder='e.g. 1"' style={inputStyle} />
             </Field>
@@ -478,14 +486,14 @@ export default function OrderForm({ isOpen, onClose, onSave, editingOrder }) {
             />
           </Field>
 
-          {/* Toiling Only — EpoxyFab only, same toggle style as CPU ASAP */}
+          {/* Tolling Only — EpoxyFab only, same toggle style as CPU ASAP */}
           {isEpoxyFab && (
-            <Field label="Toiling Only">
+            <Field label="Tolling Only">
               <Toggle
-                value={form.toiling_only}
-                onChange={v => set('toiling_only', v)}
+                value={form.tolling_only}
+                onChange={v => set('tolling_only', v)}
                 activeColor="var(--accent-green)"
-                activeLabel="Toiling Only — On"
+                activeLabel="Tolling Only — On"
                 inactiveLabel="Off"
               />
             </Field>

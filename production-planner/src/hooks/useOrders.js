@@ -112,9 +112,9 @@ export function useOrders() {
         status:        'Status',        cpu_asap:      'CPU ASAP',
         bar_size:      'Bar Size',      bar_length:    'Bar Length',
         weight:        'Weight',        fabrication:   'Fabrication',
-        toiling_only:  'Toiling Only',  description:   'Description',
+        tolling_only:  'Tolling Only',  description:   'Description',
       };
-      const booleanFields = new Set(['cpu_asap', 'toiling_only']);
+      const booleanFields = new Set(['cpu_asap', 'tolling_only']);
       for (const [field, label] of Object.entries(fieldLabels)) {
         if (field in updates && updates[field] !== prevOrder[field]) {
           const oldVal = booleanFields.has(field) ? (prevOrder[field] ? 'Yes' : 'No') : (prevOrder[field] ?? '—');
