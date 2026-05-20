@@ -12,5 +12,7 @@ out/
 
 # misc
 .DS_Store
+._*
 *.log
 .vercel
+.env*.local
