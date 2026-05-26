@@ -120,7 +120,7 @@ export default function Home() {
       setActiveTab('active');
       setActiveStatusFilter(null);
     } else {
-      const statusMap = { pending: 'Pending', booked: 'Booked', 'in-transit': 'In Transit' };
+      const statusMap = { pending: 'Pending', booked: 'Booked', 'in-transit': 'In Transit', pickup: 'Pickup', cancelled: 'Cancelled' };
       setActiveTab('active');
       setActiveStatusFilter(statusMap[key] || null);
     }
