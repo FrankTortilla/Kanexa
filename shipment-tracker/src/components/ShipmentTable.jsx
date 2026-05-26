@@ -439,7 +439,7 @@ function MaterialsCell({ shipment, padding }) {
     <td style={{ padding, color: 'var(--text-primary)', maxWidth: '200px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {items.map((m, i) => (
-          <span key={i} style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '12px' }}>
+          <span key={i} style={{ display: 'block', whiteSpace: 'normal', fontSize: '12px' }}>
             {m.quantity ? `${m.quantity} ` : ''}{m.material_name}
           </span>
         ))}

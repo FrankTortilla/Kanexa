@@ -249,7 +249,7 @@ export default function Home() {
         metrics={visibleSummaryMetrics}
       />
 
-      {activeTab !== 'history' && (
+      {(activeTab === 'active' || activeTab === 'delivered') && (
         <SearchFilterBar
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
