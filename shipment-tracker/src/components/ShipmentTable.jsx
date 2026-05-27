@@ -28,9 +28,9 @@ const BASE_COLUMNS = [
   { key: 'trailer_type', label: 'Trailer Type' },
   { key: 'weight', label: 'Weight' },
   { key: 'total_mileage', label: 'Total Mileage' },
-  { key: 'special_instructions', label: 'Special Instructions', truncate: true },
-  { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price' }, // hidden in warehouse view
+  { key: 'status', label: 'Status' },
+  { key: 'special_instructions', label: 'Notes', truncate: true },
   { key: 'pod', label: 'POD', minWidth: '80px' },
 ];
 
@@ -221,7 +221,12 @@ function TableRow({
         </td>
         <Cell padding={cellPadding}>{s.weight}</Cell>
         <Cell padding={cellPadding}>{s.total_mileage}</Cell>
-        <TruncatedCell padding={cellPadding} text={s.special_instructions} />
+        {/* Price — office view only */}
+        {showPrice && (
+          <td style={{ padding: cellPadding, color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
+            {s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}
+          </td>
+        )}
 
         {/* Status — interactive dropdown everywhere except warehouse + trash */}
         <td style={{ padding: cellPadding, maxWidth: '140px', width: '140px' }}>
@@ -235,12 +240,7 @@ function TableRow({
           )}
         </td>
 
-        {/* Price — office view only */}
-        {showPrice && (
-          <td style={{ padding: cellPadding, color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
-            {s.price != null ? `$${Number(s.price).toFixed(2)}` : '—'}
-          </td>
-        )}
+        <TruncatedCell padding={cellPadding} text={s.special_instructions} />
 
         {/* POD */}
         <PODCell shipment={s} isWarehouse={isWarehouse} onPodUpdate={onPodUpdate || (() => {})} />
@@ -334,8 +334,7 @@ function StatusDropdown({ currentStatus, onStatusChange }) {
       ref={dropdownRef}
       style={{
         position: 'fixed',
-        top: portalStyle.top,
-        left: portalStyle.left,
+        ...portalStyle,
         zIndex: 9999,
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',

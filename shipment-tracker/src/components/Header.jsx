@@ -11,16 +11,17 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
     }}>
       {/* Row 1: Logo + Actions */}
       <div style={{
-        padding: '10px 24px',
+        height: '125px',
+        padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '12px',
       }}>
         <img
-          src="/green_steel_LOGO_copy.png"
+          src="/GS-Grey-Logo.png"
           alt="SureBuilT"
-          style={{ height: '44px', width: 'auto' }}
+          style={{ height: '70px', width: 'auto' }}
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -44,6 +45,11 @@ export default function Header({ onAddShipment, onPrint, onExport, isWarehouse, 
               <span className="btn-label">Add Shipment</span>
             </button>
           )}
+          <img
+            src="/caspr-logo.svg"
+            alt="Powered by Caspr"
+            style={{ height: '48px', width: 'auto', opacity: 0.75, marginLeft: '4px' }}
+          />
         </div>
       </div>
 

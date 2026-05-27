@@ -335,7 +335,7 @@ export default function ShipmentForm({ isOpen, onClose, onSave, editingShipment,
             <Field label="Total Mileage" error={errors.total_mileage}>
               <input type="number" min="0" step="any" value={form.total_mileage} onChange={e => set('total_mileage', e.target.value)} style={inputStyle} />
             </Field>
-            <Field label="Special Instructions" error={errors.special_instructions}>
+            <Field label="Notes" error={errors.special_instructions}>
               <textarea value={form.special_instructions} onChange={e => set('special_instructions', e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
             </Field>
             <Field label="Price" error={errors.price}>

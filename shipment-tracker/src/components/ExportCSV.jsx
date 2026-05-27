@@ -20,7 +20,7 @@ const CSV_COLUMNS = [
   { key: 'trailer_type', label: 'Trailer Type' },
   { key: 'weight', label: 'Weight' },
   { key: 'total_mileage', label: 'Total Mileage' },
-  { key: 'special_instructions', label: 'Special Instructions' },
+  { key: 'special_instructions', label: 'Notes' },
   { key: 'status', label: 'Status' },
   { key: 'price', label: 'Price', format: (v) => v != null ? `$${Number(v).toFixed(2)}` : '' },
   { key: 'pod_attached', label: 'POD Attached', format: (_, s) => s.pod_file_path ? 'Yes' : 'No' },
